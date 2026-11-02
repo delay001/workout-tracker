@@ -1,6 +1,7 @@
 import { renderBackupScreen } from './backupScreen';
 import { field, h } from './dom';
 import { renderExerciseSettings } from './exerciseSettingsScreen';
+import { renderImportScreen } from './importScreen';
 import { applyTheme, getSetting, setSetting, type Theme } from './settings';
 import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes } from './workouts';
@@ -136,6 +137,15 @@ export async function renderSettingsScreen(
           onclick: () => void renderTemplateSettings(root, () => void showMain()),
         },
         'Шаблоны',
+      ),
+      h(
+        'button',
+        {
+          type: 'button',
+          className: 'button button-secondary',
+          onclick: () => void renderImportScreen(root, () => void showMain()),
+        },
+        'Старые записи',
       ),
       backup,
     );

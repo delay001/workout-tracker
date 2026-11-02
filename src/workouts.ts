@@ -94,7 +94,7 @@ export async function startWorkout(date: string, type: WorkoutType): Promise<voi
 }
 
 // «Жим лежа» и «жим лёжа» при поиске считаются одним и тем же
-function normalize(text: string): string {
+export function normalize(text: string): string {
   return text.trim().toLowerCase().replaceAll('ё', 'е');
 }
 

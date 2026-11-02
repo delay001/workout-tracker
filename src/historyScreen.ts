@@ -1,3 +1,4 @@
+import { renderBodyWeightView } from './bodyWeightScreen';
 import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
 import type { Workout } from './db';
 import { h } from './dom';
@@ -20,7 +21,7 @@ function summary(workout: Workout): string {
     .join(', ');
 }
 
-let shownView: 'workouts' | 'exercises' = 'workouts';
+let shownView: 'workouts' | 'exercises' | 'weight' = 'workouts';
 
 export async function renderHistoryTab(
   root: HTMLElement,
@@ -47,8 +48,10 @@ export async function renderHistoryTab(
   async function showView(): Promise<void> {
     if (shownView === 'workouts') {
       await renderWorkoutsView(body, onOpen);
-    } else {
+    } else if (shownView === 'exercises') {
       await renderExercisesScreen(body);
+    } else {
+      await renderBodyWeightView(body);
     }
   }
 
@@ -59,6 +62,7 @@ export async function renderHistoryTab(
       { className: 'chips', role: 'radiogroup', ariaLabel: 'Что показать' },
       viewChip('Тренировки', 'workouts'),
       viewChip('Упражнения', 'exercises'),
+      viewChip('Вес тела', 'weight'),
     ),
     body,
   );

@@ -6,7 +6,7 @@
   --border: #423e52;
   --text: #f4f2f8;
   --muted: #aaa5b8;
-  --accent: #f0609e;
+  --accent: #e8528f;
   --grad-1: linear-gradient(135deg, #f58a6b, #e0559a);
   --grad-2: linear-gradient(135deg, #d858b4, #8f5fe0);
   --grad-3: linear-gradient(135deg, #9b63e4, #5f78e6);
@@ -391,6 +391,58 @@ textarea {
 
 .set-form {
   margin-top: 12px;
+}
+
+.skipped {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.chart {
+  margin: 0 0 16px;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--card);
+}
+
+.chart-readout {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart text {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.chart-dot {
+  fill: var(--accent);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.chart-hit {
+  fill: transparent;
 }
 
 .record {

@@ -633,7 +633,7 @@ describe('поиск упражнений', () => {
     const options = await searchOptions('жим лежа');
 
     expect(isExactMatch(options, 'жим лежа')).toBe(true);
-    expect(isExactMatch(options, 'жим')).toBe(false);
+    expect(isExactMatch(options, 'жим ле')).toBe(false);
   });
 
   it('группу мышц можно поменять', async () => {
