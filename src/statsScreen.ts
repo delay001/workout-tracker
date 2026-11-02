@@ -7,6 +7,8 @@ import { overdueExercises, periodTotals, topExercises, workoutStats } from './pr
 import { formatWeight, toWeight, weightUnit } from './units';
 import { getMonthlyGoal, getOverdueDays } from './settings';
 import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage } from './stats';
+import { radioChips } from './ui';
+import { renderVolumeView } from './volumeScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { LOCALE, t } from './i18n';
 
@@ -70,7 +72,38 @@ export async function renderTotalsScreen(root: HTMLElement, onBack: () => void):
   );
 }
 
+let shownView: 'month' | 'week' = 'month';
+
 export async function renderStatsScreen(root: HTMLElement): Promise<void> {
+  const body = h('div');
+  const showView = async (): Promise<void> => {
+    if (shownView === 'month') {
+      await renderMonthView(body);
+    } else {
+      await renderVolumeView(body);
+    }
+  };
+  root.replaceChildren(
+    h('h1', {}, t('tab.stats')),
+    radioChips<'month' | 'week'>(
+      'stats-view',
+      t('stats.view'),
+      [
+        ['month', t('stats.viewMonth')],
+        ['week', t('stats.viewWeek')],
+      ],
+      shownView,
+      (value) => {
+        shownView = value;
+        void showView();
+      },
+    ),
+    body,
+  );
+  await showView();
+}
+
+async function renderMonthView(root: HTMLElement): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const goal = await getMonthlyGoal();
   const today = todayLocal();
@@ -120,7 +153,6 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
       h('div', { className: 'stat' }, h('strong', {}, value), label);
 
     root.replaceChildren(
-      h('h1', {}, t('tab.stats')),
       h(
         'div',
         { className: 'month-nav' },

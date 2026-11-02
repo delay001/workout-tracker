@@ -18,6 +18,8 @@ import {
 import { numberInput, select } from './ui';
 import { getUnits, setUnits } from './units';
 import { resizeAvatar } from './avatar';
+import { MUSCLES } from './muscles';
+import { getNorms } from './volumeScreen';
 import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeName } from './workouts';
 import { t } from './i18n';
@@ -27,6 +29,49 @@ export async function renderSettingsScreen(
   message: string,
   onImported: (message: string) => void,
 ): Promise<void> {
+  async function showNorms(): Promise<void> {
+    const norms = await getNorms();
+    const inputs = MUSCLES.map((muscle) => {
+      const min = numberInput('integer', String(norms[muscle][0]), 2);
+      const max = numberInput('integer', String(norms[muscle][1]), 2);
+      return [muscle, min, max] as const;
+    });
+    const save = (): void => {
+      const value = Object.fromEntries(
+        inputs.map(([muscle, min, max]) => [muscle, [Number(min.value), Number(max.value)]]),
+      );
+      void setSetting('volumeNorms', JSON.stringify(value));
+    };
+    inputs.forEach(([, min, max]) => {
+      min.onchange = save;
+      max.onchange = save;
+    });
+    const ratio = numberInput('decimal', (await getSetting('balanceRatio')) || '3', 3);
+    ratio.onchange = () => void setSetting('balanceRatio', ratio.value);
+
+    root.replaceChildren(
+      h(
+        'div',
+        { className: 'screen' },
+        h('h1', {}, t('settings.norms')),
+        h('p', { className: 'hint' }, t('settings.normsHint')),
+        ...inputs.map(([muscle, min, max]) =>
+          h('div', { className: 'set-inputs' }, field(t(`muscle.${muscle}`), min), field('—', max)),
+        ),
+        field(t('settings.balanceRatio'), ratio),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'button button-secondary bottom-action',
+            onclick: () => void showMain(),
+          },
+          t('common.back'),
+        ),
+      ),
+    );
+  }
+
   async function showTypes(): Promise<void> {
     const name = h('input', { type: 'text', autocomplete: 'off' });
     const error = h('p', { className: 'error', role: 'alert' });
@@ -253,6 +298,11 @@ export async function renderSettingsScreen(
           onclick: () => void renderTemplateSettings(root, () => void showMain()),
         },
         t('settings.templates'),
+      ),
+      h(
+        'button',
+        { type: 'button', className: 'button button-secondary', onclick: () => void showNorms() },
+        t('settings.norms'),
       ),
       h(
         'button',
