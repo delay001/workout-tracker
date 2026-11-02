@@ -7,8 +7,10 @@ import {
   addSet,
   bestSet,
   defaultSet,
+  deleteWorkout,
   finishWorkout,
   getActiveWorkout,
+  getFinishedWorkouts,
   getLastPerformance,
   isExactMatch,
   parseDuration,
@@ -300,6 +302,54 @@ describe('завершение', () => {
     expect(await finishWorkout(await active(), {})).toBe(false);
 
     expect(await db.workouts.count()).toBe(0);
+  });
+});
+
+describe('история', () => {
+  const save = (date: string, status: 'active' | 'finished' = 'finished') =>
+    saveWorkout({ type: 'upper', exercises: [{ exerciseId: 1, sets: [SET] }], date, status });
+
+  it('показывает только завершённые, новые сверху', async () => {
+    await save('2026-10-01');
+    await save('2026-10-20');
+    await save('2026-10-10');
+    await save('2026-11-02', 'active');
+
+    const dates = (await getFinishedWorkouts()).map((workout) => workout.date);
+
+    expect(dates).toEqual(['2026-10-20', '2026-10-10', '2026-10-01']);
+  });
+
+  it('удаляет выбранную тренировку', async () => {
+    const id = await save('2026-10-01');
+    await save('2026-10-20');
+
+    await deleteWorkout(id);
+
+    expect((await getFinishedWorkouts()).map((workout) => workout.date)).toEqual(['2026-10-20']);
+  });
+
+  it('правка завершённой тренировки меняет дату, тип и оценку', async () => {
+    const id = await save('2026-10-01');
+    const workout = await db.workouts.get(id);
+
+    await finishWorkout(workout!, { date: '2026-10-02', type: 'lower', rating: undefined, durationMin: 80 });
+
+    expect(await db.workouts.get(id)).toMatchObject({
+      date: '2026-10-02',
+      type: 'lower',
+      status: 'finished',
+      durationMin: 80,
+    });
+  });
+
+  it('прошлым разом для исправляемой тренировки не считается она сама', async () => {
+    await save('2026-10-01');
+    const id = await save('2026-10-20');
+
+    const last = await getLastPerformance(1, (await db.workouts.get(id))!);
+
+    expect(last?.date).toBe('2026-10-01');
   });
 });
 

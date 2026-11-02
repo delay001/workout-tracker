@@ -1,5 +1,5 @@
 import { guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
-import { formatDate } from './dates';
+import { formatDate, formatDuration } from './dates';
 import {
   db,
   findOrCreateExercise,
@@ -7,6 +7,7 @@ import {
   type Workout,
   type WorkoutExercise,
   type WorkoutSet,
+  type WorkoutType,
 } from './db';
 import { field, h } from './dom';
 import {
@@ -14,8 +15,8 @@ import {
   addSet,
   bestSet,
   defaultSet,
+  deleteWorkout,
   finishWorkout,
-  getActiveWorkout,
   getLastPerformance,
   isExactMatch,
   type LastPerformance,
@@ -88,14 +89,16 @@ export async function renderWorkoutScreen(
   onClosed: (message: string) => void,
 ): Promise<void> {
   let workout = startedWorkout;
-  let currentId = workout.exercises.at(-1)?.exerciseId;
+  // Завершённая тренировка открыта из истории: изменения в ней сохраняются сразу же
+  const isEditing = startedWorkout.status === 'finished';
+  let currentId = isEditing ? undefined : workout.exercises.at(-1)?.exerciseId;
   // Номер подхода текущего упражнения, который сейчас исправляется
   let editedIndex: number | undefined;
 
   async function reload(): Promise<void> {
     editedIndex = undefined;
-    workout = (await getActiveWorkout()) ?? workout;
-    if (!workout.exercises.some((item) => item.exerciseId === currentId)) {
+    workout = (await db.workouts.get(workout.id)) ?? workout;
+    if (currentId !== undefined && !workout.exercises.some((item) => item.exerciseId === currentId)) {
       currentId = workout.exercises.at(-1)?.exerciseId;
     }
     await showWorkout();
@@ -296,39 +299,64 @@ export async function renderWorkoutScreen(
       return exercise ? [exerciseCard(item, exercise, last)] : [];
     });
 
-    const closeButton =
-      workout.exercises.length > 0
-        ? h(
+    const backButton = h(
+      'button',
+      {
+        type: 'button',
+        className: 'button button-secondary bottom-action',
+        // Пустая тренировка при завершении удаляется, поэтому завершённую спрашиваем
+        onclick: async () => {
+          const hasSets = workout.exercises.some((item) => item.sets.length > 0);
+          if (isEditing && !hasSets && !confirm('В тренировке нет подходов, она будет удалена. Продолжить?')) {
+            return;
+          }
+          await finishWorkout(workout, {});
+          onClosed('');
+        },
+      },
+      'Назад',
+    );
+
+    const closeButtons = isEditing
+      ? [
+          h(
             'button',
             { type: 'button', className: 'button button-secondary', onclick: showFinish },
-            'Завершить тренировку',
-          )
-        : h(
-            'button',
-            {
-              type: 'button',
-              className: 'button button-secondary bottom-action',
-              // Пустая тренировка при завершении удаляется
-              onclick: async () => {
-                await finishWorkout(workout, {});
-                onClosed('');
-              },
-            },
-            'Назад',
-          );
+            'Дата, оценка и заметка',
+          ),
+          backButton,
+        ]
+      : workout.exercises.length > 0
+        ? [
+            h(
+              'button',
+              { type: 'button', className: 'button button-secondary', onclick: showFinish },
+              'Завершить тренировку',
+            ),
+          ]
+        : [backButton];
+
+    const details = [
+      workout.durationMin === undefined ? '' : `Длительность ${formatDuration(workout.durationMin)}`,
+      workout.rating === undefined ? '' : `оценка ${workout.rating}`,
+    ]
+      .filter(Boolean)
+      .join(', ');
 
     root.replaceChildren(
       h(
         'div',
         { className: 'screen' },
         h('h1', {}, `${WORKOUT_TYPE_NAMES[workout.type]}, ${formatDate(workout.date)}`),
+        ...(isEditing && details ? [h('p', { className: 'hint' }, details)] : []),
+        ...(isEditing && workout.note ? [h('p', { className: 'hint' }, workout.note)] : []),
         ...cards,
         h(
           'button',
           { type: 'button', className: 'button', onclick: () => void showAddExercise() },
           'Добавить упражнение',
         ),
-        closeButton,
+        ...closeButtons,
       ),
     );
   }
@@ -458,8 +486,21 @@ export async function renderWorkoutScreen(
   function showFinish(): void {
     const hours = digitsInput();
     const minutes = digitsInput();
-    const note = h('textarea', { rows: 3 });
-    let rating: number | undefined;
+    if (workout.durationMin !== undefined) {
+      hours.value = String(Math.floor(workout.durationMin / 60));
+      minutes.value = String(workout.durationMin % 60);
+    }
+    const note = h('textarea', { rows: 3, value: workout.note ?? '' });
+    const date = h('input', { type: 'date', value: workout.date });
+    const type = h(
+      'select',
+      {},
+      ...(Object.keys(WORKOUT_TYPE_NAMES) as WorkoutType[]).map((value) =>
+        h('option', { value }, WORKOUT_TYPE_NAMES[value]),
+      ),
+    );
+    type.value = workout.type;
+    let rating = workout.rating;
     const ratingButtons = Array.from({ length: 10 }, (_, index) =>
       h(
         'label',
@@ -467,6 +508,7 @@ export async function renderWorkoutScreen(
         h('input', {
           type: 'radio',
           name: 'rating',
+          checked: workout.rating === index + 1,
           onclick: () => {
             rating = index + 1;
           },
@@ -478,7 +520,7 @@ export async function renderWorkoutScreen(
     const isEmpty = workout.exercises.every((item) => item.sets.length === 0);
 
     root.replaceChildren(
-      h('h1', {}, 'Завершение'),
+      h('h1', {}, isEditing ? 'Дата, оценка и заметка' : 'Завершение'),
       ...(isEmpty ? [h('p', { className: 'hint' }, 'В тренировке нет подходов, она не сохранится.')] : []),
       h(
         'form',
@@ -487,6 +529,8 @@ export async function renderWorkoutScreen(
             event.preventDefault();
             try {
               const saved = await finishWorkout(workout, {
+                date: (isEditing && date.value) || workout.date,
+                type: isEditing ? (type.value as WorkoutType) : workout.type,
                 durationMin: parseDuration(hours.value, minutes.value),
                 rating,
                 note: note.value.trim() || undefined,
@@ -497,6 +541,7 @@ export async function renderWorkoutScreen(
             }
           },
         },
+        ...(isEditing ? [field('Дата', date), field('Тип тренировки', type)] : []),
         h(
           'div',
           { className: 'set-inputs' },
@@ -511,12 +556,30 @@ export async function renderWorkoutScreen(
         ),
         field('Заметка', note),
         error,
-        h('button', { type: 'submit', className: 'button' }, 'Завершить'),
+        h('button', { type: 'submit', className: 'button' }, isEditing ? 'Сохранить' : 'Завершить'),
         h(
           'button',
           { type: 'button', className: 'button button-secondary', onclick: () => void showWorkout() },
           'Назад',
         ),
+        ...(isEditing
+          ? [
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'button button-danger',
+                  onclick: async () => {
+                    if (confirm(`Удалить тренировку за ${formatDate(workout.date)}? Это не отменить.`)) {
+                      await deleteWorkout(workout.id);
+                      onClosed('');
+                    }
+                  },
+                },
+                'Удалить тренировку',
+              ),
+            ]
+          : []),
       ),
     );
   }

@@ -58,6 +58,69 @@ h2 {
   color: var(--text);
 }
 
+.button-danger {
+  background: none;
+  color: #f87171;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0;
+}
+
+.month-nav h2 {
+  margin: 0;
+}
+
+.month-nav .step-button {
+  flex-basis: 48px;
+  height: 48px;
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.weekday {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 2px 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+}
+
+.day-today {
+  border-color: var(--muted);
+}
+
+.day-workout {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.day-type {
+  font-size: 0.6875rem;
+  font-weight: 400;
+}
+
 .status {
   min-height: 1.5em;
   margin: 4px 0 0;

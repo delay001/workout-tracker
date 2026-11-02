@@ -23,6 +23,16 @@ export async function getActiveWorkout(): Promise<Workout | undefined> {
   return db.workouts.where('status').equals('active').first();
 }
 
+// Сначала самые новые: по дате тренировки, а за один день — внесённая позже
+export async function getFinishedWorkouts(): Promise<Workout[]> {
+  const workouts = await db.workouts.where('status').equals('finished').toArray();
+  return workouts.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+}
+
+export async function deleteWorkout(workoutId: number): Promise<void> {
+  await db.workouts.delete(workoutId);
+}
+
 export async function startWorkout(date: string, type: WorkoutType): Promise<void> {
   await saveWorkout({ date, type, status: 'active', exercises: [] });
 }
@@ -174,7 +184,7 @@ export async function removeSet(workout: Workout, exerciseId: number, setIndex: 
 // Упражнения без подходов не сохраняются. Тренировка без подходов удаляется, тогда вернётся false.
 export async function finishWorkout(
   workout: Workout,
-  details: { durationMin?: number; rating?: number; note?: string },
+  details: Partial<Pick<Workout, 'date' | 'type' | 'durationMin' | 'rating' | 'note'>>,
 ): Promise<boolean> {
   const exercises = workout.exercises.filter((item) => item.sets.length > 0);
   if (exercises.length === 0) {
