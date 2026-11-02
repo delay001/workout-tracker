@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Workout, WorkoutSet } from './db';
-import { exerciseProgress, goalPercent, monthlyTonnage, monthStats, tonnage } from './stats';
+import { goalPercent, monthlyTonnage, monthStats, tonnage } from './stats';
 
 const set = (weight: number, reps: number, warmup = false): WorkoutSet => ({ weight, reps, warmup });
 
@@ -52,29 +52,6 @@ describe('статистика месяца', () => {
       { date: '2025-12-01', value: 100 },
       { date: '2026-01-01', value: 0 },
     ]);
-  });
-});
-
-describe('прогресс упражнения', () => {
-  it('берёт лучший вес за день и идёт от старых записей к новым', () => {
-    expect(
-      exerciseProgress([
-        { date: '2026-10-20', sets: [set(70, 8), set(80, 5)] },
-        { date: '2026-10-01', sets: [set(60, 8), set(90, 1, true)] },
-      ]),
-    ).toEqual([
-      { date: '2026-10-01', value: 60 },
-      { date: '2026-10-20', value: 80 },
-    ]);
-  });
-
-  it('две тренировки за день дают одну точку', () => {
-    expect(
-      exerciseProgress([
-        { date: '2026-10-20', sets: [set(70, 8)] },
-        { date: '2026-10-20', sets: [set(80, 5)] },
-      ]),
-    ).toEqual([{ date: '2026-10-20', value: 80 }]);
   });
 });
 

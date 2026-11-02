@@ -1,7 +1,6 @@
 import type { ChartDatum } from './chart';
 import { shiftMonth } from './dates';
 import type { Workout, WorkoutSet } from './db';
-import { bestSet, type LastPerformance } from './workouts';
 
 export interface MonthStats {
   count: number;
@@ -50,16 +49,6 @@ export function monthlyTonnage(workouts: Workout[], year: number, month: number,
       value: monthStats(workouts, shown.year, shown.month).tonnage,
     };
   });
-}
-
-// Лучший вес за каждый день, от старых записей к новым
-export function exerciseProgress(history: LastPerformance[]): ChartDatum[] {
-  const byDate = new Map<string, number>();
-  for (const entry of [...history].reverse()) {
-    const peak = bestSet(entry.sets)?.weight ?? 0;
-    byDate.set(entry.date, Math.max(byDate.get(entry.date) ?? 0, peak));
-  }
-  return [...byDate].map(([date, value]) => ({ date, value }));
 }
 
 // Доля цели для полосы прогресса: от 0 до 100

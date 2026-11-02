@@ -6,6 +6,7 @@ export const ACCENTS = ['pink', 'orange', 'green', 'blue', 'violet', 'red'] as c
 export type Accent = (typeof ACCENTS)[number];
 
 const DEFAULT_MONTHLY_GOAL = 12;
+const DEFAULT_OVERDUE_DAYS = 21;
 
 let chosenTheme: Theme = 'dark';
 
@@ -20,6 +21,11 @@ export async function setSetting(key: string, value: string): Promise<void> {
 export async function getMonthlyGoal(): Promise<number> {
   const goal = Number(await getSetting('monthlyGoal'));
   return Number.isInteger(goal) && goal > 0 ? goal : DEFAULT_MONTHLY_GOAL;
+}
+
+export async function getOverdueDays(): Promise<number> {
+  const days = Number(await getSetting('overdueDays'));
+  return Number.isInteger(days) && days > 0 ? days : DEFAULT_OVERDUE_DAYS;
 }
 
 export function resolveTheme(theme: Theme, systemIsDark: boolean): 'dark' | 'light' {

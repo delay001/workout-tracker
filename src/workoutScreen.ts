@@ -7,7 +7,7 @@ import {
   type Workout,
   type WorkoutExercise,
 } from './db';
-import { field, h } from './dom';
+import { field, h, showToast } from './dom';
 import {
   addExerciseToWorkout,
   addSet,
@@ -135,6 +135,18 @@ export async function renderWorkoutScreen(
             const set = parseSet(weight.value, reps.value, warmup.checked, toFailure.checked);
             if (index === undefined) {
               await addSet(workout, exercise.id, set);
+              const prior = await getPriorSets(exercise.id, workout);
+              const record = recordLabels([...item.sets, set], prior).at(-1);
+              if (record) {
+                showToast(
+                  t('record.toast', {
+                    set: `${set.weight}×${set.reps}`,
+                    name: exercise.name,
+                    kinds: record.replace(t('record.prefix', { kinds: '' }), ''),
+                  }),
+                );
+                navigator.vibrate?.(200);
+              }
             } else {
               await updateSet(workout, exercise.id, index, set);
             }

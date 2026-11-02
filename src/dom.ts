@@ -10,6 +10,13 @@ export function h<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
+// Заметная плашка поверх экрана, которая исчезает сама
+export function showToast(text: string): void {
+  const toast = h('div', { className: 'toast', role: 'status' }, text);
+  document.body.append(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
 export function field(label: string, control: HTMLElement): HTMLLabelElement {
   return h('label', { className: 'field' }, h('span', {}, label), control);
 }

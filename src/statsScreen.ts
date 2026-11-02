@@ -1,7 +1,9 @@
 import { lineChart } from './chart';
-import { formatDuration, formatMonth, shiftMonth } from './dates';
+import { formatDuration, formatMonth, shiftMonth, todayLocal } from './dates';
+import { db } from './db';
 import { h } from './dom';
-import { getMonthlyGoal } from './settings';
+import { overdueExercises, periodTotals, topExercises } from './progress';
+import { getMonthlyGoal, getOverdueDays } from './settings';
 import { goalPercent, monthlyTonnage, monthStats } from './stats';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { LOCALE, t } from './i18n';
@@ -34,6 +36,23 @@ export function goalBar(count: number, goal: number): HTMLElement {
 export async function renderStatsScreen(root: HTMLElement): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const goal = await getMonthlyGoal();
+  const today = todayLocal();
+  const totals = periodTotals(workouts, today);
+  const top = topExercises(workouts, 5);
+  const overdue = overdueExercises(workouts, await getOverdueDays(), today);
+  const exercises = await db.exercises.toArray();
+  const exerciseName = (id: number): string =>
+    exercises.find((exercise) => exercise.id === id)?.name ?? '';
+
+  const row = (name: string, value: string): HTMLElement =>
+    h('p', { className: 'set-row' }, name, h('strong', {}, value));
+  const topRows = top.map((item) =>
+    row(exerciseName(item.exerciseId), t('stats.topRow', { count: item.count })),
+  );
+  // Скрытые упражнения в подсказку «давно не делал» не попадают
+  const overdueRows = overdue
+    .filter((item) => !exercises.find((exercise) => exercise.id === item.exerciseId)?.hidden)
+    .map((item) => row(exerciseName(item.exerciseId), t('stats.overdueRow', { days: item.days })));
 
   function show(): void {
     const stats = monthStats(workouts, shown.year, shown.month);
@@ -85,6 +104,27 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
         const [year, month] = date.split('-').map(Number);
         return formatMonth(year, month - 1);
       }),
+      h('h2', {}, t('stats.totals')),
+      ...(['week', 'month', 'year'] as const).map((period) =>
+        h(
+          'p',
+          { className: 'set-row' },
+          t(`period.${period}`),
+          h(
+            'span',
+            {},
+            t('stats.totalRow', {
+              workouts: totals[period].workouts,
+              hours: formatDuration(totals[period].durationMin),
+              tonnage: totals[period].tonnage.toLocaleString(LOCALE),
+            }),
+          ),
+        ),
+      ),
+      h('h2', {}, t('stats.top')),
+      ...topRows,
+      h('h2', {}, t('stats.overdue')),
+      ...(overdueRows.length > 0 ? overdueRows : [h('p', { className: 'hint' }, t('stats.noOverdue'))]),
     );
   }
 

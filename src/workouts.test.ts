@@ -10,7 +10,6 @@ import {
   bestSet,
   deleteWorkout,
   deleteWorkoutType,
-  epley,
   finishWorkout,
   getActiveWorkout,
   getCustomWorkoutTypes,
@@ -23,6 +22,7 @@ import {
   getWorkoutTypes,
   isExactMatch,
   parseDuration,
+  oneRepMax,
   parseSet,
   recordLabels,
   removeExercise,
@@ -450,15 +450,32 @@ describe('личные рекорды', () => {
   const set = (weight: number, reps: number, warmup = false) => ({ weight, reps, warmup });
 
   it('считает 1ПМ по формуле Эпли', () => {
-    expect(epley(set(90, 30))).toBe(180);
+    expect(oneRepMax(set(90, 10))).toBe(120);
+  });
+
+  it('для одного повторения 1ПМ равен весу', () => {
+    expect(oneRepMax(set(100, 1))).toBe(100);
+  });
+
+  it('подходы больше 12 повторений и свой вес не дают 1ПМ', () => {
+    expect(oneRepMax(set(50, 13))).toBeUndefined();
+    expect(oneRepMax(set(0, 8))).toBeUndefined();
   });
 
   it('отмечает новый вес и новый 1ПМ', () => {
     expect(recordLabels([set(105, 3)], [set(100, 3)])).toEqual(['Рекорд: вес, 1ПМ']);
   });
 
-  it('больше повторений с тем же весом — рекорд только по 1ПМ', () => {
-    expect(recordLabels([set(100, 5)], [set(100, 3)])).toEqual(['Рекорд: 1ПМ']);
+  it('больше повторений с тем же весом — рекорд по 1ПМ и повторениям', () => {
+    expect(recordLabels([set(100, 5)], [set(100, 3)])).toEqual(['Рекорд: 1ПМ, повторы']);
+  });
+
+  it('больший вес при меньшем числе повторений, чем у прежнего, сравнивается с ним', () => {
+    expect(recordLabels([set(90, 8)], [set(100, 8), set(80, 8)])).toEqual(['']);
+  });
+
+  it('в упражнении со своим весом рекорд по повторениям', () => {
+    expect(recordLabels([set(0, 6)], [set(0, 5)])).toEqual(['Рекорд: повторы']);
   });
 
   it('больший вес с малым числом повторений — рекорд только по весу', () => {

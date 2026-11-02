@@ -259,9 +259,12 @@ export function bestSet(sets: WorkoutSet[]): WorkoutSet | undefined {
   );
 }
 
-// Расчётный одноповторный максимум по формуле Эпли
-export function epley(set: WorkoutSet): number {
-  return set.weight * (1 + set.reps / 30);
+// Расчётный 1ПМ по формуле Эпли. Считается только по подходам до 12 повторений с весом.
+export function oneRepMax(set: WorkoutSet): number | undefined {
+  if (set.weight === 0 || set.reps > 12) {
+    return undefined;
+  }
+  return set.reps === 1 ? set.weight : set.weight * (1 + set.reps / 30);
 }
 
 // Рабочие подходы упражнения из завершённых тренировок не позже этой
@@ -275,26 +278,34 @@ export async function getPriorSets(exerciseId: number, workout: Workout): Promis
     .filter((set) => !set.warmup);
 }
 
+// Какие рекорды бьёт подход по сравнению с уже сделанными
+function recordKinds(set: WorkoutSet, seen: WorkoutSet[]): string[] {
+  const sameOrMoreReps = seen.filter((old) => old.reps >= set.reps).map((old) => old.weight);
+  const sameWeight = seen.filter((old) => old.weight === set.weight).map((old) => old.reps);
+  const oldBest = seen.flatMap((old) => oneRepMax(old) ?? []);
+  const current = oneRepMax(set);
+
+  return [
+    sameOrMoreReps.length > 0 && set.weight > Math.max(...sameOrMoreReps) ? t('record.weight') : '',
+    current !== undefined && oldBest.length > 0 && current > Math.max(...oldBest) ? t('record.oneRepMax') : '',
+    sameWeight.length > 0 && set.reps > Math.max(...sameWeight) ? t('record.reps') : '',
+  ].filter(Boolean);
+}
+
 // Подпись рекорда для каждого подхода. Первый раз в упражнении рекордом не считается.
 export function recordLabels(sets: WorkoutSet[], priorSets: WorkoutSet[]): string[] {
   if (priorSets.length === 0) {
     return sets.map(() => '');
   }
 
-  let bestWeight = Math.max(...priorSets.map((set) => set.weight));
-  let bestOneRepMax = Math.max(...priorSets.map(epley));
-
+  const seen = [...priorSets];
   return sets.map((set) => {
-    if (set.warmup || set.weight === 0) {
+    if (set.warmup) {
       return '';
     }
-    const labels = [
-      set.weight > bestWeight ? t('record.weight') : '',
-      epley(set) > bestOneRepMax ? t('record.oneRepMax') : '',
-    ].filter(Boolean);
-    bestWeight = Math.max(bestWeight, set.weight);
-    bestOneRepMax = Math.max(bestOneRepMax, epley(set));
-    return labels.length > 0 ? t('record.prefix', { kinds: labels.join(', ') }) : '';
+    const kinds = recordKinds(set, seen);
+    seen.push(set);
+    return kinds.length > 0 ? t('record.prefix', { kinds: kinds.join(', ') }) : '';
   });
 }
 

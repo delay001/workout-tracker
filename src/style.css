@@ -522,6 +522,21 @@ textarea {
   fill: transparent;
 }
 
+.toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  left: 16px;
+  z-index: 2;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--grad-1);
+  color: var(--on-accent);
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+  animation: pop 0.3s ease-out;
+}
+
 .record {
   display: inline-block;
   margin-left: 8px;

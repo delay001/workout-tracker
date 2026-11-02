@@ -7,6 +7,7 @@ import {
   applyAccent,
   applyTheme,
   getMonthlyGoal,
+  getOverdueDays,
   getSetting,
   parseAccent,
   parseTheme,
@@ -102,6 +103,14 @@ export async function renderSettingsScreen(
       value: String(await getMonthlyGoal()),
       onchange: () => void setSetting('monthlyGoal', goal.value.trim()),
     });
+    const overdueDays = h('input', {
+      type: 'text',
+      inputMode: 'numeric',
+      autocomplete: 'off',
+      maxLength: 3,
+      value: String(await getOverdueDays()),
+      onchange: () => void setSetting('overdueDays', overdueDays.value.trim()),
+    });
     const theme = parseTheme(await getSetting('theme'));
     const accent = parseAccent(await getSetting('accent'));
 
@@ -142,6 +151,7 @@ export async function renderSettingsScreen(
       h('p', { className: 'status', role: 'status' }, message),
       field(t('settings.yourName'), name),
       field(t('settings.goal'), goal),
+      field(t('settings.overdueDays'), overdueDays),
       h(
         'div',
         { className: 'field' },
