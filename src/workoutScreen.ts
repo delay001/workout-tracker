@@ -319,7 +319,7 @@ export async function renderWorkoutScreen(
           h(
             'button',
             { type: 'button', className: 'button button-secondary', onclick: showFinish },
-            'Дата, оценка и заметка',
+            'Итог',
           ),
           backButton,
         ]
@@ -513,7 +513,7 @@ export async function renderWorkoutScreen(
     const isEmpty = workout.exercises.every((item) => item.sets.length === 0);
 
     root.replaceChildren(
-      h('h1', {}, isEditing ? 'Дата, оценка и заметка' : 'Завершение'),
+      h('h1', {}, isEditing ? 'Итог' : 'Завершение'),
       ...(isEmpty ? [h('p', { className: 'hint' }, 'В тренировке нет подходов, она не сохранится.')] : []),
       h(
         'form',
