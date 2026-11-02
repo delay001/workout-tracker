@@ -57,6 +57,14 @@ describe('ход тренировки', () => {
     expect(await active()).toMatchObject({ date: '2026-10-30', type: 'lower', status: 'active' });
   });
 
+  it('вторую тренировку начать нельзя, пока есть активная', async () => {
+    await startWorkout('2026-10-30', 'lower');
+    await startWorkout('2026-11-02', 'upper');
+
+    expect(await db.workouts.count()).toBe(1);
+    expect(await active()).toMatchObject({ date: '2026-10-30', type: 'lower' });
+  });
+
   it('подход сохраняется сразу и только в своём упражнении', async () => {
     await startWorkout('2026-11-02', 'upper');
     await addExerciseToWorkout(await active(), 1);

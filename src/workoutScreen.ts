@@ -330,6 +330,8 @@ export async function renderWorkoutScreen(
               { type: 'button', className: 'button button-secondary', onclick: showFinish },
               'Завершить тренировку',
             ),
+            // Тренировка остаётся активной, вернуться можно с вкладки «Тренировка»
+            h('button', { type: 'button', className: 'button button-secondary', onclick: onClosed }, 'Назад'),
           ]
         : [backButton];
 

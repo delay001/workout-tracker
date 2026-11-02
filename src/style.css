@@ -77,6 +77,12 @@ h2 {
   font-size: 1.5rem;
 }
 
+.button-note {
+  display: block;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
 .tab-content {
   padding-bottom: 72px;
 }

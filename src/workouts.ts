@@ -86,6 +86,9 @@ export async function deleteWorkout(workoutId: number): Promise<void> {
 }
 
 export async function startWorkout(date: string, type: WorkoutType): Promise<void> {
+  if (await getActiveWorkout()) {
+    return;
+  }
   await saveWorkout({ date, type, status: 'active', exercises: [] });
 }
 

@@ -23,13 +23,6 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
     return;
   }
 
-  // Начатая тренировка хранится в базе, поэтому после перезапуска открывается снова
-  const workout = await getActiveWorkout();
-  if (workout) {
-    await openWorkout(workout, () => void showTab('workout'));
-    return;
-  }
-
   const buttons = TABS.map(([id, label]) =>
     h(
       'button',
@@ -44,7 +37,7 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
   app.replaceChildren(content, h('nav', { className: 'tabs' }, ...buttons));
 
   if (tab === 'workout') {
-    renderHomeScreen(content, () => void showTab('workout'));
+    renderHomeScreen(content, await getActiveWorkout(), () => void openActive());
   } else if (tab === 'history') {
     await renderHistoryTab(content, (opened) => {
       void openWorkout(opened, () => void showTab('history'));
@@ -60,5 +53,15 @@ async function openWorkout(workout: Workout, onClosed: () => void): Promise<void
   }
 }
 
-void showTab('workout');
+// Начатая тренировка хранится в базе, поэтому при запуске открывается снова
+async function openActive(): Promise<void> {
+  const workout = await getActiveWorkout();
+  if (workout) {
+    await openWorkout(workout, () => void showTab('workout'));
+  } else {
+    await showTab('workout');
+  }
+}
+
+void openActive();
 void requestPersistentStorage();

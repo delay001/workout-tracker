@@ -1,8 +1,13 @@
-import { todayLocal } from './dates';
+import { formatDate, todayLocal } from './dates';
+import type { Workout } from './db';
 import { field, h } from './dom';
 import { getWorkoutTypes, startWorkout, workoutTypeName } from './workouts';
 
-export function renderHomeScreen(root: HTMLElement, onStarted: () => void): void {
+export function renderHomeScreen(
+  root: HTMLElement,
+  active: Workout | undefined,
+  onOpenActive: () => void,
+): void {
   async function showStart(): Promise<void> {
     const dateInput = h('input', { type: 'date', value: todayLocal() });
 
@@ -14,7 +19,7 @@ export function renderHomeScreen(root: HTMLElement, onStarted: () => void): void
           className: 'button',
           onclick: async () => {
             await startWorkout(dateInput.value || todayLocal(), type);
-            onStarted();
+            onOpenActive();
           },
         },
         workoutTypeName(type),
@@ -50,11 +55,22 @@ export function renderHomeScreen(root: HTMLElement, onStarted: () => void): void
         h(
           'div',
           { className: 'centered' },
-          h(
-            'button',
-            { type: 'button', className: 'button button-big', onclick: () => void showStart() },
-            'Новая запись',
-          ),
+          active
+            ? h(
+                'button',
+                { type: 'button', className: 'button button-big', onclick: onOpenActive },
+                'Активная тренировка',
+                h(
+                  'span',
+                  { className: 'button-note' },
+                  `${workoutTypeName(active.type)}, ${formatDate(active.date)}`,
+                ),
+              )
+            : h(
+                'button',
+                { type: 'button', className: 'button button-big', onclick: () => void showStart() },
+                'Новая запись',
+              ),
         ),
       ),
     );
