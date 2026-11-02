@@ -7,10 +7,16 @@ beforeEach(async () => {
   await db.exercises.clear();
   await db.workouts.clear();
   await db.workoutTypes.clear();
+  await db.settings.clear();
+  await db.templates.clear();
+  await db.bodyWeights.clear();
 });
 
 async function fillData(): Promise<void> {
   await db.workoutTypes.add({ name: 'Руки' });
+  await db.settings.add({ key: 'name', value: 'Артём' });
+  await db.templates.add({ type: 'upper', exerciseNames: ['Жим лёжа'] });
+  await db.bodyWeights.add({ date: '2026-11-02', kg: 85.5 });
   const exercise = await findOrCreateExercise('Тяга верхнего блока', 'Спина');
   await saveWorkout({
     date: '2026-11-02',
@@ -40,8 +46,14 @@ describe('экспорт и импорт', () => {
     await db.exercises.clear();
     await db.workouts.clear();
     await db.workoutTypes.clear();
+    await db.settings.clear();
+    await db.templates.clear();
+    await db.bodyWeights.clear();
     await importData(parseBackup(file));
 
+    expect(await db.settings.toArray()).toEqual([{ key: 'name', value: 'Артём' }]);
+    expect(await db.templates.toArray()).toEqual([{ type: 'upper', exerciseNames: ['Жим лёжа'] }]);
+    expect(await db.bodyWeights.toArray()).toEqual([{ date: '2026-11-02', kg: 85.5 }]);
     expect(await db.exercises.toArray()).toEqual(before.exercises);
     expect(await db.workouts.toArray()).toEqual(before.workouts);
     expect(await db.workoutTypes.toArray()).toEqual([{ name: 'Руки' }]);

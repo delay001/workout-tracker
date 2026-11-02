@@ -1,15 +1,47 @@
 :root {
   color-scheme: dark;
-  --bg: #121417;
-  --text: #f2f4f7;
-  --muted: #a4abb6;
-  --accent: #f59e0b;
-  --surface: #23272e;
+  --bg: #17151f;
+  --card: #211e2b;
+  --surface: #2c2938;
+  --border: #423e52;
+  --text: #f4f2f8;
+  --muted: #aaa5b8;
+  --accent: #f0609e;
+  --grad-1: linear-gradient(135deg, #f58a6b, #e0559a);
+  --grad-2: linear-gradient(135deg, #d858b4, #8f5fe0);
+  --grad-3: linear-gradient(135deg, #9b63e4, #5f78e6);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f6f5fb;
+  --card: #ffffff;
+  --surface: #ebe8f4;
+  --border: #d6d1e4;
+  --text: #221f2e;
+  --muted: #6c667c;
+  --accent: #c92f7d;
 }
 
 * {
   box-sizing: border-box;
+}
+
+button {
+  transition: transform 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 body {
@@ -45,9 +77,9 @@ h2 {
   margin-bottom: 12px;
   padding: 12px 16px;
   border: 0;
-  border-radius: 12px;
-  background: var(--accent);
-  color: var(--bg);
+  border-radius: 16px;
+  background: var(--grad-1);
+  color: #fff;
   font: inherit;
   font-size: 1.125rem;
   font-weight: 600;
@@ -73,14 +105,42 @@ h2 {
 }
 
 .button-big {
-  min-height: 96px;
-  font-size: 1.5rem;
+  min-height: 150px;
+  border-radius: 24px;
+  font-size: 1.625rem;
+  text-align: left;
 }
 
 .button-note {
   display: block;
   font-size: 1rem;
   font-weight: 400;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 120px;
+  padding: 16px;
+  border-radius: 24px;
+  background: var(--grad-2);
+  color: #fff;
+}
+
+.stat + .stat {
+  background: var(--grad-3);
+}
+
+.stat strong {
+  font-size: 2rem;
+  line-height: 1.1;
 }
 
 .tab-content {
@@ -109,11 +169,27 @@ h2 {
 }
 
 .tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   min-height: 64px;
   border: 0;
   background: none;
   color: var(--muted);
   font: inherit;
+  font-size: 0.8125rem;
+}
+
+.tab svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .tab-active {
@@ -169,8 +245,8 @@ h2 {
 }
 
 .day-workout {
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--grad-1);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -211,7 +287,7 @@ textarea {
   width: 100%;
   min-height: 56px;
   padding: 12px;
-  border: 1px solid #3a404a;
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
@@ -229,8 +305,8 @@ textarea {
   margin: 12px 0;
   padding: 12px;
   border: 2px solid transparent;
-  border-radius: 12px;
-  background: #1a1d22;
+  border-radius: 20px;
+  background: var(--card);
 }
 
 .card-current {
@@ -391,8 +467,8 @@ textarea {
 }
 
 .chip:has(input:checked) {
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--grad-1);
+  color: #fff;
   font-weight: 600;
 }
 

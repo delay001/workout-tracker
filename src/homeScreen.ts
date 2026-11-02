@@ -1,13 +1,14 @@
 import { formatDate, todayLocal } from './dates';
 import type { Workout } from './db';
 import { field, h } from './dom';
-import { getWorkoutTypes, startWorkout, workoutTypeName } from './workouts';
+import { getSetting } from './settings';
+import { getFinishedWorkouts, getWorkoutTypes, startWorkout, workoutTypeName } from './workouts';
 
-export function renderHomeScreen(
+export async function renderHomeScreen(
   root: HTMLElement,
   active: Workout | undefined,
   onOpenActive: () => void,
-): void {
+): Promise<void> {
   async function showStart(): Promise<void> {
     const dateInput = h('input', { type: 'date', value: todayLocal() });
 
@@ -39,19 +40,28 @@ export function renderHomeScreen(
         ),
         h(
           'button',
-          { type: 'button', className: 'button button-secondary bottom-action', onclick: showMain },
+          {
+            type: 'button',
+            className: 'button button-secondary bottom-action',
+            onclick: () => void showMain(),
+          },
           'Назад',
         ),
       ),
     );
   }
 
-  function showMain(): void {
+  async function showMain(): Promise<void> {
+    const name = await getSetting('name');
+    const workouts = await getFinishedWorkouts();
+    const month = todayLocal().slice(0, 7);
+    const monthCount = workouts.filter((workout) => workout.date.startsWith(month)).length;
+
     root.replaceChildren(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, 'Тренировка'),
+        h('h1', {}, name ? `Привет, ${name}!` : 'Привет!'),
         h(
           'div',
           { className: 'centered' },
@@ -71,10 +81,16 @@ export function renderHomeScreen(
                 { type: 'button', className: 'button button-big', onclick: () => void showStart() },
                 'Новая запись',
               ),
+          h(
+            'div',
+            { className: 'stats' },
+            h('div', { className: 'stat' }, h('strong', {}, String(monthCount)), 'за этот месяц'),
+            h('div', { className: 'stat' }, h('strong', {}, String(workouts.length)), 'всего тренировок'),
+          ),
         ),
       ),
     );
   }
 
-  showMain();
+  await showMain();
 }

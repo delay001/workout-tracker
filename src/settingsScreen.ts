@@ -1,13 +1,14 @@
 import { renderBackupScreen } from './backupScreen';
 import { field, h } from './dom';
 import { renderExerciseSettings } from './exerciseSettingsScreen';
+import { applyTheme, getSetting, setSetting, type Theme } from './settings';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes } from './workouts';
 
-export function renderSettingsScreen(
+export async function renderSettingsScreen(
   root: HTMLElement,
   message: string,
   onImported: (message: string) => void,
-): void {
+): Promise<void> {
   async function showTypes(): Promise<void> {
     const name = h('input', { type: 'text', autocomplete: 'off' });
     const error = h('p', { className: 'error', role: 'alert' });
@@ -60,25 +61,64 @@ export function renderSettingsScreen(
         ),
         h(
           'button',
-          { type: 'button', className: 'button button-secondary bottom-action', onclick: showMain },
+          {
+            type: 'button',
+            className: 'button button-secondary bottom-action',
+            onclick: () => void showMain(),
+          },
           'Назад',
         ),
       ),
     );
   }
 
-  function showMain(): void {
+  async function showMain(): Promise<void> {
     const backup = h('section');
+    const name = h('input', {
+      type: 'text',
+      autocomplete: 'off',
+      value: await getSetting('name'),
+      onchange: () => void setSetting('name', name.value.trim()),
+    });
+    const theme = document.documentElement.dataset.theme;
+
+    const themeChip = (label: string, value: Theme): HTMLElement =>
+      h(
+        'label',
+        { className: 'chip' },
+        h('input', {
+          type: 'radio',
+          name: 'theme',
+          checked: theme === value,
+          onchange: () => {
+            applyTheme(value);
+            void setSetting('theme', value);
+          },
+        }),
+        label,
+      );
 
     root.replaceChildren(
       h('h1', {}, 'Настройки'),
       h('p', { className: 'status', role: 'status' }, message),
+      field('Твоё имя', name),
+      h(
+        'div',
+        { className: 'field' },
+        h('span', {}, 'Тема'),
+        h(
+          'div',
+          { className: 'chips', role: 'radiogroup', ariaLabel: 'Тема' },
+          themeChip('Тёмная', 'dark'),
+          themeChip('Светлая', 'light'),
+        ),
+      ),
       h(
         'button',
         {
           type: 'button',
           className: 'button button-secondary',
-          onclick: () => void renderExerciseSettings(root, showMain),
+          onclick: () => void renderExerciseSettings(root, () => void showMain()),
         },
         'Упражнения',
       ),
@@ -92,5 +132,5 @@ export function renderSettingsScreen(
     renderBackupScreen(backup, onImported);
   }
 
-  showMain();
+  await showMain();
 }

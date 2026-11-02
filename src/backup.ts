@@ -1,7 +1,15 @@
-import { db, type Exercise, type Workout, type WorkoutType } from './db';
+import {
+  db,
+  type BodyWeight,
+  type Exercise,
+  type Setting,
+  type Workout,
+  type WorkoutTemplate,
+  type WorkoutType,
+} from './db';
 
 const APP_NAME = 'workout-tracker';
-const BACKUP_VERSION = 2;
+const BACKUP_VERSION = 3;
 
 export interface Backup {
   app: typeof APP_NAME;
@@ -10,6 +18,9 @@ export interface Backup {
   exercises: Exercise[];
   workouts: Workout[];
   workoutTypes: WorkoutType[];
+  settings: Setting[];
+  templates: WorkoutTemplate[];
+  bodyWeights: BodyWeight[];
 }
 
 export async function exportData(): Promise<Backup> {
@@ -20,6 +31,9 @@ export async function exportData(): Promise<Backup> {
     exercises: await db.exercises.toArray(),
     workouts: await db.workouts.toArray(),
     workoutTypes: await db.workoutTypes.toCollection().primaryKeys(),
+    settings: await db.settings.toArray(),
+    templates: await db.templates.toArray(),
+    bodyWeights: await db.bodyWeights.toArray(),
   };
 }
 
@@ -90,23 +104,41 @@ export function parseBackup(text: string): Backup {
     throw new Error('В файле не хватает данных или они записаны неверно');
   }
 
-  // В копиях первой версии своих типов тренировок ещё не было
+  // В копиях старых версий этих разделов ещё не было
   const workoutTypes = data.workoutTypes ?? [];
-  if (!Array.isArray(workoutTypes) || !workoutTypes.every((type) => typeof type === 'string')) {
+  const settings = data.settings ?? [];
+  const templates = data.templates ?? [];
+  const bodyWeights = data.bodyWeights ?? [];
+  if (
+    !Array.isArray(workoutTypes) ||
+    !workoutTypes.every((type) => typeof type === 'string') ||
+    !Array.isArray(settings) ||
+    !settings.every((item) => isRecord(item) && typeof item.key === 'string') ||
+    !Array.isArray(templates) ||
+    !templates.every(
+      (item) => isRecord(item) && typeof item.type === 'string' && Array.isArray(item.exerciseNames),
+    ) ||
+    !Array.isArray(bodyWeights) ||
+    !bodyWeights.every(
+      (item) => isRecord(item) && typeof item.date === 'string' && typeof item.kg === 'number',
+    )
+  ) {
     throw new Error('В файле не хватает данных или они записаны неверно');
   }
 
-  return { ...data, workoutTypes } as unknown as Backup;
+  return { ...data, workoutTypes, settings, templates, bodyWeights } as unknown as Backup;
 }
 
 // Полностью заменяет данные. Транзакция: при любой ошибке старые данные останутся на месте.
 export async function importData(backup: Backup): Promise<void> {
-  await db.transaction('rw', db.exercises, db.workouts, db.workoutTypes, async () => {
-    await db.exercises.clear();
-    await db.workouts.clear();
-    await db.workoutTypes.clear();
+  const tables = [db.exercises, db.workouts, db.workoutTypes, db.settings, db.templates, db.bodyWeights];
+  await db.transaction('rw', tables, async () => {
+    await Promise.all(tables.map((table) => table.clear()));
     await db.exercises.bulkAdd(backup.exercises);
     await db.workouts.bulkAdd(backup.workouts);
     await db.workoutTypes.bulkAdd(backup.workoutTypes.map((name) => ({ name })));
+    await db.settings.bulkAdd(backup.settings);
+    await db.templates.bulkAdd(backup.templates);
+    await db.bodyWeights.bulkAdd(backup.bodyWeights);
   });
 }

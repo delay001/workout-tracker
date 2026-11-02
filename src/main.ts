@@ -3,28 +3,51 @@ import { requestPersistentStorage, type Workout } from './db';
 import { h } from './dom';
 import { renderHistoryTab } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
+import { loadTheme } from './settings';
 import { renderSettingsScreen } from './settingsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
 import { getActiveWorkout } from './workouts';
 
 type Tab = 'workout' | 'history' | 'settings';
 
-const TABS: [Tab, string][] = [
-  ['workout', 'Тренировка'],
-  ['history', 'История'],
-  ['settings', 'Настройки'],
+const TABS: [Tab, string, string][] = [
+  [
+    'workout',
+    'Тренировка',
+    '<path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/>',
+  ],
+  [
+    'history',
+    'История',
+    '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  ],
+  [
+    'settings',
+    'Настройки',
+    '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  ],
 ];
 
 const app = document.querySelector<HTMLDivElement>('#app');
 const content = h('main', { className: 'tab-content' });
+
+function appear(element: HTMLElement): void {
+  element.animate(
+    [
+      { opacity: 0, transform: 'translateY(8px)' },
+      { opacity: 1, transform: 'none' },
+    ],
+    { duration: 220, easing: 'ease-out' },
+  );
+}
 
 async function showTab(tab: Tab, message = ''): Promise<void> {
   if (!app) {
     return;
   }
 
-  const buttons = TABS.map(([id, label]) =>
-    h(
+  const buttons = TABS.map(([id, label, icon]) => {
+    const button = h(
       'button',
       {
         type: 'button',
@@ -32,24 +55,28 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
         onclick: () => void showTab(id),
       },
       label,
-    ),
-  );
+    );
+    button.insertAdjacentHTML('afterbegin', `<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>`);
+    return button;
+  });
   app.replaceChildren(content, h('nav', { className: 'tabs' }, ...buttons));
 
   if (tab === 'workout') {
-    renderHomeScreen(content, await getActiveWorkout(), () => void openActive());
+    await renderHomeScreen(content, await getActiveWorkout(), () => void openActive());
   } else if (tab === 'history') {
     await renderHistoryTab(content, (opened) => {
       void openWorkout(opened, () => void showTab('history'));
     });
   } else {
-    renderSettingsScreen(content, message, (result) => void showTab('settings', result));
+    await renderSettingsScreen(content, message, (result) => void showTab('settings', result));
   }
+  appear(content);
 }
 
 async function openWorkout(workout: Workout, onClosed: () => void): Promise<void> {
   if (app) {
     await renderWorkoutScreen(app, workout, onClosed);
+    appear(app);
   }
 }
 
@@ -63,5 +90,5 @@ async function openActive(): Promise<void> {
   }
 }
 
-void openActive();
+void loadTheme().then(openActive);
 void requestPersistentStorage();

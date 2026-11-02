@@ -44,12 +44,30 @@ export interface Workout {
   exerciseIds: number[];
 }
 
+export interface Setting {
+  key: string;
+  value: string;
+}
+
+export interface WorkoutTemplate {
+  type: WorkoutType;
+  exerciseNames: string[];
+}
+
+export interface BodyWeight {
+  date: string;
+  kg: number;
+}
+
 export type WorkoutDraft = Omit<Workout, 'id' | 'exerciseIds'> & { id?: number };
 
 export const db = new Dexie('workout-tracker') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>;
   workouts: EntityTable<Workout, 'id'>;
   workoutTypes: Table<{ name: string }, string>;
+  settings: Table<Setting, string>;
+  templates: Table<WorkoutTemplate, string>;
+  bodyWeights: Table<BodyWeight, string>;
 };
 
 db.version(1).stores({
@@ -58,6 +76,7 @@ db.version(1).stores({
 });
 
 db.version(2).stores({ workoutTypes: 'name' });
+db.version(3).stores({ settings: 'key', templates: 'type', bodyWeights: 'date' });
 
 export async function findOrCreateExercise(name: string, muscleGroup?: string): Promise<Exercise> {
   const cleanName = name.trim();
