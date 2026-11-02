@@ -107,7 +107,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
             fill,
           ),
         ),
-        h('p', { className: 'set-row' }, t('goal.left', { weight: signed(status.leftKg), days: status.leftDays })),
+        h('p', { className: 'set-row' }, t('goal.left', { weight: formatWeight(Math.abs(status.leftKg)), days: status.leftDays })),
         h('p', { className: 'set-row' }, t('goal.required', { value: signed(status.requiredPerWeek) })),
         ...(status.actualPerWeek === undefined
           ? []
