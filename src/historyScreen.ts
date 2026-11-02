@@ -2,7 +2,7 @@ import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayL
 import type { Workout } from './db';
 import { h } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
-import { getFinishedWorkouts, WORKOUT_TYPE_NAMES } from './workouts';
+import { getFinishedWorkouts, workoutTypeName } from './workouts';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -102,7 +102,7 @@ async function renderWorkoutsView(
           },
         },
         number,
-        h('span', { className: 'day-type' }, `${WORKOUT_TYPE_NAMES[dayWorkouts.at(-1)!.type]}${more}`),
+        h('span', { className: 'day-type' }, `${workoutTypeName(dayWorkouts.at(-1)!.type)}${more}`),
       );
     };
 
@@ -144,7 +144,7 @@ async function renderWorkoutsView(
         h(
           'button',
           { type: 'button', className: 'list-button', onclick: () => onOpen(workout) },
-          `${formatDate(workout.date)}, ${WORKOUT_TYPE_NAMES[workout.type]}`,
+          `${formatDate(workout.date)}, ${workoutTypeName(workout.type)}`,
           h('span', { className: 'muscle-group' }, summary(workout)),
         ),
       ),

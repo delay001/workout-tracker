@@ -6,9 +6,11 @@ import { db, findOrCreateExercise, saveWorkout } from './db';
 beforeEach(async () => {
   await db.exercises.clear();
   await db.workouts.clear();
+  await db.workoutTypes.clear();
 });
 
 async function fillData(): Promise<void> {
+  await db.workoutTypes.add({ name: 'Руки' });
   const exercise = await findOrCreateExercise('Тяга верхнего блока', 'Спина');
   await saveWorkout({
     date: '2026-11-02',
@@ -37,10 +39,21 @@ describe('экспорт и импорт', () => {
 
     await db.exercises.clear();
     await db.workouts.clear();
+    await db.workoutTypes.clear();
     await importData(parseBackup(file));
 
     expect(await db.exercises.toArray()).toEqual(before.exercises);
     expect(await db.workouts.toArray()).toEqual(before.workouts);
+    expect(await db.workoutTypes.toArray()).toEqual([{ name: 'Руки' }]);
+  });
+
+  it('копия первой версии восстанавливается и убирает свои типы', async () => {
+    await fillData();
+
+    await importData(parseBackup(JSON.stringify({ app: 'workout-tracker', version: 1, exercises: [], workouts: [] })));
+
+    expect(await db.workouts.count()).toBe(0);
+    expect(await db.workoutTypes.count()).toBe(0);
   });
 
   it('импорт заменяет текущие данные, а не дополняет их', async () => {

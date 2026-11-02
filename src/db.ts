@@ -1,6 +1,7 @@
-import Dexie, { type EntityTable } from 'dexie';
+import Dexie, { type EntityTable, type Table } from 'dexie';
 
-export type WorkoutType = 'upper' | 'lower' | 'other';
+// upper, lower, other или название своего типа
+export type WorkoutType = string;
 export type WorkoutStatus = 'active' | 'finished';
 
 export interface Exercise {
@@ -48,12 +49,15 @@ export type WorkoutDraft = Omit<Workout, 'id' | 'exerciseIds'> & { id?: number }
 export const db = new Dexie('workout-tracker') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>;
   workouts: EntityTable<Workout, 'id'>;
+  workoutTypes: Table<{ name: string }, string>;
 };
 
 db.version(1).stores({
   exercises: '++id, &nameKey',
   workouts: '++id, date, status, *exerciseIds',
 });
+
+db.version(2).stores({ workoutTypes: 'name' });
 
 export async function findOrCreateExercise(name: string, muscleGroup?: string): Promise<Exercise> {
   const cleanName = name.trim();

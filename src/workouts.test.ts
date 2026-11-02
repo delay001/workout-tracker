@@ -5,17 +5,21 @@ import { db, findOrCreateExercise, saveWorkout, type Workout } from './db';
 import {
   addExerciseToWorkout,
   addSet,
+  addWorkoutType,
   bestResult,
   bestSet,
   defaultSet,
   deleteWorkout,
+  deleteWorkoutType,
   finishWorkout,
   getActiveWorkout,
+  getCustomWorkoutTypes,
   getExerciseHistory,
   getFinishedWorkouts,
   getHiddenExercises,
   getLastPerformance,
   getUsedExercises,
+  getWorkoutTypes,
   isExactMatch,
   parseDuration,
   parseSet,
@@ -29,6 +33,7 @@ import {
   stepValue,
   updateExercise,
   updateSet,
+  workoutTypeName,
 } from './workouts';
 
 const SET = { weight: 66, reps: 8, warmup: false };
@@ -410,6 +415,43 @@ describe('история по упражнению', () => {
       ['Жим лёжа', 100],
       ['Румынская тяга', 80],
     ]);
+  });
+});
+
+describe('типы тренировок', () => {
+  beforeEach(async () => {
+    await db.workoutTypes.clear();
+  });
+
+  it('свой тип добавляется после встроенных и показывается своим названием', async () => {
+    await addWorkoutType('  Руки ');
+
+    expect(await getWorkoutTypes()).toEqual(['upper', 'lower', 'other', 'Руки']);
+    expect(workoutTypeName('Руки')).toBe('Руки');
+    expect(workoutTypeName('upper')).toBe('Верх');
+  });
+
+  it.each(['верх', 'upper', 'РУКИ', '  '])('не принимает «%s»', async (name) => {
+    await addWorkoutType('Руки');
+
+    await expect(addWorkoutType(name)).rejects.toThrow();
+    expect(await getCustomWorkoutTypes()).toEqual(['Руки']);
+  });
+
+  it('удаляет неиспользованный тип', async () => {
+    await addWorkoutType('Руки');
+
+    await deleteWorkoutType('Руки');
+
+    expect(await getCustomWorkoutTypes()).toEqual([]);
+  });
+
+  it('не удаляет тип, который есть в тренировке', async () => {
+    await addWorkoutType('Руки');
+    await startWorkout('2026-11-02', 'Руки');
+
+    await expect(deleteWorkoutType('Руки')).rejects.toThrow('удалить нельзя');
+    expect(await getCustomWorkoutTypes()).toEqual(['Руки']);
   });
 });
 

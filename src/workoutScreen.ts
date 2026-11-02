@@ -6,7 +6,6 @@ import {
   type Exercise,
   type Workout,
   type WorkoutExercise,
-  type WorkoutType,
 } from './db';
 import { field, h } from './dom';
 import {
@@ -18,6 +17,7 @@ import {
   finishWorkout,
   formatSet,
   getLastPerformance,
+  getWorkoutTypes,
   isExactMatch,
   type LastPerformance,
   parseDuration,
@@ -29,7 +29,7 @@ import {
   setMuscleGroup,
   stepValue,
   updateSet,
-  WORKOUT_TYPE_NAMES,
+  workoutTypeName,
 } from './workouts';
 
 const NO_GROUP = 'Без группы';
@@ -84,6 +84,7 @@ export async function renderWorkoutScreen(
   onClosed: (message: string) => void,
 ): Promise<void> {
   let workout = startedWorkout;
+  const workoutTypes = await getWorkoutTypes();
   // Завершённая тренировка открыта из истории: изменения в ней сохраняются сразу же
   const isEditing = startedWorkout.status === 'finished';
   let currentId = isEditing ? undefined : workout.exercises.at(-1)?.exerciseId;
@@ -342,7 +343,7 @@ export async function renderWorkoutScreen(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, `${WORKOUT_TYPE_NAMES[workout.type]}, ${formatDate(workout.date)}`),
+        h('h1', {}, `${workoutTypeName(workout.type)}, ${formatDate(workout.date)}`),
         ...(isEditing && details ? [h('p', { className: 'hint' }, details)] : []),
         ...(isEditing && workout.note ? [h('p', { className: 'hint' }, workout.note)] : []),
         ...cards,
@@ -490,9 +491,7 @@ export async function renderWorkoutScreen(
     const type = h(
       'select',
       {},
-      ...(Object.keys(WORKOUT_TYPE_NAMES) as WorkoutType[]).map((value) =>
-        h('option', { value }, WORKOUT_TYPE_NAMES[value]),
-      ),
+      ...workoutTypes.map((value) => h('option', { value }, workoutTypeName(value))),
     );
     type.value = workout.type;
     let rating = workout.rating;
@@ -525,7 +524,7 @@ export async function renderWorkoutScreen(
             try {
               const saved = await finishWorkout(workout, {
                 date: (isEditing && date.value) || workout.date,
-                type: isEditing ? (type.value as WorkoutType) : workout.type,
+                type: isEditing ? type.value : workout.type,
                 durationMin: parseDuration(hours.value, minutes.value),
                 rating,
                 note: note.value.trim() || undefined,

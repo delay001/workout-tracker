@@ -1,7 +1,7 @@
-import { db, type Exercise, type Workout } from './db';
+import { db, type Exercise, type Workout, type WorkoutType } from './db';
 
 const APP_NAME = 'workout-tracker';
-const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 2;
 
 export interface Backup {
   app: typeof APP_NAME;
@@ -9,6 +9,7 @@ export interface Backup {
   exportedAt: string;
   exercises: Exercise[];
   workouts: Workout[];
+  workoutTypes: WorkoutType[];
 }
 
 export async function exportData(): Promise<Backup> {
@@ -18,6 +19,7 @@ export async function exportData(): Promise<Backup> {
     exportedAt: new Date().toISOString(),
     exercises: await db.exercises.toArray(),
     workouts: await db.workouts.toArray(),
+    workoutTypes: await db.workoutTypes.toCollection().primaryKeys(),
   };
 }
 
@@ -88,15 +90,23 @@ export function parseBackup(text: string): Backup {
     throw new Error('В файле не хватает данных или они записаны неверно');
   }
 
-  return data as unknown as Backup;
+  // В копиях первой версии своих типов тренировок ещё не было
+  const workoutTypes = data.workoutTypes ?? [];
+  if (!Array.isArray(workoutTypes) || !workoutTypes.every((type) => typeof type === 'string')) {
+    throw new Error('В файле не хватает данных или они записаны неверно');
+  }
+
+  return { ...data, workoutTypes } as unknown as Backup;
 }
 
 // Полностью заменяет данные. Транзакция: при любой ошибке старые данные останутся на месте.
 export async function importData(backup: Backup): Promise<void> {
-  await db.transaction('rw', db.exercises, db.workouts, async () => {
+  await db.transaction('rw', db.exercises, db.workouts, db.workoutTypes, async () => {
     await db.exercises.clear();
     await db.workouts.clear();
+    await db.workoutTypes.clear();
     await db.exercises.bulkAdd(backup.exercises);
     await db.workouts.bulkAdd(backup.workouts);
+    await db.workoutTypes.bulkAdd(backup.workoutTypes.map((name) => ({ name })));
   });
 }

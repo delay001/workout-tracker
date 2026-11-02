@@ -8,11 +8,46 @@ import {
   type WorkoutType,
 } from './db';
 
-export const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
+const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
   upper: 'Верх',
   lower: 'Низ',
   other: 'Другое',
 };
+
+export function workoutTypeName(type: WorkoutType): string {
+  return WORKOUT_TYPE_NAMES[type] ?? type;
+}
+
+export async function getCustomWorkoutTypes(): Promise<WorkoutType[]> {
+  return (await db.workoutTypes.toCollection().primaryKeys()).sort((a, b) => a.localeCompare(b, 'ru'));
+}
+
+export async function getWorkoutTypes(): Promise<WorkoutType[]> {
+  return [...Object.keys(WORKOUT_TYPE_NAMES), ...(await getCustomWorkoutTypes())];
+}
+
+export async function addWorkoutType(name: string): Promise<void> {
+  const cleanName = name.trim();
+  if (!cleanName) {
+    throw new Error('Название типа не может быть пустым');
+  }
+
+  const key = cleanName.toLowerCase();
+  const taken = (await getWorkoutTypes()).some(
+    (type) => type.toLowerCase() === key || workoutTypeName(type).toLowerCase() === key,
+  );
+  if (taken) {
+    throw new Error('Такой тип уже есть');
+  }
+  await db.workoutTypes.add({ name: cleanName });
+}
+
+export async function deleteWorkoutType(name: string): Promise<void> {
+  if ((await db.workouts.filter((workout) => workout.type === name).count()) > 0) {
+    throw new Error('Этот тип уже есть в тренировках, удалить нельзя');
+  }
+  await db.workoutTypes.delete(name);
+}
 
 export interface LastPerformance {
   date: string;

@@ -1,13 +1,12 @@
 import { todayLocal } from './dates';
-import type { WorkoutType } from './db';
 import { field, h } from './dom';
-import { startWorkout, WORKOUT_TYPE_NAMES } from './workouts';
+import { getWorkoutTypes, startWorkout, workoutTypeName } from './workouts';
 
 export function renderHomeScreen(root: HTMLElement, message: string, onStarted: () => void): void {
-  function showStart(): void {
+  async function showStart(): Promise<void> {
     const dateInput = h('input', { type: 'date', value: todayLocal() });
 
-    const typeButtons = (Object.keys(WORKOUT_TYPE_NAMES) as WorkoutType[]).map((type) =>
+    const typeButtons = (await getWorkoutTypes()).map((type) =>
       h(
         'button',
         {
@@ -18,7 +17,7 @@ export function renderHomeScreen(root: HTMLElement, message: string, onStarted: 
             onStarted();
           },
         },
-        WORKOUT_TYPE_NAMES[type],
+        workoutTypeName(type),
       ),
     );
 
@@ -42,7 +41,11 @@ export function renderHomeScreen(root: HTMLElement, message: string, onStarted: 
     root.replaceChildren(
       h('h1', {}, 'Тренировка'),
       h('p', { className: 'status', role: 'status' }, message),
-      h('button', { type: 'button', className: 'button button-big', onclick: showStart }, '+ Тренировка'),
+      h(
+        'button',
+        { type: 'button', className: 'button button-big', onclick: () => void showStart() },
+        '+ Тренировка',
+      ),
     );
   }
 
