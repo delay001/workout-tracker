@@ -1,4 +1,5 @@
 import { exportData, importData, parseBackup } from './backup';
+import { todayLocal } from './dates';
 
 function downloadJson(fileName: string, content: string): void {
   const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
@@ -7,11 +8,6 @@ function downloadJson(fileName: string, content: string): void {
   link.download = fileName;
   link.click();
   URL.revokeObjectURL(url);
-}
-
-function localDate(): string {
-  // Шведский формат даты совпадает с ГГГГ-ММ-ДД
-  return new Date().toLocaleDateString('sv-SE');
 }
 
 export function renderBackupScreen(root: HTMLElement): void {
@@ -29,7 +25,7 @@ export function renderBackupScreen(root: HTMLElement): void {
 
   root.querySelector('#export')!.addEventListener('click', async () => {
     const backup = await exportData();
-    downloadJson(`workout-backup-${localDate()}.json`, JSON.stringify(backup, null, 2));
+    downloadJson(`workout-backup-${todayLocal()}.json`, JSON.stringify(backup, null, 2));
     status.textContent = `Сохранено: упражнений ${backup.exercises.length}, тренировок ${backup.workouts.length}`;
   });
 
