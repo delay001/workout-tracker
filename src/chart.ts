@@ -1,5 +1,6 @@
 import { formatDate } from './dates';
 import { h } from './dom';
+import { LOCALE } from './i18n';
 
 export interface ChartDatum {
   date: string;
@@ -52,7 +53,7 @@ export function lineChart(
 ): HTMLElement {
   const points = chartPoints(data, BOX);
   const values = data.map((item) => item.value);
-  const number = (value: number): string => value.toLocaleString('ru-RU');
+  const number = (value: number): string => value.toLocaleString(LOCALE);
   const readout = h('p', { className: 'chart-readout' });
   const show = (item: ChartDatum): void => {
     readout.textContent = `${number(item.value)} ${unit}, ${formatWhen(item.date)}`;

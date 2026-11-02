@@ -1,19 +1,20 @@
 import type { ChartDatum } from './chart';
 import { db, type Measurement } from './db';
+import { t } from './i18n';
 
 export const MEASUREMENT_FIELDS: [string, string][] = [
-  ['neck', 'Шея'],
-  ['waist', 'Талия'],
-  ['chest', 'Грудь'],
-  ['hips', 'Бёдра'],
-  ['bicepsLeft', 'Бицепс Л'],
-  ['bicepsRight', 'Бицепс П'],
-  ['forearmLeft', 'Предплечье Л'],
-  ['forearmRight', 'Предплечье П'],
-  ['thighLeft', 'Бедро Л'],
-  ['thighRight', 'Бедро П'],
-  ['calfLeft', 'Икра Л'],
-  ['calfRight', 'Икра П'],
+  ['neck', t('measure.neck')],
+  ['waist', t('measure.waist')],
+  ['chest', t('measure.chest')],
+  ['hips', t('measure.hips')],
+  ['bicepsLeft', t('measure.bicepsLeft')],
+  ['bicepsRight', t('measure.bicepsRight')],
+  ['forearmLeft', t('measure.forearmLeft')],
+  ['forearmRight', t('measure.forearmRight')],
+  ['thighLeft', t('measure.thighLeft')],
+  ['thighRight', t('measure.thighRight')],
+  ['calfLeft', t('measure.calfLeft')],
+  ['calfRight', t('measure.calfRight')],
 ];
 
 export async function getMeasurements(): Promise<Measurement[]> {
@@ -28,13 +29,13 @@ export async function saveMeasurement(date: string, texts: Record<string, string
     if (text !== '') {
       const value = Number(text.replace(',', '.'));
       if (!Number.isFinite(value) || value <= 0 || value > 300) {
-        throw new Error(`${label}: число в сантиметрах`);
+        throw new Error(t('measure.invalid', { name: label }));
       }
       values[key] = value;
     }
   }
   if (Object.keys(values).length === 0) {
-    throw new Error('Заполни хотя бы один замер');
+    throw new Error(t('measure.fillOne'));
   }
   await db.measurements.put({ date, values });
 }

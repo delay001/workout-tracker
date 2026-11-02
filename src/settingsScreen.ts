@@ -5,6 +5,7 @@ import { renderImportScreen } from './importScreen';
 import { applyTheme, getMonthlyGoal, getSetting, setSetting, type Theme } from './settings';
 import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes } from './workouts';
+import { t } from './i18n';
 
 export async function renderSettingsScreen(
   root: HTMLElement,
@@ -20,7 +21,7 @@ export async function renderSettingsScreen(
         await action();
         await showTypes();
       } catch (problem) {
-        error.textContent = problem instanceof Error ? problem.message : 'Не получилось';
+        error.textContent = problem instanceof Error ? problem.message : t('common.failed');
       }
     }
 
@@ -34,7 +35,7 @@ export async function renderSettingsScreen(
           {
             type: 'button',
             className: 'remove-button',
-            ariaLabel: `Удалить тип ${type}`,
+            ariaLabel: t('settings.deleteType', { type }),
             onclick: () => void run(() => deleteWorkoutType(type)),
           },
           '✕',
@@ -46,8 +47,8 @@ export async function renderSettingsScreen(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, 'Типы тренировок'),
-        h('p', { className: 'hint' }, 'Верх, Низ и Другое есть всегда. Здесь можно добавить свои.'),
+        h('h1', {}, t('settings.workoutTypes')),
+        h('p', { className: 'hint' }, t('settings.typesHint')),
         h('ol', { className: 'set-list' }, ...rows),
         h(
           'form',
@@ -57,9 +58,9 @@ export async function renderSettingsScreen(
               void run(() => addWorkoutType(name.value));
             },
           },
-          field('Новый тип', name),
+          field(t('settings.newType'), name),
           error,
-          h('button', { type: 'submit', className: 'button' }, 'Добавить'),
+          h('button', { type: 'submit', className: 'button' }, t('common.add')),
         ),
         h(
           'button',
@@ -68,7 +69,7 @@ export async function renderSettingsScreen(
             className: 'button button-secondary bottom-action',
             onclick: () => void showMain(),
           },
-          'Назад',
+          t('common.back'),
         ),
       ),
     );
@@ -109,19 +110,19 @@ export async function renderSettingsScreen(
       );
 
     root.replaceChildren(
-      h('h1', {}, 'Настройки'),
+      h('h1', {}, t('tab.settings')),
       h('p', { className: 'status', role: 'status' }, message),
-      field('Твоё имя', name),
-      field('Цель: тренировок в месяц', goal),
+      field(t('settings.yourName'), name),
+      field(t('settings.goal'), goal),
       h(
         'div',
         { className: 'field' },
-        h('span', {}, 'Тема'),
+        h('span', {}, t('settings.theme')),
         h(
           'div',
-          { className: 'chips', role: 'radiogroup', ariaLabel: 'Тема' },
-          themeChip('Тёмная', 'dark'),
-          themeChip('Светлая', 'light'),
+          { className: 'chips', role: 'radiogroup', ariaLabel: t('settings.theme') },
+          themeChip(t('settings.themeDark'), 'dark'),
+          themeChip(t('settings.themeLight'), 'light'),
         ),
       ),
       h(
@@ -131,12 +132,12 @@ export async function renderSettingsScreen(
           className: 'button button-secondary',
           onclick: () => void renderExerciseSettings(root, () => void showMain()),
         },
-        'Упражнения',
+        t('common.exercises'),
       ),
       h(
         'button',
         { type: 'button', className: 'button button-secondary', onclick: () => void showTypes() },
-        'Типы тренировок',
+        t('settings.workoutTypes'),
       ),
       h(
         'button',
@@ -145,7 +146,7 @@ export async function renderSettingsScreen(
           className: 'button button-secondary',
           onclick: () => void renderTemplateSettings(root, () => void showMain()),
         },
-        'Шаблоны',
+        t('settings.templates'),
       ),
       h(
         'button',
@@ -154,7 +155,7 @@ export async function renderSettingsScreen(
           className: 'button button-secondary',
           onclick: () => void renderImportScreen(root, () => void showMain()),
         },
-        'Старые записи',
+        t('import.title'),
       ),
       backup,
     );

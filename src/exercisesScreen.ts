@@ -10,9 +10,10 @@ import {
   getUsedExercises,
   type BestResult,
 } from './workouts';
+import { t } from './i18n';
 
 function formatBest(best: BestResult): string {
-  return `${best.set.weight} кг × ${best.set.reps}, ${formatDate(best.date)}`;
+  return t('exercise.bestValue', { weight: best.set.weight, reps: best.set.reps, date: formatDate(best.date) });
 }
 
 export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
@@ -22,7 +23,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     const items: HTMLElement[] = [];
     let lastGroup: string | undefined;
     for (const { exercise, best } of used) {
-      const group = exercise.muscleGroup ?? 'Без группы';
+      const group = exercise.muscleGroup ?? t('common.noGroup');
       if (group !== lastGroup) {
         items.push(h('h2', { className: 'group-heading' }, group));
         lastGroup = group;
@@ -32,14 +33,14 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
           'button',
           { type: 'button', className: 'list-button', onclick: () => void showExercise(exercise) },
           exercise.name,
-          h('span', { className: 'muscle-group' }, best ? `Лучший: ${formatBest(best)}` : ''),
+          h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
         ),
       );
     }
 
     root.replaceChildren(
       ...(used.length === 0
-        ? [h('p', { className: 'hint' }, 'Здесь появятся упражнения из завершённых тренировок')]
+        ? [h('p', { className: 'hint' }, t('exercise.noneYet'))]
         : items),
     );
   }
@@ -60,13 +61,13 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
               h(
                 'section',
                 { className: 'last-time' },
-                h('h2', {}, 'Лучший результат'),
+                h('h2', {}, t('exercise.bestResult')),
                 h('p', {}, formatBest(best)),
               ),
             ]
           : []),
         ...(progress.length > 1 && progress.some((point) => point.value > 0)
-          ? [lineChart(progress, 'кг', `Прогресс: ${exercise.name}`)]
+          ? [lineChart(progress, t('unit.kg'), t('exercise.progress', { name: exercise.name }))]
           : []),
         ...history.map((entry) =>
           h(
@@ -83,7 +84,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
             className: 'button button-secondary bottom-action',
             onclick: () => void showList(),
           },
-          'Назад',
+          t('common.back'),
         ),
       ),
     );

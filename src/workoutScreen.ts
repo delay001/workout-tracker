@@ -32,8 +32,9 @@ import {
   updateSet,
   workoutTypeName,
 } from './workouts';
+import { t } from './i18n';
 
-const NO_GROUP = 'Без группы';
+const NO_GROUP = t('common.noGroup');
 
 function stepper(input: HTMLInputElement, step: number, min: number, max?: number): HTMLElement {
   const stepButton = (label: string, name: string, delta: number): HTMLButtonElement =>
@@ -53,9 +54,9 @@ function stepper(input: HTMLInputElement, step: number, min: number, max?: numbe
   return h(
     'div',
     { className: 'stepper' },
-    stepButton('−', 'Уменьшить', -step),
+    stepButton('−', t('set.decrease'), -step),
     input,
-    stepButton('+', 'Увеличить', step),
+    stepButton('+', t('set.increase'), step),
   );
 }
 
@@ -139,27 +140,27 @@ export async function renderWorkoutScreen(
             }
             await reload();
           } catch (problem) {
-            error.textContent = problem instanceof Error ? problem.message : 'Не удалось сохранить';
+            error.textContent = problem instanceof Error ? problem.message : t('common.saveFailed');
           }
         },
       },
       h(
         'div',
         { className: 'set-inputs' },
-        field('Вес, кг', stepper(weight, 0.5, 0)),
-        field('Повторения', stepper(reps, 1, 1)),
+        field(t('weight.input'), stepper(weight, 0.5, 0)),
+        field(t('set.reps'), stepper(reps, 1, 1)),
       ),
       h(
         'div',
         { className: 'checkboxes' },
-        h('label', { className: 'checkbox' }, warmup, 'Разминочный'),
-        h('label', { className: 'checkbox' }, toFailure, 'В отказ'),
+        h('label', { className: 'checkbox' }, warmup, t('set.warmup')),
+        h('label', { className: 'checkbox' }, toFailure, t('set.toFailure')),
       ),
       error,
       h(
         'button',
         { type: 'submit', className: 'button' },
-        index === undefined ? 'Записать подход' : 'Сохранить изменения',
+        index === undefined ? t('set.record') : t('set.saveChanges'),
       ),
       ...(index === undefined
         ? []
@@ -171,7 +172,7 @@ export async function renderWorkoutScreen(
                 className: 'button button-secondary',
                 onclick: () => void reload(),
               },
-              'Отмена',
+              t('set.cancel'),
             ),
           ]),
     );
@@ -182,8 +183,8 @@ export async function renderWorkoutScreen(
     return h(
       'section',
       { className: 'last-time' },
-      h('h2', {}, last ? `В прошлый раз, ${formatDate(last.date)}` : 'В прошлый раз'),
-      h('p', {}, peak ? `${peak.weight} кг × ${peak.reps}` : 'Записей ещё нет'),
+      h('h2', {}, last ? t('workout.lastTimeDate', { date: formatDate(last.date) }) : t('workout.lastTime')),
+      h('p', {}, peak ? t('unit.setValue', { weight: peak.weight, reps: peak.reps }) : t('workout.noRecords')),
     );
   }
 
@@ -210,7 +211,7 @@ export async function renderWorkoutScreen(
           {
             type: 'button',
             className: 'set-text',
-            ariaLabel: `Исправить подход ${formatSet(set)}`,
+            ariaLabel: t('set.fix', { set: formatSet(set) }),
             onclick: () => {
               currentId = item.exerciseId;
               editedIndex = index;
@@ -225,7 +226,7 @@ export async function renderWorkoutScreen(
           {
             type: 'button',
             className: 'remove-button',
-            ariaLabel: 'Удалить подход',
+            ariaLabel: t('set.delete'),
             onclick: async () => {
               await removeSet(workout, item.exerciseId, index);
               await reload();
@@ -246,7 +247,7 @@ export async function renderWorkoutScreen(
           className: 'button button-secondary',
           onclick: () => void showAddExercise(item.exerciseId),
         },
-        'Заменить',
+        t('workout.replace'),
       ),
       h(
         'button',
@@ -254,14 +255,14 @@ export async function renderWorkoutScreen(
           type: 'button',
           className: 'button button-secondary',
           onclick: async () => {
-            const question = `Удалить «${exercise.name}» из тренировки вместе с подходами?`;
+            const question = t('workout.deleteExercise', { name: exercise.name });
             if (item.sets.length === 0 || confirm(question)) {
               await removeExercise(workout, item.exerciseId);
               await reload();
             }
           },
         },
-        'Удалить',
+        t('workout.delete'),
       ),
     );
 
@@ -284,7 +285,7 @@ export async function renderWorkoutScreen(
       ),
       ...(isCurrent ? [lastTimeBlock(last)] : []),
       h('ol', { className: 'set-list' }, ...rows),
-      ...(isCurrent ? [setForm(item, exercise), field('Группа мышц', group), actions] : []),
+      ...(isCurrent ? [setForm(item, exercise), field(t('common.muscleGroup'), group), actions] : []),
     );
   }
 
@@ -303,7 +304,7 @@ export async function renderWorkoutScreen(
     const addButton = h(
       'button',
       { type: 'button', className: 'button', onclick: () => void showAddExercise() },
-      'Добавить упражнение',
+      t('workout.addExercise'),
     );
 
     const backButton = h(
@@ -314,14 +315,14 @@ export async function renderWorkoutScreen(
         // Пустая тренировка при завершении удаляется, поэтому завершённую спрашиваем
         onclick: async () => {
           const hasSets = workout.exercises.some((item) => item.sets.length > 0);
-          if (isEditing && !hasSets && !confirm('В тренировке нет подходов, она будет удалена. Продолжить?')) {
+          if (isEditing && !hasSets && !confirm(t('workout.emptyDeleted'))) {
             return;
           }
           await finishWorkout(workout, {});
           onClosed();
         },
       },
-      'Назад',
+      t('common.back'),
     );
 
     const closeButtons = isEditing
@@ -329,7 +330,7 @@ export async function renderWorkoutScreen(
           h(
             'button',
             { type: 'button', className: 'button button-secondary', onclick: showFinish },
-            'Итог',
+            t('workout.summary'),
           ),
           backButton,
         ]
@@ -338,16 +339,16 @@ export async function renderWorkoutScreen(
             h(
               'button',
               { type: 'button', className: 'button button-secondary', onclick: showFinish },
-              'Завершить тренировку',
+              t('workout.finish'),
             ),
             // Тренировка остаётся активной, вернуться можно с вкладки «Тренировка»
-            h('button', { type: 'button', className: 'button button-secondary', onclick: onClosed }, 'Назад'),
+            h('button', { type: 'button', className: 'button button-secondary', onclick: onClosed }, t('common.back')),
           ]
         : [backButton];
 
     const details = [
-      workout.durationMin === undefined ? '' : `Длительность ${formatDuration(workout.durationMin)}`,
-      workout.rating === undefined ? '' : `оценка ${workout.rating}`,
+      workout.durationMin === undefined ? '' : t('workout.duration', { value: formatDuration(workout.durationMin) }),
+      workout.rating === undefined ? '' : t('common.rating', { rating: workout.rating }),
     ]
       .filter(Boolean)
       .join(', ');
@@ -392,8 +393,8 @@ export async function renderWorkoutScreen(
     let selectedGroup = '';
     const groupFilter = h(
       'div',
-      { className: 'chips', role: 'radiogroup', ariaLabel: 'Группа мышц' },
-      ...[['Все', ''], ...MUSCLE_GROUPS.map((group) => [group, group])].map(([label, value]) =>
+      { className: 'chips', role: 'radiogroup', ariaLabel: t('common.muscleGroup') },
+      ...[[t('common.all'), ''], ...MUSCLE_GROUPS.map((group) => [group, group])].map(([label, value]) =>
         h(
           'label',
           { className: 'chip' },
@@ -422,8 +423,8 @@ export async function renderWorkoutScreen(
           await choose(await findOrCreateExercise(nameInput.value, groupInput.value || undefined));
         },
       },
-      field('Группа мышц', groupInput),
-      h('button', { type: 'submit', className: 'button' }, 'Создать упражнение'),
+      field(t('common.muscleGroup'), groupInput),
+      h('button', { type: 'submit', className: 'button' }, t('workout.createExercise')),
     );
 
     async function updateResults(): Promise<void> {
@@ -469,8 +470,8 @@ export async function renderWorkoutScreen(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, replacedId === undefined ? 'Добавить упражнение' : 'Заменить упражнение'),
-        field('Название', nameInput),
+        h('h1', {}, replacedId === undefined ? t('workout.addExercise') : t('workout.replaceExercise')),
+        field(t('common.name'), nameInput),
         groupFilter,
         newExercise,
         results,
@@ -481,7 +482,7 @@ export async function renderWorkoutScreen(
             className: 'button button-secondary bottom-action',
             onclick: () => void showWorkout(),
           },
-          'Назад',
+          t('common.back'),
         ),
       ),
     );
@@ -523,8 +524,8 @@ export async function renderWorkoutScreen(
     const isEmpty = workout.exercises.every((item) => item.sets.length === 0);
 
     root.replaceChildren(
-      h('h1', {}, isEditing ? 'Итог' : 'Завершение'),
-      ...(isEmpty ? [h('p', { className: 'hint' }, 'В тренировке нет подходов, она не сохранится.')] : []),
+      h('h1', {}, isEditing ? t('workout.summary') : t('workout.finishing')),
+      ...(isEmpty ? [h('p', { className: 'hint' }, t('workout.emptyHint'))] : []),
       h(
         'form',
         {
@@ -540,30 +541,30 @@ export async function renderWorkoutScreen(
               });
               onClosed();
             } catch (problem) {
-              error.textContent = problem instanceof Error ? problem.message : 'Не удалось сохранить';
+              error.textContent = problem instanceof Error ? problem.message : t('common.saveFailed');
             }
           },
         },
-        ...(isEditing ? [field('Дата', date), field('Тип тренировки', type)] : []),
+        ...(isEditing ? [field(t('common.date'), date), field(t('workout.type'), type)] : []),
         h(
           'div',
           { className: 'set-inputs' },
-          field('Часы', stepper(hours, 1, 0)),
-          field('Минуты', stepper(minutes, 5, 0, 59)),
+          field(t('workout.hours'), stepper(hours, 1, 0)),
+          field(t('workout.minutes'), stepper(minutes, 5, 0, 59)),
         ),
         h(
           'div',
           { className: 'field' },
-          h('span', {}, 'Оценка тренировки'),
-          h('div', { className: 'rating', role: 'radiogroup', ariaLabel: 'Оценка' }, ...ratingButtons),
+          h('span', {}, t('workout.ratingTitle')),
+          h('div', { className: 'rating', role: 'radiogroup', ariaLabel: t('workout.ratingLabel') }, ...ratingButtons),
         ),
-        field('Заметка', note),
+        field(t('workout.note'), note),
         error,
-        h('button', { type: 'submit', className: 'button' }, isEditing ? 'Сохранить' : 'Завершить'),
+        h('button', { type: 'submit', className: 'button' }, isEditing ? t('common.save') : t('workout.finishShort')),
         h(
           'button',
           { type: 'button', className: 'button button-secondary', onclick: () => void showWorkout() },
-          'Назад',
+          t('common.back'),
         ),
         ...(isEditing
           ? [
@@ -573,13 +574,13 @@ export async function renderWorkoutScreen(
                   type: 'button',
                   className: 'button button-danger',
                   onclick: async () => {
-                    if (confirm(`Удалить тренировку за ${formatDate(workout.date)}? Это не отменить.`)) {
+                    if (confirm(t('workout.deleteConfirm', { date: formatDate(workout.date) }))) {
                       await deleteWorkout(workout.id);
                       onClosed();
                     }
                   },
                 },
-                'Удалить тренировку',
+                t('workout.deleteWorkout'),
               ),
             ]
           : []),

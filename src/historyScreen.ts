@@ -5,8 +5,9 @@ import { h } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
 import { renderMeasurementsView } from './measurementsScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
+import { t } from './i18n';
 
-const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const WEEKDAYS = [t('weekday.mon'), t('weekday.tue'), t('weekday.wed'), t('weekday.thu'), t('weekday.fri'), t('weekday.sat'), t('weekday.sun')];
 
 // Месяц запоминается, чтобы после правки тренировки вернуться туда же
 const now = new Date();
@@ -14,9 +15,9 @@ let shown = { year: now.getFullYear(), month: now.getMonth() };
 
 function summary(workout: Workout): string {
   return [
-    `Упражнений: ${workout.exercises.length}`,
+    t('history.summary', { count: workout.exercises.length }),
     workout.durationMin === undefined ? '' : formatDuration(workout.durationMin),
-    workout.rating === undefined ? '' : `оценка ${workout.rating}`,
+    workout.rating === undefined ? '' : t('common.rating', { rating: workout.rating }),
   ]
     .filter(Boolean)
     .join(', ');
@@ -59,14 +60,14 @@ export async function renderHistoryTab(
   }
 
   root.replaceChildren(
-    h('h1', {}, 'История'),
+    h('h1', {}, t('tab.history')),
     h(
       'div',
-      { className: 'chips', role: 'radiogroup', ariaLabel: 'Что показать' },
-      viewChip('Тренировки', 'workouts'),
-      viewChip('Упражнения', 'exercises'),
-      viewChip('Вес тела', 'weight'),
-      viewChip('Замеры', 'measurements'),
+      { className: 'chips', role: 'radiogroup', ariaLabel: t('history.whatToShow') },
+      viewChip(t('common.workouts'), 'workouts'),
+      viewChip(t('common.exercises'), 'exercises'),
+      viewChip(t('history.bodyWeight'), 'weight'),
+      viewChip(t('history.measurements'), 'measurements'),
     ),
     body,
   );
@@ -138,9 +139,9 @@ async function renderWorkoutsView(
       h(
         'div',
         { className: 'month-nav' },
-        monthButton('‹', 'Предыдущий месяц', -1),
+        monthButton('‹', t('common.prevMonth'), -1),
         h('h2', {}, formatMonth(shown.year, shown.month)),
-        monthButton('›', 'Следующий месяц', 1),
+        monthButton('›', t('common.nextMonth'), 1),
       ),
       h(
         'div',
@@ -148,7 +149,7 @@ async function renderWorkoutsView(
         ...WEEKDAYS.map((day) => h('span', { className: 'weekday' }, day)),
         ...cells.map(dayCell),
       ),
-      h('p', { className: 'hint' }, `Тренировок за месяц: ${monthCount}`),
+      h('p', { className: 'hint' }, t('history.monthCount', { count: monthCount })),
       ...listed.map((workout) =>
         h(
           'button',

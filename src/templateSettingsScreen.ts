@@ -1,13 +1,14 @@
 import type { WorkoutType } from './db';
 import { field, h } from './dom';
 import { getTemplate, getWorkoutTypes, saveTemplate, searchOptions, workoutTypeName } from './workouts';
+import { t } from './i18n';
 
 export async function renderTemplateSettings(root: HTMLElement, onBack: () => void): Promise<void> {
   function backButton(onclick: () => void): HTMLButtonElement {
     return h(
       'button',
       { type: 'button', className: 'button button-secondary bottom-action', onclick },
-      'Назад',
+      t('common.back'),
     );
   }
 
@@ -33,7 +34,7 @@ export async function renderTemplateSettings(root: HTMLElement, onBack: () => vo
           {
             type: 'button',
             className: 'remove-button',
-            ariaLabel: `Убрать ${name}`,
+            ariaLabel: t('template.remove', { name }),
             onclick: () => void save(names.filter((_, other) => other !== index)),
           },
           '✕',
@@ -45,8 +46,8 @@ export async function renderTemplateSettings(root: HTMLElement, onBack: () => vo
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, `Шаблон: ${workoutTypeName(type)}`),
-        h('p', { className: 'hint' }, 'Эти упражнения появятся сразу при начале тренировки.'),
+        h('h1', {}, t('template.title', { type: workoutTypeName(type) })),
+        h('p', { className: 'hint' }, t('template.hint')),
         h('ol', { className: 'set-list' }, ...rows),
         h(
           'form',
@@ -55,16 +56,16 @@ export async function renderTemplateSettings(root: HTMLElement, onBack: () => vo
               event.preventDefault();
               const name = input.value.trim();
               if (!name || names.includes(name)) {
-                error.textContent = name ? 'Это упражнение уже в шаблоне' : 'Введи название';
+                error.textContent = name ? t('template.exists') : t('template.enterName');
                 return;
               }
               void save([...names, name]);
             },
           },
-          field('Добавить упражнение', input),
+          field(t('workout.addExercise'), input),
           h('datalist', { id: 'exercise-names' }, ...options.map((option) => h('option', { value: option.name }))),
           error,
-          h('button', { type: 'submit', className: 'button' }, 'Добавить'),
+          h('button', { type: 'submit', className: 'button' }, t('common.add')),
         ),
         backButton(() => void showList()),
       ),
@@ -77,7 +78,7 @@ export async function renderTemplateSettings(root: HTMLElement, onBack: () => vo
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, 'Шаблоны'),
+        h('h1', {}, t('settings.templates')),
         ...types.map((type) =>
           h(
             'button',

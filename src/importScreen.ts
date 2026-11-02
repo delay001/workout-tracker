@@ -1,9 +1,10 @@
 import { todayLocal } from './dates';
 import { h } from './dom';
 import { getNameKeys, importParsedWorkouts, parseWorkoutsText, type ParsedText } from './textImport';
+import { t } from './i18n';
 
 export async function renderImportScreen(root: HTMLElement, onBack: () => void): Promise<void> {
-  const text = h('textarea', { rows: 8, ariaLabel: 'Текст тренировок' });
+  const text = h('textarea', { rows: 8, ariaLabel: t('import.textLabel') });
   const file = h('input', { type: 'file', hidden: true });
   const result = h('div');
 
@@ -18,10 +19,10 @@ export async function renderImportScreen(root: HTMLElement, onBack: () => void):
     const sets = parsed.workouts.flatMap((workout) => workout.entries).flatMap((entry) => entry.sets);
 
     result.replaceChildren(
-      h('p', {}, `Тренировок: ${parsed.workouts.length}, подходов: ${sets.length}`),
+      h('p', {}, t('import.found', { workouts: parsed.workouts.length, sets: sets.length })),
       ...(parsed.skipped.length > 0
         ? [
-            h('p', { className: 'hint' }, `Не распознано строк: ${parsed.skipped.length}. Их можно исправить в тексте и разобрать снова.`),
+            h('p', { className: 'hint' }, t('import.skipped', { count: parsed.skipped.length })),
             h('ul', { className: 'skipped' }, ...parsed.skipped.map((line) => h('li', {}, line))),
           ]
         : []),
@@ -36,11 +37,11 @@ export async function renderImportScreen(root: HTMLElement, onBack: () => void):
                   const added = await importParsedWorkouts(parsed.workouts);
                   const repeated = parsed.workouts.length - added;
                   result.replaceChildren(
-                    h('p', {}, `Добавлено тренировок: ${added}. Уже были в истории: ${repeated}.`),
+                    h('p', {}, t('import.done', { added, repeated })),
                   );
                 },
               },
-              'Добавить в историю',
+              t('import.add'),
             ),
           ]
         : []),
@@ -51,18 +52,18 @@ export async function renderImportScreen(root: HTMLElement, onBack: () => void):
     h(
       'div',
       { className: 'screen' },
-      h('h1', {}, 'Старые записи'),
+      h('h1', {}, t('import.title')),
       h(
         'p',
         { className: 'hint' },
-        'Строка с днём и датой («Верх 25.10.26»), под ней упражнения («Жим лёжа 100кг 3 на 3»). Текущие данные не удаляются.',
+        t('import.hint'),
       ),
       text,
       file,
       h(
         'button',
         { type: 'button', className: 'button button-secondary', onclick: () => file.click() },
-        'Взять из файла',
+        t('import.fromFile'),
       ),
       h(
         'button',
@@ -71,13 +72,13 @@ export async function renderImportScreen(root: HTMLElement, onBack: () => void):
           className: 'button',
           onclick: async () => showResult(parseWorkoutsText(text.value, await getNameKeys(), todayLocal())),
         },
-        'Разобрать',
+        t('import.parse'),
       ),
       result,
       h(
         'button',
         { type: 'button', className: 'button button-secondary bottom-action', onclick: onBack },
-        'Назад',
+        t('common.back'),
       ),
     ),
   );

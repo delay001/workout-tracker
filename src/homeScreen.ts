@@ -4,6 +4,7 @@ import { field, h } from './dom';
 import { getMonthlyGoal, getSetting } from './settings';
 import { goalBar } from './statsScreen';
 import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
+import { t } from './i18n';
 
 export async function renderHomeScreen(
   root: HTMLElement,
@@ -32,11 +33,11 @@ export async function renderHomeScreen(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, 'Новая тренировка'),
+        h('h1', {}, t('home.newWorkout')),
         h(
           'div',
           { className: 'centered' },
-          field('Дата', dateInput),
+          field(t('common.date'), dateInput),
           h('div', { className: 'type-buttons' }, ...typeButtons),
         ),
         h(
@@ -46,7 +47,7 @@ export async function renderHomeScreen(
             className: 'button button-secondary bottom-action',
             onclick: () => void showMain(),
           },
-          'Назад',
+          t('common.back'),
         ),
       ),
     );
@@ -62,7 +63,7 @@ export async function renderHomeScreen(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, name ? `Привет, ${name}!` : 'Привет!'),
+        h('h1', {}, name ? t('home.helloName', { name }) : t('home.hello')),
         h(
           'div',
           { className: 'centered' },
@@ -70,7 +71,7 @@ export async function renderHomeScreen(
             ? h(
                 'button',
                 { type: 'button', className: 'button button-big', onclick: onOpenActive },
-                'Активная тренировка',
+                t('home.activeWorkout'),
                 h(
                   'span',
                   { className: 'button-note' },
@@ -80,14 +81,14 @@ export async function renderHomeScreen(
             : h(
                 'button',
                 { type: 'button', className: 'button button-big', onclick: () => void showStart() },
-                'Новая запись',
+                t('home.newEntry'),
               ),
           goalBar(monthCount, await getMonthlyGoal()),
           h(
             'div',
             { className: 'stats' },
-            h('div', { className: 'stat' }, h('strong', {}, String(monthCount)), 'за этот месяц'),
-            h('div', { className: 'stat' }, h('strong', {}, String(workouts.length)), 'всего тренировок'),
+            h('div', { className: 'stat' }, h('strong', {}, String(monthCount)), t('home.thisMonth')),
+            h('div', { className: 'stat' }, h('strong', {}, String(workouts.length)), t('home.totalWorkouts')),
           ),
         ),
       ),

@@ -8,24 +8,25 @@ import { renderSettingsScreen } from './settingsScreen';
 import { renderStatsScreen } from './statsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
 import { getActiveWorkout } from './workouts';
+import { t } from './i18n';
 
 type Tab = 'workout' | 'history' | 'stats' | 'settings';
 
 const TABS: [Tab, string, string][] = [
   [
     'workout',
-    'Тренировка',
+    t('tab.workout'),
     '<path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/>',
   ],
   [
     'history',
-    'История',
+    t('tab.history'),
     '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   ],
-  ['stats', 'Статистика', '<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10"/>'],
+  ['stats', t('tab.stats'), '<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10"/>'],
   [
     'settings',
-    'Настройки',
+    t('tab.settings'),
     '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
   ],
 ];

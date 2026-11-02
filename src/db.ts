@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
+import { t } from './i18n';
 
 // upper, lower, other или название своего типа
 export type WorkoutType = string;
@@ -89,7 +90,7 @@ db.version(4).stores({ measurements: 'date' });
 export async function findOrCreateExercise(name: string, muscleGroup?: string): Promise<Exercise> {
   const cleanName = name.trim();
   if (!cleanName) {
-    throw new Error('Название упражнения не может быть пустым');
+    throw new Error(t('exercise.emptyName'));
   }
 
   const nameKey = cleanName.toLowerCase();

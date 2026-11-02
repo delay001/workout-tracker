@@ -8,11 +8,12 @@ import {
   type WorkoutSet,
   type WorkoutType,
 } from './db';
+import { t } from './i18n';
 
 const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
-  upper: 'Верх',
-  lower: 'Низ',
-  other: 'Другое',
+  upper: t('type.upper'),
+  lower: t('type.lower'),
+  other: t('type.other'),
 };
 
 export function workoutTypeName(type: WorkoutType): string {
@@ -30,7 +31,7 @@ export async function getWorkoutTypes(): Promise<WorkoutType[]> {
 export async function addWorkoutType(name: string): Promise<void> {
   const cleanName = name.trim();
   if (!cleanName) {
-    throw new Error('Название типа не может быть пустым');
+    throw new Error(t('type.emptyName'));
   }
 
   const key = cleanName.toLowerCase();
@@ -38,14 +39,14 @@ export async function addWorkoutType(name: string): Promise<void> {
     (type) => type.toLowerCase() === key || workoutTypeName(type).toLowerCase() === key,
   );
   if (taken) {
-    throw new Error('Такой тип уже есть');
+    throw new Error(t('type.exists'));
   }
   await db.workoutTypes.add({ name: cleanName });
 }
 
 export async function deleteWorkoutType(name: string): Promise<void> {
   if ((await db.workouts.filter((workout) => workout.type === name).count()) > 0) {
-    throw new Error('Этот тип уже есть в тренировках, удалить нельзя');
+    throw new Error(t('type.inUse'));
   }
   await db.workoutTypes.delete(name);
 }
@@ -175,12 +176,12 @@ export async function updateExercise(
   const cleanName = name.trim();
   const nameKey = cleanName.toLowerCase();
   if (!cleanName) {
-    throw new Error('Название упражнения не может быть пустым');
+    throw new Error(t('exercise.emptyName'));
   }
 
   const same = await db.exercises.where('nameKey').equals(nameKey).first();
   if (same && same.id !== exercise.id) {
-    throw new Error('Такое упражнение уже есть');
+    throw new Error(t('exercise.exists'));
   }
 
   await db.transaction('rw', db.exercises, async () => {
@@ -288,17 +289,17 @@ export function recordLabels(sets: WorkoutSet[], priorSets: WorkoutSet[]): strin
       return '';
     }
     const labels = [
-      set.weight > bestWeight ? 'вес' : '',
-      epley(set) > bestOneRepMax ? '1ПМ' : '',
+      set.weight > bestWeight ? t('record.weight') : '',
+      epley(set) > bestOneRepMax ? t('record.oneRepMax') : '',
     ].filter(Boolean);
     bestWeight = Math.max(bestWeight, set.weight);
     bestOneRepMax = Math.max(bestOneRepMax, epley(set));
-    return labels.length > 0 ? `Рекорд: ${labels.join(', ')}` : '';
+    return labels.length > 0 ? t('record.prefix', { kinds: labels.join(', ') }) : '';
   });
 }
 
 export function formatSet(set: WorkoutSet): string {
-  const marks = [set.warmup ? 'разминка' : '', set.toFailure ? 'в отказ' : ''].filter(Boolean);
+  const marks = [set.warmup ? t('set.warmupMark') : '', set.toFailure ? t('set.failureMark') : ''].filter(Boolean);
   return `${set.weight} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
 }
 
@@ -402,10 +403,10 @@ export function parseSet(
   const reps = Number(repsText);
 
   if (weightText.trim() === '' || !Number.isFinite(weight) || weight < 0 || !Number.isInteger(weight * 2)) {
-    throw new Error('Вес: число с шагом 0.5 кг');
+    throw new Error(t('set.invalidWeight'));
   }
   if (!Number.isInteger(reps) || reps < 1) {
-    throw new Error('Повторения: целое число больше нуля');
+    throw new Error(t('set.invalidReps'));
   }
 
   return { weight, reps, warmup, ...(toFailure ? { toFailure } : {}) };
@@ -420,7 +421,7 @@ export function parseDuration(hoursText: string, minutesText: string): number | 
   const minutes = Number(minutesText);
   const isValid = Number.isInteger(hours) && Number.isInteger(minutes) && hours >= 0 && minutes >= 0;
   if (!isValid || minutes > 59 || hours * 60 + minutes < 1) {
-    throw new Error('Длительность: часы и минуты, минут не больше 59');
+    throw new Error(t('workout.invalidDuration'));
   }
   return hours * 60 + minutes;
 }

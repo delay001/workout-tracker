@@ -9,13 +9,14 @@ import {
   updateExercise,
   type ExerciseOption,
 } from './workouts';
+import { t } from './i18n';
 
 export async function renderExerciseSettings(root: HTMLElement, onBack: () => void): Promise<void> {
   function backButton(onclick: () => void): HTMLButtonElement {
     return h(
       'button',
       { type: 'button', className: 'button button-secondary bottom-action', onclick },
-      'Назад',
+      t('common.back'),
     );
   }
 
@@ -29,7 +30,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
       if (option) {
         await updateExercise(await findOrCreateExercise(option.name, option.muscleGroup), name.value, muscleGroup);
       } else if (isExactMatch(await searchOptions(name.value), name.value)) {
-        throw new Error('Такое упражнение уже есть');
+        throw new Error(t('exercise.exists'));
       } else {
         await findOrCreateExercise(name.value, muscleGroup);
       }
@@ -39,7 +40,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, option ? 'Изменить упражнение' : 'Новое упражнение'),
+        h('h1', {}, option ? t('exercise.edit') : t('exercise.new')),
         h(
           'form',
           {
@@ -49,14 +50,14 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
                 await save();
                 await showList();
               } catch (problem) {
-                error.textContent = problem instanceof Error ? problem.message : 'Не удалось сохранить';
+                error.textContent = problem instanceof Error ? problem.message : t('common.saveFailed');
               }
             },
           },
-          field('Название', name),
-          field('Группа мышц', group),
+          field(t('common.name'), name),
+          field(t('common.muscleGroup'), group),
           error,
-          h('button', { type: 'submit', className: 'button' }, 'Сохранить'),
+          h('button', { type: 'submit', className: 'button' }, t('common.save')),
         ),
         ...(option
           ? [
@@ -71,7 +72,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
                     await showList();
                   },
                 },
-                'Скрыть из каталога',
+                t('exercise.hide'),
               ),
             ]
           : []),
@@ -91,7 +92,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
       const items: HTMLElement[] = [];
       let lastGroup: string | undefined;
       for (const option of options) {
-        const group = option.muscleGroup ?? 'Без группы';
+        const group = option.muscleGroup ?? t('common.noGroup');
         if (group !== lastGroup) {
           items.push(h('h2', { className: 'group-heading' }, group));
           lastGroup = group;
@@ -106,7 +107,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
       }
 
       if (hidden.length > 0) {
-        items.push(h('h2', { className: 'group-heading' }, 'Скрытые, нажми, чтобы вернуть'));
+        items.push(h('h2', { className: 'group-heading' }, t('exercise.hiddenList')));
       }
       for (const exercise of hidden) {
         items.push(
@@ -133,9 +134,9 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, 'Упражнения'),
-        h('button', { type: 'button', className: 'button', onclick: () => showEdit() }, '+ Новое упражнение'),
-        field('Поиск', search),
+        h('h1', {}, t('common.exercises')),
+        h('button', { type: 'button', className: 'button', onclick: () => showEdit() }, t('exercise.addNew')),
+        field(t('common.search'), search),
         results,
         backButton(onBack),
       ),

@@ -1,4 +1,5 @@
 import { db, type BodyWeight } from './db';
+import { t } from './i18n';
 
 export async function getBodyWeights(): Promise<BodyWeight[]> {
   return db.bodyWeights.orderBy('date').toArray();
@@ -8,7 +9,7 @@ export async function getBodyWeights(): Promise<BodyWeight[]> {
 export async function saveBodyWeight(date: string, kgText: string): Promise<void> {
   const kg = Number(kgText.replace(',', '.'));
   if (kgText.trim() === '' || !Number.isFinite(kg) || kg <= 0 || kg > 400) {
-    throw new Error('Вес: число в килограммах');
+    throw new Error(t('weight.invalid'));
   }
   await db.bodyWeights.put({ date, kg });
 }

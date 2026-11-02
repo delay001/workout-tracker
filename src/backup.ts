@@ -8,6 +8,7 @@ import {
   type WorkoutTemplate,
   type WorkoutType,
 } from './db';
+import { t } from './i18n';
 
 const APP_NAME = 'workout-tracker';
 const BACKUP_VERSION = 4;
@@ -89,14 +90,14 @@ export function parseBackup(text: string): Backup {
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error('Файл повреждён или это не JSON');
+    throw new Error(t('backup.notJson'));
   }
 
   if (!isRecord(data) || data.app !== APP_NAME) {
-    throw new Error('Это не резервная копия трекера тренировок');
+    throw new Error(t('backup.notOurs'));
   }
   if (typeof data.version !== 'number' || data.version > BACKUP_VERSION) {
-    throw new Error('Копия сделана более новой версией приложения');
+    throw new Error(t('backup.tooNew'));
   }
   if (
     !Array.isArray(data.exercises) ||
@@ -104,7 +105,7 @@ export function parseBackup(text: string): Backup {
     !data.exercises.every(isExercise) ||
     !data.workouts.every(isWorkout)
   ) {
-    throw new Error('В файле не хватает данных или они записаны неверно');
+    throw new Error(t('backup.badData'));
   }
 
   // В копиях старых версий этих разделов ещё не было
@@ -131,7 +132,7 @@ export function parseBackup(text: string): Backup {
       (item) => isRecord(item) && typeof item.date === 'string' && typeof item.kg === 'number',
     )
   ) {
-    throw new Error('В файле не хватает данных или они записаны неверно');
+    throw new Error(t('backup.badData'));
   }
 
   return { ...data, workoutTypes, settings, templates, bodyWeights, measurements } as unknown as Backup;

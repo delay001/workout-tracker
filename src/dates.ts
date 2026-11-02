@@ -1,10 +1,12 @@
+import { LOCALE } from './i18n';
+
 // Сегодняшняя дата в виде ГГГГ-ММ-ДД. Шведский формат даты совпадает с ним.
 export function todayLocal(): string {
   return new Date().toLocaleDateString('sv-SE');
 }
 
 export function formatDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('ru-RU');
+  return new Date(`${date}T00:00:00`).toLocaleDateString(LOCALE);
 }
 
 export function formatDuration(minutes: number): string {
@@ -12,7 +14,7 @@ export function formatDuration(minutes: number): string {
 }
 
 export function formatMonth(year: number, month: number): string {
-  const name = new Date(year, month, 1).toLocaleDateString('ru-RU', { month: 'long' });
+  const name = new Date(year, month, 1).toLocaleDateString(LOCALE, { month: 'long' });
   return `${name[0].toUpperCase()}${name.slice(1)} ${year}`;
 }
 
