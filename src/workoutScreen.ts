@@ -296,18 +296,39 @@ export async function renderWorkoutScreen(
       return exercise ? [exerciseCard(item, exercise, last)] : [];
     });
 
+    const closeButton =
+      workout.exercises.length > 0
+        ? h(
+            'button',
+            { type: 'button', className: 'button button-secondary', onclick: showFinish },
+            'Завершить тренировку',
+          )
+        : h(
+            'button',
+            {
+              type: 'button',
+              className: 'button button-secondary bottom-action',
+              // Пустая тренировка при завершении удаляется
+              onclick: async () => {
+                await finishWorkout(workout, {});
+                onClosed('');
+              },
+            },
+            'Назад',
+          );
+
     root.replaceChildren(
-      h('h1', {}, `${WORKOUT_TYPE_NAMES[workout.type]}, ${formatDate(workout.date)}`),
-      ...cards,
       h(
-        'button',
-        { type: 'button', className: 'button', onclick: () => void showAddExercise() },
-        'Добавить упражнение',
-      ),
-      h(
-        'button',
-        { type: 'button', className: 'button button-secondary', onclick: showFinish },
-        'Завершить тренировку',
+        'div',
+        { className: 'screen' },
+        h('h1', {}, `${WORKOUT_TYPE_NAMES[workout.type]}, ${formatDate(workout.date)}`),
+        ...cards,
+        h(
+          'button',
+          { type: 'button', className: 'button', onclick: () => void showAddExercise() },
+          'Добавить упражнение',
+        ),
+        closeButton,
       ),
     );
   }
