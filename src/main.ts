@@ -4,6 +4,8 @@ import { h } from './dom';
 import { renderHistoryTab } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
 import { loadTheme } from './settings';
+import { syncAchievements } from './motivationScreens';
+import { needsOnboarding, renderOnboarding } from './onboarding';
 import { renderSettingsScreen } from './settingsScreen';
 import { renderStatsScreen } from './statsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
@@ -95,5 +97,15 @@ async function openActive(): Promise<void> {
   }
 }
 
-void loadTheme().then(markUpExercises).then(openActive);
+void loadTheme()
+  .then(markUpExercises)
+  .then(() => syncAchievements(false))
+  .then(needsOnboarding)
+  .then((needed) => {
+    if (needed && app) {
+      void renderOnboarding(app, () => void openActive());
+    } else {
+      void openActive();
+    }
+  });
 void requestPersistentStorage();

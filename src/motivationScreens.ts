@@ -8,7 +8,7 @@ import { getBodyWeights, getGoalHistory, getWeightGoal, type WeightGoal } from '
 import { formatMonth, todayLocal } from './dates';
 import { db } from './db';
 import { h, showToast } from './dom';
-import { t } from './i18n';
+import { t, type MessageKey } from './i18n';
 import { getSetting, setSetting } from './settings';
 import { select } from './ui';
 import { formatWeight } from './units';
@@ -36,7 +36,7 @@ export async function syncAchievements(notify: boolean): Promise<void> {
   if (seen && notify) {
     const fresh = newAchievements(states, seen)[0];
     if (fresh) {
-      showToast(t('achievement.toast', { name: t(`achievement.${fresh.id}`) }));
+      showToast(t('achievement.toast', { name: t(`achievement.${fresh.id}` as MessageKey) }));
     }
   }
   if (!seen || notify) {
@@ -53,7 +53,7 @@ export async function renderAchievementsScreen(root: HTMLElement, onBack: () => 
     h(
       'article',
       { className: state.count > 0 ? 'card achievement achievement-done' : 'card achievement' },
-      h('strong', {}, t(`achievement.${state.id}`)),
+      h('strong', {}, t(`achievement.${state.id}` as MessageKey)),
       h(
         'span',
         { className: 'muscle-group' },

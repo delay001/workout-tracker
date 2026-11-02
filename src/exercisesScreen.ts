@@ -1,3 +1,4 @@
+import { getBodyWeights } from './bodyWeight';
 import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
@@ -13,6 +14,9 @@ import {
   workingWeightSeries,
   type Period,
 } from './progress';
+import type { Sex } from './formulas';
+import { STANDARDS, strengthLevel } from './levels';
+import { getSetting } from './settings';
 import { periodChips, radioChips } from './ui';
 import { formatWeight, toWeight, weightUnit } from './units';
 import {
@@ -38,6 +42,15 @@ const METRICS: Record<Metric, (history: LastPerformance[]) => ChartDatum[]> = {
 
 let shownMetric: Metric = 'oneRepMax';
 let shownPeriod: Period = 'all';
+
+// В подтягиваниях поднимается вес тела, поэтому он входит в расчёт 1ПМ
+function pullUpOneRepMax(history: LastPerformance[], bodyKg: number): number | undefined {
+  const values = history
+    .flatMap((entry) => entry.sets)
+    .filter((set) => !set.warmup && set.reps <= 12)
+    .map((set) => (bodyKg + set.weight) * (1 + set.reps / 30));
+  return values.length > 0 ? Math.max(...values) : undefined;
+}
 
 function formatBest(best: BestResult): string {
   const set =
@@ -82,6 +95,11 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     const best = bestResult(history);
     const summary = exerciseSummary(history, todayLocal());
     const records = historyRecords(history);
+    const bodyKg = (await getBodyWeights()).at(-1)?.kg;
+    const sex: Sex = (await getSetting('sex')) === 'female' ? 'female' : 'male';
+    const bodyweightMove = exercise.name === 'Подтягивания';
+    const levelBase = bodyweightMove && bodyKg ? pullUpOneRepMax(history, bodyKg) : summary.bestOneRepMax;
+    const level = bodyKg && levelBase ? strengthLevel(exercise.name, levelBase, bodyKg, sex) : undefined;
     const cardio = isCardio(exercise);
     const chartBox = h('div');
 
@@ -165,6 +183,27 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
               chartBox,
             ]
           : []),
+        ...(level
+          ? [
+              h(
+                'p',
+                { className: 'set-row' },
+                t('level.title'),
+                h('strong', {}, level.level ? t(`level.${level.level}`) : t('level.belowNovice')),
+              ),
+              ...(level.next && level.missingKg !== undefined
+                ? [
+                    h(
+                      'p',
+                      { className: 'hint' },
+                      t('level.next', { level: t(`level.${level.next}`), weight: formatWeight(level.missingKg) }),
+                    ),
+                  ]
+                : []),
+            ]
+          : STANDARDS[exercise.name] && !bodyKg
+            ? [h('p', { className: 'hint' }, t('level.needWeight'))]
+            : []),
         ...summaryRows.flatMap(([label, value]) =>
           value === undefined ? [] : [h('p', { className: 'set-row' }, label, h('strong', {}, value))],
         ),

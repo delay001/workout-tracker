@@ -22,7 +22,8 @@ import { MUSCLES } from './muscles';
 import { getNorms } from './volumeScreen';
 import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeName } from './workouts';
-import { t } from './i18n';
+import { LANGUAGE, setLanguage, t, type Language } from './i18n';
+import { renderOnboarding } from './onboarding';
 
 export async function renderSettingsScreen(
   root: HTMLElement,
@@ -228,6 +229,17 @@ export async function renderSettingsScreen(
       h('h1', {}, t('tab.settings')),
       h('p', { className: 'status', role: 'status' }, message),
       field(t('settings.yourName'), name),
+      field(
+        t('settings.language'),
+        select(
+          [
+            ['ru', 'Русский'],
+            ['en', 'English'],
+          ],
+          LANGUAGE,
+          (value) => setLanguage(value as Language),
+        ),
+      ),
       field(t('settings.goal'), goal),
       field(t('settings.overdueDays'), overdueDays),
       h(
@@ -303,6 +315,15 @@ export async function renderSettingsScreen(
         'button',
         { type: 'button', className: 'button button-secondary', onclick: () => void showNorms() },
         t('settings.norms'),
+      ),
+      h(
+        'button',
+        {
+          type: 'button',
+          className: 'button button-secondary',
+          onclick: () => void renderOnboarding(root, () => void showMain()),
+        },
+        t('settings.onboarding'),
       ),
       h(
         'button',

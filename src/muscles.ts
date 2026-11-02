@@ -51,6 +51,8 @@ export const CATALOG_MARKUP: Record<string, MuscleMarkup> = {
   'Горизонтальная тяга в Смите': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
   'Тяга гантелей в наклоне': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
   'Карманная тяга с гантелью': mark('lats', 'pull', 'biceps'),
+  'Становая тяга': mark('hamstrings', 'pull', 'glutes', 'lats', 'traps'),
+  'Приседания со штангой': mark('quads', 'push', 'glutes', 'hamstrings'),
   Подтягивания: mark('lats', 'pull', 'biceps', 'forearms'),
   'Шраги с гантелями': mark('traps', 'pull', 'forearms'),
   'Шраги со штангой': mark('traps', 'pull', 'forearms'),

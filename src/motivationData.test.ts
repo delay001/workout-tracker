@@ -114,7 +114,7 @@ describe('итоги года', () => {
       weightChange: -5,
       upper: 1,
       lower: 1,
-      records: 0,
+      records: 1,
     });
   });
 

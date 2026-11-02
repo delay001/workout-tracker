@@ -1,4 +1,4 @@
-import { t } from './i18n';
+import { LOCALE, t } from './i18n';
 
 export type Units = 'metric' | 'imperial';
 
@@ -46,5 +46,5 @@ export function lengthUnit(): string {
 }
 
 export function formatWeight(kg: number): string {
-  return `${toWeight(kg).toLocaleString('ru-RU')} ${weightUnit()}`;
+  return `${toWeight(kg).toLocaleString(LOCALE)} ${weightUnit()}`;
 }

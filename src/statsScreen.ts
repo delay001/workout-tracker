@@ -3,6 +3,7 @@ import { formatDate, formatDuration, formatMonth, shiftMonth, todayLocal } from 
 import { db } from './db';
 import { h } from './dom';
 import { renderCalcScreen } from './calcScreen';
+import { renderAchievementsScreen, renderYearScreen } from './motivationScreens';
 import { overdueExercises, periodTotals, topExercises, workoutStats } from './progress';
 import { formatWeight, toWeight, weightUnit } from './units';
 import { getMonthlyGoal, getOverdueDays } from './settings';
@@ -169,6 +170,16 @@ async function renderMonthView(root: HTMLElement): Promise<void> {
         tile(String(stats.sets), t('stats.workingSets')),
         tile(formatDuration(stats.durationMin), t('stats.hours')),
         tile(rating === undefined ? '—' : String(rating), t('stats.averageRating')),
+        h(
+          'button',
+          { type: 'button', className: 'stat', onclick: () => void renderAchievementsScreen(root, show) },
+          t('achievement.title'),
+        ),
+        h(
+          'button',
+          { type: 'button', className: 'stat', onclick: () => void renderYearScreen(root, show) },
+          t('year.title'),
+        ),
         h(
           'button',
           { type: 'button', className: 'stat', onclick: () => void renderCalcScreen(root, () => show()) },

@@ -1,5 +1,6 @@
 import { guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
 import { motivationMessage } from './motivation';
+import { syncAchievements } from './motivationScreens';
 import { getMonthlyGoal, getWeightStep } from './settings';
 import { numberInput, stepper } from './ui';
 import { formatWeight, toWeight, weightUnit } from './units';
@@ -542,6 +543,7 @@ export async function renderWorkoutScreen(
                 const month = workout.date.slice(0, 7);
                 const count = (await getFinishedWorkouts()).filter((item) => item.date.startsWith(month)).length;
                 showToast(motivationMessage(count, await getMonthlyGoal()));
+                await syncAchievements(true);
               }
               onClosed();
             } catch (problem) {
