@@ -12,7 +12,6 @@ import {
   addExerciseToWorkout,
   addSet,
   bestSet,
-  defaultSet,
   deleteWorkout,
   finishWorkout,
   formatSet,
@@ -100,14 +99,10 @@ export async function renderWorkoutScreen(
     await showWorkout();
   }
 
-  function setForm(
-    item: WorkoutExercise,
-    exercise: Exercise,
-    last?: LastPerformance,
-  ): HTMLFormElement {
+  function setForm(item: WorkoutExercise, exercise: Exercise): HTMLFormElement {
     const index = editedIndex;
     const edited = index === undefined ? undefined : item.sets[index];
-    const filled = edited ?? defaultSet(item.sets, last?.sets);
+    const filled = edited ?? item.sets.at(-1);
 
     const weight = h('input', {
       type: 'text',
@@ -283,7 +278,7 @@ export async function renderWorkoutScreen(
       ),
       ...(isCurrent ? [lastTimeBlock(last)] : []),
       h('ol', { className: 'set-list' }, ...rows),
-      ...(isCurrent ? [setForm(item, exercise, last), field('Группа мышц', group), actions] : []),
+      ...(isCurrent ? [setForm(item, exercise), field('Группа мышц', group), actions] : []),
     );
   }
 
@@ -294,6 +289,12 @@ export async function renderWorkoutScreen(
       const exercise = exercises[index];
       return exercise ? [exerciseCard(item, exercise, last)] : [];
     });
+
+    const addButton = h(
+      'button',
+      { type: 'button', className: 'button', onclick: () => void showAddExercise() },
+      'Добавить упражнение',
+    );
 
     const backButton = h(
       'button',
@@ -347,11 +348,7 @@ export async function renderWorkoutScreen(
         ...(isEditing && details ? [h('p', { className: 'hint' }, details)] : []),
         ...(isEditing && workout.note ? [h('p', { className: 'hint' }, workout.note)] : []),
         ...cards,
-        h(
-          'button',
-          { type: 'button', className: 'button', onclick: () => void showAddExercise() },
-          'Добавить упражнение',
-        ),
+        cards.length > 0 ? addButton : h('div', { className: 'centered' }, addButton),
         ...closeButtons,
       ),
     );

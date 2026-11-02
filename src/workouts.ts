@@ -276,11 +276,6 @@ export async function getUsedExercises(): Promise<UsedExercise[]> {
   );
 }
 
-// Что подставить в форму: прошлый подход этой тренировки, иначе первый рабочий из прошлого раза
-export function defaultSet(sets: WorkoutSet[], lastSets: WorkoutSet[] = []): WorkoutSet | undefined {
-  return sets.at(-1) ?? lastSets.find((set) => !set.warmup) ?? lastSets[0];
-}
-
 export async function addSet(workout: Workout, exerciseId: number, set: WorkoutSet): Promise<void> {
   const exercises = workout.exercises.map((item) =>
     item.exerciseId === exerciseId ? { ...item, sets: [...item.sets, set] } : item,

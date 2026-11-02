@@ -8,7 +8,6 @@ import {
   addWorkoutType,
   bestResult,
   bestSet,
-  defaultSet,
   deleteWorkout,
   deleteWorkoutType,
   finishWorkout,
@@ -178,28 +177,6 @@ describe('пиковый подход', () => {
 
   it('без подходов возвращает пусто', () => {
     expect(bestSet([])).toBeUndefined();
-  });
-});
-
-describe('подстановка в форму', () => {
-  const warmup = { weight: 40, reps: 10, warmup: true };
-  const working = { weight: 66, reps: 8, warmup: false };
-  const heavy = { weight: 79, reps: 6, warmup: false };
-
-  it('в начатом упражнении повторяет предыдущий подход', () => {
-    expect(defaultSet([working, heavy], [warmup])).toEqual(heavy);
-  });
-
-  it('первый подход берёт первый рабочий из прошлого раза', () => {
-    expect(defaultSet([], [warmup, working, heavy])).toEqual(working);
-  });
-
-  it('если в прошлый раз были только разминочные, берёт разминочный', () => {
-    expect(defaultSet([], [warmup])).toEqual(warmup);
-  });
-
-  it('у нового упражнения ничего не подставляет', () => {
-    expect(defaultSet([])).toBeUndefined();
   });
 });
 
