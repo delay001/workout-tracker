@@ -121,6 +121,7 @@ async function renderWorkoutsView(
         label,
       );
 
+    const monthCount = workouts.filter((workout) => workout.date.startsWith(shownPrefix)).length;
     const listed = workouts.filter((workout) =>
       selectedDate ? workout.date === selectedDate : workout.date.startsWith(shownPrefix),
     );
@@ -139,7 +140,7 @@ async function renderWorkoutsView(
         ...WEEKDAYS.map((day) => h('span', { className: 'weekday' }, day)),
         ...cells.map(dayCell),
       ),
-      ...(listed.length === 0 ? [h('p', { className: 'hint' }, 'В этом месяце тренировок нет')] : []),
+      h('p', { className: 'hint' }, `Тренировок за месяц: ${monthCount}`),
       ...listed.map((workout) =>
         h(
           'button',

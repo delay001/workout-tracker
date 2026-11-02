@@ -63,6 +63,15 @@ h2 {
   color: #f87171;
 }
 
+.centered {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.centered + .bottom-action {
+  margin-top: 0;
+}
+
 .button-big {
   min-height: 96px;
   font-size: 1.5rem;

@@ -81,7 +81,7 @@ export function groupSelect(value?: string): HTMLSelectElement {
 export async function renderWorkoutScreen(
   root: HTMLElement,
   startedWorkout: Workout,
-  onClosed: (message: string) => void,
+  onClosed: () => void,
 ): Promise<void> {
   let workout = startedWorkout;
   const workoutTypes = await getWorkoutTypes();
@@ -307,7 +307,7 @@ export async function renderWorkoutScreen(
             return;
           }
           await finishWorkout(workout, {});
-          onClosed('');
+          onClosed();
         },
       },
       'Назад',
@@ -522,14 +522,14 @@ export async function renderWorkoutScreen(
           onsubmit: async (event: Event) => {
             event.preventDefault();
             try {
-              const saved = await finishWorkout(workout, {
+              await finishWorkout(workout, {
                 date: (isEditing && date.value) || workout.date,
                 type: isEditing ? type.value : workout.type,
                 durationMin: parseDuration(hours.value, minutes.value),
                 rating,
                 note: note.value.trim() || undefined,
               });
-              onClosed(saved ? 'Тренировка сохранена' : 'Пустая тренировка удалена');
+              onClosed();
             } catch (problem) {
               error.textContent = problem instanceof Error ? problem.message : 'Не удалось сохранить';
             }
@@ -566,7 +566,7 @@ export async function renderWorkoutScreen(
                   onclick: async () => {
                     if (confirm(`Удалить тренировку за ${formatDate(workout.date)}? Это не отменить.`)) {
                       await deleteWorkout(workout.id);
-                      onClosed('');
+                      onClosed();
                     }
                   },
                 },
