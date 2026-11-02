@@ -10,7 +10,9 @@ import {
   isExactMatch,
   parseDuration,
   parseSet,
+  removeExercise,
   removeSet,
+  replaceExercise,
   searchOptions,
   setMuscleGroup,
   startWorkout,
@@ -74,6 +76,55 @@ describe('ход тренировки', () => {
   });
 });
 
+describe('замена и удаление упражнения', () => {
+  it('замена сохраняет подходы и обновляет поиск по упражнению', async () => {
+    await startWorkout('2026-11-02', 'upper');
+    await addExerciseToWorkout(await active(), 1);
+    await addSet(await active(), 1, SET);
+
+    await replaceExercise(await active(), 1, 2);
+
+    expect((await active()).exercises).toEqual([{ exerciseId: 2, sets: [SET] }]);
+    expect((await active()).exerciseIds).toEqual([2]);
+  });
+
+  it('если новое уже есть в тренировке, подходы дописываются к нему', async () => {
+    await startWorkout('2026-11-02', 'upper');
+    await addExerciseToWorkout(await active(), 1);
+    await addExerciseToWorkout(await active(), 2);
+    await addSet(await active(), 1, SET);
+    await addSet(await active(), 2, { ...SET, weight: 73 });
+
+    await replaceExercise(await active(), 1, 2);
+
+    expect((await active()).exercises).toEqual([
+      { exerciseId: 2, sets: [{ ...SET, weight: 73 }, SET] },
+    ]);
+  });
+
+  it('замена на то же упражнение ничего не меняет', async () => {
+    await startWorkout('2026-11-02', 'upper');
+    await addExerciseToWorkout(await active(), 1);
+    await addSet(await active(), 1, SET);
+
+    await replaceExercise(await active(), 1, 1);
+
+    expect((await active()).exercises).toEqual([{ exerciseId: 1, sets: [SET] }]);
+  });
+
+  it('удаление убирает упражнение вместе с подходами', async () => {
+    await startWorkout('2026-11-02', 'upper');
+    await addExerciseToWorkout(await active(), 1);
+    await addExerciseToWorkout(await active(), 2);
+    await addSet(await active(), 1, SET);
+
+    await removeExercise(await active(), 1);
+
+    expect((await active()).exercises).toEqual([{ exerciseId: 2, sets: [] }]);
+    expect((await active()).exerciseIds).toEqual([2]);
+  });
+});
+
 describe('правка подхода', () => {
   it('меняет только выбранный подход', async () => {
     await startWorkout('2026-11-02', 'upper');
@@ -115,12 +166,13 @@ describe('завершение', () => {
     await addSet(await active(), 1, SET);
     const { id } = await active();
 
-    expect(await finishWorkout(await active(), { durationMin: 60, note: 'Тяжело' })).toBe(true);
+    expect(await finishWorkout(await active(), { durationMin: 60, rating: 8, note: 'Тяжело' })).toBe(true);
 
     expect(await getActiveWorkout()).toBeUndefined();
     expect(await db.workouts.get(id)).toMatchObject({
       status: 'finished',
       durationMin: 60,
+      rating: 8,
       note: 'Тяжело',
       exerciseIds: [1],
     });
@@ -220,9 +272,13 @@ describe('проверка ввода', () => {
     expect(() => parseSet(weight, reps, false)).toThrow();
   });
 
-  it('длительность необязательна, но должна быть целым числом', () => {
+  it('длительность необязательна и переводится из времени в минуты', () => {
     expect(parseDuration('')).toBeUndefined();
-    expect(parseDuration('75')).toBe(75);
-    expect(() => parseDuration('1.5')).toThrow();
+    expect(parseDuration('01:20')).toBe(80);
+    expect(parseDuration('00:55')).toBe(55);
+  });
+
+  it.each(['00:00', 'вапвквк234', '75'])('отклоняет длительность «%s»', (text) => {
+    expect(() => parseDuration(text)).toThrow();
   });
 });

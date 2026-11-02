@@ -77,6 +77,31 @@ export async function addExerciseToWorkout(workout: Workout, exerciseId: number)
   await saveWorkout({ ...workout, exercises: [...workout.exercises, { exerciseId, sets: [] }] });
 }
 
+// Подходы остаются. Если новое упражнение уже есть в тренировке, подходы дописываются к нему.
+export async function replaceExercise(workout: Workout, oldId: number, newId: number): Promise<void> {
+  const old = workout.exercises.find((item) => item.exerciseId === oldId);
+  if (!old || oldId === newId) {
+    return;
+  }
+
+  const hasNew = workout.exercises.some((item) => item.exerciseId === newId);
+  const exercises = hasNew
+    ? workout.exercises
+        .filter((item) => item.exerciseId !== oldId)
+        .map((item) =>
+          item.exerciseId === newId ? { ...item, sets: [...item.sets, ...old.sets] } : item,
+        )
+    : workout.exercises.map((item) =>
+        item.exerciseId === oldId ? { ...item, exerciseId: newId } : item,
+      );
+  await saveWorkout({ ...workout, exercises });
+}
+
+export async function removeExercise(workout: Workout, exerciseId: number): Promise<void> {
+  const exercises = workout.exercises.filter((item) => item.exerciseId !== exerciseId);
+  await saveWorkout({ ...workout, exercises });
+}
+
 export async function addSet(workout: Workout, exerciseId: number, set: WorkoutSet): Promise<void> {
   const exercises = workout.exercises.map((item) =>
     item.exerciseId === exerciseId ? { ...item, sets: [...item.sets, set] } : item,
@@ -110,7 +135,7 @@ export async function removeSet(workout: Workout, exerciseId: number, setIndex: 
 // Упражнения без подходов не сохраняются. Тренировка без подходов удаляется, тогда вернётся false.
 export async function finishWorkout(
   workout: Workout,
-  details: { durationMin?: number; note?: string },
+  details: { durationMin?: number; rating?: number; note?: string },
 ): Promise<boolean> {
   const exercises = workout.exercises.filter((item) => item.sets.length > 0);
   if (exercises.length === 0) {
@@ -148,13 +173,15 @@ export function parseSet(
   return { weight, reps, warmup, ...(toFailure ? { toFailure } : {}) };
 }
 
+// Время из поля вида 01:20 переводится в минуты
 export function parseDuration(text: string): number | undefined {
-  if (text.trim() === '') {
+  if (text === '') {
     return undefined;
   }
-  const minutes = Number(text);
-  if (!Number.isInteger(minutes) || minutes < 1) {
-    throw new Error('Длительность: целое число минут');
+  const match = /^(\d{1,2}):(\d{2})$/.exec(text);
+  const minutes = match ? Number(match[1]) * 60 + Number(match[2]) : 0;
+  if (minutes < 1) {
+    throw new Error('Укажи длительность в часах и минутах');
   }
   return minutes;
 }

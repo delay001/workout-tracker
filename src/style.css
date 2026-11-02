@@ -85,6 +85,7 @@ h2 {
 
 input[type='text'],
 input[type='date'],
+input[type='time'],
 select,
 textarea {
   width: 100%;
@@ -249,6 +250,29 @@ textarea {
   background: var(--accent);
   color: var(--bg);
   font-weight: 600;
+}
+
+.rating {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.rating .chip {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.card-actions .button {
+  min-height: 48px;
+  margin-bottom: 0;
+  font-size: 1rem;
 }
 
 .screen {

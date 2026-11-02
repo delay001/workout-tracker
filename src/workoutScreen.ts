@@ -17,7 +17,9 @@ import {
   isExactMatch,
   parseDuration,
   parseSet,
+  removeExercise,
   removeSet,
+  replaceExercise,
   searchOptions,
   setMuscleGroup,
   stepValue,
@@ -81,6 +83,9 @@ export async function renderWorkoutScreen(
   async function reload(): Promise<void> {
     editedIndex = undefined;
     workout = (await getActiveWorkout()) ?? workout;
+    if (!workout.exercises.some((item) => item.exerciseId === currentId)) {
+      currentId = workout.exercises.at(-1)?.exerciseId;
+    }
     await showWorkout();
   }
 
@@ -200,6 +205,35 @@ export async function renderWorkoutScreen(
       ),
     );
 
+    const actions = h(
+      'div',
+      { className: 'card-actions' },
+      h(
+        'button',
+        {
+          type: 'button',
+          className: 'button button-secondary',
+          onclick: () => void showAddExercise(item.exerciseId),
+        },
+        'Заменить',
+      ),
+      h(
+        'button',
+        {
+          type: 'button',
+          className: 'button button-secondary',
+          onclick: async () => {
+            const question = `Удалить «${exercise.name}» из тренировки вместе с подходами?`;
+            if (item.sets.length === 0 || confirm(question)) {
+              await removeExercise(workout, item.exerciseId);
+              await reload();
+            }
+          },
+        },
+        'Удалить',
+      ),
+    );
+
     return h(
       'article',
       { className: isCurrent ? 'card card-current' : 'card' },
@@ -218,7 +252,7 @@ export async function renderWorkoutScreen(
         h('span', { className: 'muscle-group' }, exercise.muscleGroup ?? ''),
       ),
       h('ol', { className: 'set-list' }, ...rows),
-      ...(isCurrent ? [setForm(item, exercise), field('Группа мышц', group)] : []),
+      ...(isCurrent ? [setForm(item, exercise), field('Группа мышц', group), actions] : []),
     );
   }
 
@@ -245,13 +279,17 @@ export async function renderWorkoutScreen(
     );
   }
 
-  async function choose(exercise: Exercise): Promise<void> {
-    await addExerciseToWorkout(workout, exercise.id);
-    currentId = exercise.id;
-    await reload();
-  }
+  async function showAddExercise(replacedId?: number): Promise<void> {
+    async function choose(exercise: Exercise): Promise<void> {
+      if (replacedId === undefined) {
+        await addExerciseToWorkout(workout, exercise.id);
+      } else {
+        await replaceExercise(workout, replacedId, exercise.id);
+      }
+      currentId = exercise.id;
+      await reload();
+    }
 
-  async function showAddExercise(): Promise<void> {
     const nameInput = h('input', { type: 'text', autocomplete: 'off' });
     const groupInput = groupSelect();
     let groupChanged = false;
@@ -344,7 +382,7 @@ export async function renderWorkoutScreen(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, 'Добавить упражнение'),
+        h('h1', {}, replacedId === undefined ? 'Добавить упражнение' : 'Заменить упражнение'),
         field('Название', nameInput),
         groupFilter,
         newExercise,
@@ -364,8 +402,23 @@ export async function renderWorkoutScreen(
   }
 
   function showFinish(): void {
-    const duration = h('input', { type: 'text', inputMode: 'numeric', autocomplete: 'off' });
+    const duration = h('input', { type: 'time' });
     const note = h('textarea', { rows: 3 });
+    let rating: number | undefined;
+    const ratingButtons = Array.from({ length: 10 }, (_, index) =>
+      h(
+        'label',
+        { className: 'chip' },
+        h('input', {
+          type: 'radio',
+          name: 'rating',
+          onclick: () => {
+            rating = index + 1;
+          },
+        }),
+        String(index + 1),
+      ),
+    );
     const error = h('p', { className: 'error', role: 'alert' });
     const isEmpty = workout.exercises.every((item) => item.sets.length === 0);
 
@@ -380,6 +433,7 @@ export async function renderWorkoutScreen(
             try {
               const saved = await finishWorkout(workout, {
                 durationMin: parseDuration(duration.value),
+                rating,
                 note: note.value.trim() || undefined,
               });
               onClosed(saved ? 'Тренировка сохранена' : 'Пустая тренировка удалена');
@@ -388,7 +442,13 @@ export async function renderWorkoutScreen(
             }
           },
         },
-        field('Длительность, минут', duration),
+        field('Длительность, часы и минуты', duration),
+        h(
+          'div',
+          { className: 'field' },
+          h('span', {}, 'Оценка тренировки'),
+          h('div', { className: 'rating', role: 'radiogroup', ariaLabel: 'Оценка' }, ...ratingButtons),
+        ),
         field('Заметка', note),
         error,
         h('button', { type: 'submit', className: 'button' }, 'Завершить'),

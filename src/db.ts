@@ -33,6 +33,8 @@ export interface Workout {
   type: WorkoutType;
   status: WorkoutStatus;
   durationMin?: number;
+  // Оценка тренировки от 1 до 10
+  rating?: number;
   note?: string;
   exercises: WorkoutExercise[];
   // Повторяет exercises: нужно, чтобы быстро находить тренировки по упражнению
