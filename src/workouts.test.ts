@@ -1,12 +1,14 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CATALOG } from './catalog';
-import { db, findOrCreateExercise, type Workout } from './db';
+import { db, findOrCreateExercise, saveWorkout, type Workout } from './db';
 import {
   addExerciseToWorkout,
   addSet,
+  defaultSet,
   finishWorkout,
   getActiveWorkout,
+  getLastPerformance,
   isExactMatch,
   parseDuration,
   parseSet,
@@ -73,6 +75,93 @@ describe('ход тренировки', () => {
     await removeSet(await active(), 1, 1);
 
     expect((await active()).exercises[0].sets.map((set) => set.weight)).toEqual([66, 79]);
+  });
+});
+
+describe('прошлый раз', () => {
+  async function finished(date: string, exerciseId: number, weight: number): Promise<void> {
+    await saveWorkout({
+      date,
+      type: 'upper',
+      status: 'finished',
+      exercises: [{ exerciseId, sets: [{ ...SET, weight }] }],
+    });
+  }
+
+  async function lastWeight(): Promise<number | undefined> {
+    return (await getLastPerformance(1, await active()))?.sets[0].weight;
+  }
+
+  it('берёт самую позднюю тренировку с этим упражнением', async () => {
+    await finished('2026-10-01', 1, 60);
+    await finished('2026-10-20', 1, 70);
+    await finished('2026-10-25', 2, 99);
+    await startWorkout('2026-11-02', 'upper');
+
+    const last = await getLastPerformance(1, await active());
+
+    expect(last?.date).toBe('2026-10-20');
+    expect(last?.sets[0].weight).toBe(70);
+  });
+
+  it('смотрит на дату тренировки, а не на порядок внесения', async () => {
+    await finished('2026-10-20', 1, 70);
+    await finished('2026-10-01', 1, 60);
+    await startWorkout('2026-11-02', 'upper');
+
+    expect(await lastWeight()).toBe(70);
+  });
+
+  it('для тренировки задним числом не берёт более поздние', async () => {
+    await finished('2026-10-01', 1, 60);
+    await finished('2026-10-20', 1, 70);
+    await startWorkout('2026-10-10', 'upper');
+
+    expect(await lastWeight()).toBe(60);
+  });
+
+  it('из двух тренировок за день берёт внесённую позже', async () => {
+    await finished('2026-10-20', 1, 60);
+    await finished('2026-10-20', 1, 70);
+    await startWorkout('2026-11-02', 'upper');
+
+    expect(await lastWeight()).toBe(70);
+  });
+
+  it('не считает прошлым разом текущую тренировку', async () => {
+    await startWorkout('2026-11-02', 'upper');
+    await addExerciseToWorkout(await active(), 1);
+    await addSet(await active(), 1, SET);
+
+    expect(await getLastPerformance(1, await active())).toBeUndefined();
+  });
+
+  it('если записей нет, возвращает пусто', async () => {
+    await startWorkout('2026-11-02', 'upper');
+
+    expect(await getLastPerformance(1, await active())).toBeUndefined();
+  });
+});
+
+describe('подстановка в форму', () => {
+  const warmup = { weight: 40, reps: 10, warmup: true };
+  const working = { weight: 66, reps: 8, warmup: false };
+  const heavy = { weight: 79, reps: 6, warmup: false };
+
+  it('в начатом упражнении повторяет предыдущий подход', () => {
+    expect(defaultSet([working, heavy], [warmup])).toEqual(heavy);
+  });
+
+  it('первый подход берёт первый рабочий из прошлого раза', () => {
+    expect(defaultSet([], [warmup, working, heavy])).toEqual(working);
+  });
+
+  it('если в прошлый раз были только разминочные, берёт разминочный', () => {
+    expect(defaultSet([], [warmup])).toEqual(warmup);
+  });
+
+  it('у нового упражнения ничего не подставляет', () => {
+    expect(defaultSet([])).toBeUndefined();
   });
 });
 
@@ -255,6 +344,12 @@ describe('проверка ввода', () => {
   it('принимает вес с запятой, шагом 0.5 и вес 0', () => {
     expect(parseSet('79,5', '6', false)).toEqual({ weight: 79.5, reps: 6, warmup: false });
     expect(parseSet('0', '12', true)).toEqual({ weight: 0, reps: 12, warmup: true });
+  });
+
+  it('RIR необязателен и может быть нулём', () => {
+    expect(parseSet('66', '8', false, false, '')).toEqual({ weight: 66, reps: 8, warmup: false });
+    expect(parseSet('66', '8', false, false, '0')).toMatchObject({ rir: 0 });
+    expect(() => parseSet('66', '8', false, false, '-1')).toThrow();
   });
 
   it('запоминает отметку «в отказ»', () => {

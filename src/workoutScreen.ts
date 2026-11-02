@@ -12,9 +12,12 @@ import { field, h } from './dom';
 import {
   addExerciseToWorkout,
   addSet,
+  defaultSet,
   finishWorkout,
   getActiveWorkout,
+  getLastPerformance,
   isExactMatch,
+  type LastPerformance,
   parseDuration,
   parseSet,
   removeExercise,
@@ -54,7 +57,11 @@ function stepper(input: HTMLInputElement, step: number, min: number): HTMLElemen
 }
 
 function formatSet(set: WorkoutSet): string {
-  const marks = [set.warmup ? 'разминка' : '', set.toFailure ? 'в отказ' : ''].filter(Boolean);
+  const marks = [
+    set.warmup ? 'разминка' : '',
+    set.toFailure ? 'в отказ' : '',
+    set.rir === undefined ? '' : `RIR ${set.rir}`,
+  ].filter(Boolean);
   return `${set.weight} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
 }
 
@@ -89,24 +96,35 @@ export async function renderWorkoutScreen(
     await showWorkout();
   }
 
-  function setForm(item: WorkoutExercise, exercise: Exercise): HTMLFormElement {
+  function setForm(
+    item: WorkoutExercise,
+    exercise: Exercise,
+    last?: LastPerformance,
+  ): HTMLFormElement {
     const index = editedIndex;
     const edited = index === undefined ? undefined : item.sets[index];
+    const filled = edited ?? defaultSet(item.sets, last?.sets);
 
     const weight = h('input', {
       type: 'text',
       inputMode: 'decimal',
       autocomplete: 'off',
-      value: edited ? String(edited.weight) : '',
+      value: filled ? String(filled.weight) : '',
     });
     const reps = h('input', {
       type: 'text',
       inputMode: 'numeric',
       autocomplete: 'off',
-      value: edited ? String(edited.reps) : '',
+      value: filled ? String(filled.reps) : '',
     });
     const warmup = h('input', { type: 'checkbox', checked: edited?.warmup ?? false });
     const toFailure = h('input', { type: 'checkbox', checked: edited?.toFailure ?? false });
+    const rir = h('input', {
+      type: 'text',
+      inputMode: 'numeric',
+      autocomplete: 'off',
+      value: edited?.rir === undefined ? '' : String(edited.rir),
+    });
     const error = h('p', { className: 'error', role: 'alert' });
 
     return h(
@@ -116,7 +134,7 @@ export async function renderWorkoutScreen(
         onsubmit: async (event: Event) => {
           event.preventDefault();
           try {
-            const set = parseSet(weight.value, reps.value, warmup.checked, toFailure.checked);
+            const set = parseSet(weight.value, reps.value, warmup.checked, toFailure.checked, rir.value);
             if (index === undefined) {
               await addSet(workout, exercise.id, set);
             } else {
@@ -140,6 +158,7 @@ export async function renderWorkoutScreen(
         h('label', { className: 'checkbox' }, warmup, 'Разминочный'),
         h('label', { className: 'checkbox' }, toFailure, 'В отказ'),
       ),
+      field('RIR, повторений в запасе (можно не заполнять)', stepper(rir, 1, 0)),
       error,
       h(
         'button',
@@ -162,7 +181,22 @@ export async function renderWorkoutScreen(
     );
   }
 
-  function exerciseCard(item: WorkoutExercise, exercise: Exercise): HTMLElement {
+  function lastTimeBlock(last?: LastPerformance): HTMLElement {
+    return h(
+      'section',
+      { className: 'last-time' },
+      h('h2', {}, last ? `В прошлый раз, ${formatDate(last.date)}` : 'В прошлый раз'),
+      last
+        ? h('ul', {}, ...last.sets.map((set) => h('li', {}, formatSet(set))))
+        : h('p', {}, 'Записей ещё нет'),
+    );
+  }
+
+  function exerciseCard(
+    item: WorkoutExercise,
+    exercise: Exercise,
+    last?: LastPerformance,
+  ): HTMLElement {
     const isCurrent = item.exerciseId === currentId;
 
     const group = groupSelect(exercise.muscleGroup);
@@ -251,16 +285,18 @@ export async function renderWorkoutScreen(
         exercise.name,
         h('span', { className: 'muscle-group' }, exercise.muscleGroup ?? ''),
       ),
+      ...(isCurrent ? [lastTimeBlock(last)] : []),
       h('ol', { className: 'set-list' }, ...rows),
-      ...(isCurrent ? [setForm(item, exercise), field('Группа мышц', group), actions] : []),
+      ...(isCurrent ? [setForm(item, exercise, last), field('Группа мышц', group), actions] : []),
     );
   }
 
   async function showWorkout(): Promise<void> {
     const exercises = await db.exercises.bulkGet(workout.exercises.map((item) => item.exerciseId));
+    const last = currentId === undefined ? undefined : await getLastPerformance(currentId, workout);
     const cards = workout.exercises.flatMap((item, index) => {
       const exercise = exercises[index];
-      return exercise ? [exerciseCard(item, exercise)] : [];
+      return exercise ? [exerciseCard(item, exercise, last)] : [];
     });
 
     root.replaceChildren(

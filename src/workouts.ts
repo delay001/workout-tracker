@@ -7,6 +7,11 @@ export const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
   other: 'Другое',
 };
 
+export interface LastPerformance {
+  date: string;
+  sets: WorkoutSet[];
+}
+
 export interface ExerciseOption {
   name: string;
   muscleGroup?: string;
@@ -102,6 +107,27 @@ export async function removeExercise(workout: Workout, exerciseId: number): Prom
   await saveWorkout({ ...workout, exercises });
 }
 
+// Последняя завершённая тренировка с этим упражнением, не позже даты текущей.
+// Так тренировка, внесённая задним числом, сравнивается с тем, что было до неё.
+export async function getLastPerformance(
+  exerciseId: number,
+  workout: Workout,
+): Promise<LastPerformance | undefined> {
+  const candidates = await db.workouts.where('exerciseIds').equals(exerciseId).toArray();
+  const last = candidates
+    .filter(
+      (item) => item.status === 'finished' && item.id !== workout.id && item.date <= workout.date,
+    )
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)[0];
+  const sets = last?.exercises.find((item) => item.exerciseId === exerciseId)?.sets;
+  return last && sets ? { date: last.date, sets } : undefined;
+}
+
+// Что подставить в форму: прошлый подход этой тренировки, иначе первый рабочий из прошлого раза
+export function defaultSet(sets: WorkoutSet[], lastSets: WorkoutSet[] = []): WorkoutSet | undefined {
+  return sets.at(-1) ?? lastSets.find((set) => !set.warmup) ?? lastSets[0];
+}
+
 export async function addSet(workout: Workout, exerciseId: number, set: WorkoutSet): Promise<void> {
   const exercises = workout.exercises.map((item) =>
     item.exerciseId === exerciseId ? { ...item, sets: [...item.sets, set] } : item,
@@ -159,6 +185,7 @@ export function parseSet(
   repsText: string,
   warmup: boolean,
   toFailure = false,
+  rirText = '',
 ): WorkoutSet {
   const weight = Number(weightText.replace(',', '.'));
   const reps = Number(repsText);
@@ -170,7 +197,18 @@ export function parseSet(
     throw new Error('Повторения: целое число больше нуля');
   }
 
-  return { weight, reps, warmup, ...(toFailure ? { toFailure } : {}) };
+  const rir = Number(rirText);
+  if (!Number.isInteger(rir) || rir < 0) {
+    throw new Error('RIR: целое число от нуля');
+  }
+
+  return {
+    weight,
+    reps,
+    warmup,
+    ...(toFailure ? { toFailure } : {}),
+    ...(rirText.trim() === '' ? {} : { rir }),
+  };
 }
 
 // Время из поля вида 01:20 переводится в минуты

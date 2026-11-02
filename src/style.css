@@ -153,6 +153,27 @@ textarea {
   font-weight: 400;
 }
 
+.last-time {
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.last-time h2 {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 0.875rem;
+}
+
+.last-time ul,
+.last-time p {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 1.125rem;
+}
+
 .set-list {
   margin: 0;
   padding: 0;
