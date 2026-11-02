@@ -9,6 +9,8 @@ export function renderHomeScreen(
   message: string,
   onStarted: () => void,
   onHistory: () => void,
+  onExercises: () => void,
+  onImported: (message: string) => void,
 ): void {
   const dateInput = h('input', { type: 'date', value: todayLocal() });
 
@@ -36,7 +38,8 @@ export function renderHomeScreen(
     field('Дата', dateInput),
     h('div', { className: 'type-buttons' }, ...typeButtons),
     h('button', { type: 'button', className: 'button button-secondary', onclick: onHistory }, 'История'),
+    h('button', { type: 'button', className: 'button button-secondary', onclick: onExercises }, 'Упражнения'),
     backup,
   );
-  renderBackupScreen(backup);
+  renderBackupScreen(backup, onImported);
 }

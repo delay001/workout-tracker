@@ -6,7 +6,6 @@ import {
   type Exercise,
   type Workout,
   type WorkoutExercise,
-  type WorkoutSet,
   type WorkoutType,
 } from './db';
 import { field, h } from './dom';
@@ -17,6 +16,7 @@ import {
   defaultSet,
   deleteWorkout,
   finishWorkout,
+  formatSet,
   getLastPerformance,
   isExactMatch,
   type LastPerformance,
@@ -64,11 +64,6 @@ function digitsInput(): HTMLInputElement {
     input.value = input.value.replace(/\D/g, '');
   };
   return input;
-}
-
-function formatSet(set: WorkoutSet): string {
-  const marks = [set.warmup ? 'разминка' : '', set.toFailure ? 'в отказ' : ''].filter(Boolean);
-  return `${set.weight} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
 }
 
 function groupSelect(value?: string): HTMLSelectElement {

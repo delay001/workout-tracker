@@ -5,13 +5,16 @@ import { db, findOrCreateExercise, saveWorkout, type Workout } from './db';
 import {
   addExerciseToWorkout,
   addSet,
+  bestResult,
   bestSet,
   defaultSet,
   deleteWorkout,
   finishWorkout,
   getActiveWorkout,
+  getExerciseHistory,
   getFinishedWorkouts,
   getLastPerformance,
+  getUsedExercises,
   isExactMatch,
   parseDuration,
   parseSet,
@@ -350,6 +353,60 @@ describe('история', () => {
     const last = await getLastPerformance(1, (await db.workouts.get(id))!);
 
     expect(last?.date).toBe('2026-10-01');
+  });
+});
+
+describe('история по упражнению', () => {
+  const set = (weight: number, reps: number, warmup = false) => ({ weight, reps, warmup });
+
+  async function finished(date: string, exerciseId: number, sets: ReturnType<typeof set>[]): Promise<void> {
+    await saveWorkout({ date, type: 'upper', status: 'finished', exercises: [{ exerciseId, sets }] });
+  }
+
+  it('показывает только это упражнение и только завершённые, новые сверху', async () => {
+    await finished('2026-10-01', 1, [set(60, 8)]);
+    await finished('2026-10-20', 1, [set(70, 8)]);
+    await finished('2026-10-10', 2, [set(99, 8)]);
+    await startWorkout('2026-11-02', 'upper');
+    await addExerciseToWorkout(await active(), 1);
+    await addSet(await active(), 1, SET);
+
+    const history = await getExerciseHistory(1);
+
+    expect(history.map((entry) => entry.date)).toEqual(['2026-10-20', '2026-10-01']);
+  });
+
+  it('лучший результат: вес важнее повторений, разминочные не считаются', async () => {
+    await finished('2026-10-01', 1, [set(50, 20), set(52, 12)]);
+    await finished('2026-10-20', 1, [set(100, 3, true), set(51, 15)]);
+
+    expect(bestResult(await getExerciseHistory(1))).toEqual({ set: set(52, 12), date: '2026-10-01' });
+  });
+
+  it('повторённый рекорд датируется первым разом', async () => {
+    await finished('2026-10-01', 1, [set(52, 12)]);
+    await finished('2026-10-20', 1, [set(52, 12)]);
+
+    expect(bestResult(await getExerciseHistory(1))?.date).toBe('2026-10-01');
+  });
+
+  it('без записей лучшего результата нет', () => {
+    expect(bestResult([])).toBeUndefined();
+  });
+
+  it('список использованных упражнений идёт по группам и с лучшим результатом', async () => {
+    const legs = await findOrCreateExercise('Румынская тяга', 'Ноги');
+    const chest = await findOrCreateExercise('Жим лёжа', 'Грудь');
+    await findOrCreateExercise('Ни разу не выполнялось', 'Спина');
+    await finished('2026-10-01', legs.id, [set(80, 8)]);
+    await finished('2026-10-02', chest.id, [set(100, 3)]);
+
+    const used = await getUsedExercises();
+
+    expect(used.map((item) => [item.exercise.name, item.best?.set.weight])).toEqual([
+      ['Жим лёжа', 100],
+      ['Румынская тяга', 80],
+    ]);
   });
 });
 

@@ -10,7 +10,7 @@ function downloadJson(fileName: string, content: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function renderBackupScreen(root: HTMLElement): void {
+export function renderBackupScreen(root: HTMLElement, onImported: (message: string) => void): void {
   root.innerHTML = `
     <h2>Резервная копия</h2>
     <p class="hint">Данные хранятся только на этом телефоне. Регулярно сохраняй копию в файл.</p>
@@ -48,7 +48,8 @@ export function renderBackupScreen(root: HTMLElement): void {
       }
 
       await importData(backup);
-      status.textContent = `Восстановлено: упражнений ${backup.exercises.length}, тренировок ${backup.workouts.length}`;
+      // В копии может быть начатая тренировка, поэтому экран строится заново
+      onImported(`Восстановлено: упражнений ${backup.exercises.length}, тренировок ${backup.workouts.length}`);
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : 'Не удалось прочитать файл';
     }

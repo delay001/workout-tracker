@@ -1,5 +1,6 @@
 import './style.css';
 import { requestPersistentStorage, type Workout } from './db';
+import { renderExercisesScreen } from './exercisesScreen';
 import { renderHistoryScreen } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
 import { renderWorkoutScreen } from './workoutScreen';
@@ -22,7 +23,15 @@ async function render(message = ''): Promise<void> {
       message,
       () => void render(),
       () => void showHistory(),
+      () => void showExercises(),
+      (result) => void render(result),
     );
+  }
+}
+
+async function showExercises(): Promise<void> {
+  if (app) {
+    await renderExercisesScreen(app, () => void render());
   }
 }
 

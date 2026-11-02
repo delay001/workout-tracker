@@ -15,13 +15,14 @@ async function fillData(): Promise<void> {
     type: 'upper',
     status: 'finished',
     durationMin: 55,
+    rating: 8,
     note: 'Хорошо пошло',
     exercises: [
       {
         exerciseId: exercise.id,
         sets: [
           { weight: 66, reps: 8, warmup: true },
-          { weight: 79.5, reps: 6, warmup: false, rir: 1 },
+          { weight: 79.5, reps: 6, warmup: false, toFailure: true, rir: 1 },
         ],
       },
     ],

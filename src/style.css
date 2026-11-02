@@ -259,6 +259,12 @@ textarea {
   margin-top: 12px;
 }
 
+.history-date {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
 .set-row-edited {
   border-radius: 8px;
   background: var(--surface);

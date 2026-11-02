@@ -1,5 +1,12 @@
 import { CATALOG, MUSCLE_GROUPS } from './catalog';
-import { db, saveWorkout, type Workout, type WorkoutSet, type WorkoutType } from './db';
+import {
+  db,
+  saveWorkout,
+  type Exercise,
+  type Workout,
+  type WorkoutSet,
+  type WorkoutType,
+} from './db';
 
 export const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
   upper: 'Верх',
@@ -10,6 +17,16 @@ export const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
 export interface LastPerformance {
   date: string;
   sets: WorkoutSet[];
+}
+
+export interface BestResult {
+  set: WorkoutSet;
+  date: string;
+}
+
+export interface UsedExercise {
+  exercise: Exercise;
+  best?: BestResult;
 }
 
 export interface ExerciseOption {
@@ -143,6 +160,49 @@ export function bestSet(sets: WorkoutSet[]): WorkoutSet | undefined {
         ? set
         : best,
     undefined,
+  );
+}
+
+export function formatSet(set: WorkoutSet): string {
+  const marks = [set.warmup ? 'разминка' : '', set.toFailure ? 'в отказ' : ''].filter(Boolean);
+  return `${set.weight} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
+}
+
+// Все подходы упражнения по завершённым тренировкам, новые сверху
+export async function getExerciseHistory(exerciseId: number): Promise<LastPerformance[]> {
+  const workouts = await getFinishedWorkouts();
+  return workouts.flatMap((workout) =>
+    workout.exercises
+      .filter((item) => item.exerciseId === exerciseId)
+      .map((item) => ({ date: workout.date, sets: item.sets })),
+  );
+}
+
+// Лучший подход за всё время и дата, когда он был сделан впервые
+export function bestResult(history: LastPerformance[]): BestResult | undefined {
+  const oldestFirst = [...history].reverse();
+  const set = bestSet(oldestFirst.flatMap((entry) => entry.sets));
+  const date = oldestFirst.find((entry) => set && entry.sets.includes(set))?.date;
+  return set && date ? { set, date } : undefined;
+}
+
+// Упражнения из завершённых тренировок с лучшим результатом: по группам мышц, затем по алфавиту
+export async function getUsedExercises(): Promise<UsedExercise[]> {
+  const workouts = await getFinishedWorkouts();
+  const ids = [...new Set(workouts.flatMap((workout) => workout.exerciseIds))];
+  const exercises = await db.exercises.bulkGet(ids);
+
+  const used = await Promise.all(
+    exercises.flatMap((exercise) =>
+      exercise
+        ? [getExerciseHistory(exercise.id).then((history) => ({ exercise, best: bestResult(history) }))]
+        : [],
+    ),
+  );
+  return used.sort(
+    (a, b) =>
+      groupRank(a.exercise.muscleGroup) - groupRank(b.exercise.muscleGroup) ||
+      a.exercise.name.localeCompare(b.exercise.name, 'ru'),
   );
 }
 
