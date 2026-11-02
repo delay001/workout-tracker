@@ -1,6 +1,7 @@
 import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
 import type { Workout } from './db';
 import { h } from './dom';
+import { renderExercisesScreen } from './exercisesScreen';
 import { getFinishedWorkouts, WORKOUT_TYPE_NAMES } from './workouts';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -19,10 +20,54 @@ function summary(workout: Workout): string {
     .join(', ');
 }
 
-export async function renderHistoryScreen(
+let shownView: 'workouts' | 'exercises' = 'workouts';
+
+export async function renderHistoryTab(
   root: HTMLElement,
   onOpen: (workout: Workout) => void,
-  onBack: () => void,
+): Promise<void> {
+  const body = h('div');
+
+  const viewChip = (label: string, view: typeof shownView): HTMLElement =>
+    h(
+      'label',
+      { className: 'chip' },
+      h('input', {
+        type: 'radio',
+        name: 'history-view',
+        checked: view === shownView,
+        onchange: () => {
+          shownView = view;
+          void showView();
+        },
+      }),
+      label,
+    );
+
+  async function showView(): Promise<void> {
+    if (shownView === 'workouts') {
+      await renderWorkoutsView(body, onOpen);
+    } else {
+      await renderExercisesScreen(body);
+    }
+  }
+
+  root.replaceChildren(
+    h('h1', {}, 'История'),
+    h(
+      'div',
+      { className: 'chips', role: 'radiogroup', ariaLabel: 'Что показать' },
+      viewChip('Тренировки', 'workouts'),
+      viewChip('Упражнения', 'exercises'),
+    ),
+    body,
+  );
+  await showView();
+}
+
+async function renderWorkoutsView(
+  root: HTMLElement,
+  onOpen: (workout: Workout) => void,
 ): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const today = todayLocal();
@@ -83,34 +128,24 @@ export async function renderHistoryScreen(
     root.replaceChildren(
       h(
         'div',
-        { className: 'screen' },
-        h('h1', {}, 'История'),
-        h(
-          'div',
-          { className: 'month-nav' },
-          monthButton('‹', 'Предыдущий месяц', -1),
-          h('h2', {}, formatMonth(shown.year, shown.month)),
-          monthButton('›', 'Следующий месяц', 1),
-        ),
-        h(
-          'div',
-          { className: 'calendar' },
-          ...WEEKDAYS.map((day) => h('span', { className: 'weekday' }, day)),
-          ...cells.map(dayCell),
-        ),
-        ...(listed.length === 0 ? [h('p', { className: 'hint' }, 'В этом месяце тренировок нет')] : []),
-        ...listed.map((workout) =>
-          h(
-            'button',
-            { type: 'button', className: 'list-button', onclick: () => onOpen(workout) },
-            `${formatDate(workout.date)}, ${WORKOUT_TYPE_NAMES[workout.type]}`,
-            h('span', { className: 'muscle-group' }, summary(workout)),
-          ),
-        ),
+        { className: 'month-nav' },
+        monthButton('‹', 'Предыдущий месяц', -1),
+        h('h2', {}, formatMonth(shown.year, shown.month)),
+        monthButton('›', 'Следующий месяц', 1),
+      ),
+      h(
+        'div',
+        { className: 'calendar' },
+        ...WEEKDAYS.map((day) => h('span', { className: 'weekday' }, day)),
+        ...cells.map(dayCell),
+      ),
+      ...(listed.length === 0 ? [h('p', { className: 'hint' }, 'В этом месяце тренировок нет')] : []),
+      ...listed.map((workout) =>
         h(
           'button',
-          { type: 'button', className: 'button button-secondary bottom-action', onclick: onBack },
-          'Назад',
+          { type: 'button', className: 'list-button', onclick: () => onOpen(workout) },
+          `${formatDate(workout.date)}, ${WORKOUT_TYPE_NAMES[workout.type]}`,
+          h('span', { className: 'muscle-group' }, summary(workout)),
         ),
       ),
     );

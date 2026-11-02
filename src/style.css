@@ -63,6 +63,49 @@ h2 {
   color: #f87171;
 }
 
+.button-big {
+  min-height: 96px;
+  font-size: 1.5rem;
+}
+
+.tab-content {
+  padding-bottom: 72px;
+}
+
+.tab-content .screen {
+  min-height: calc(100dvh - 120px);
+}
+
+.tab-content .bottom-action {
+  bottom: 84px;
+}
+
+.tabs {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--surface);
+  background: var(--bg);
+}
+
+.tab {
+  min-height: 64px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+}
+
+.tab-active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .month-nav {
   display: flex;
   align-items: center;

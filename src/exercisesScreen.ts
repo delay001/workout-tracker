@@ -13,15 +13,7 @@ function formatBest(best: BestResult): string {
   return `${best.set.weight} кг × ${best.set.reps}, ${formatDate(best.date)}`;
 }
 
-export async function renderExercisesScreen(root: HTMLElement, onBack: () => void): Promise<void> {
-  function backButton(onclick: () => void): HTMLButtonElement {
-    return h(
-      'button',
-      { type: 'button', className: 'button button-secondary bottom-action', onclick },
-      'Назад',
-    );
-  }
-
+export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
   async function showList(): Promise<void> {
     const used = await getUsedExercises();
 
@@ -44,15 +36,9 @@ export async function renderExercisesScreen(root: HTMLElement, onBack: () => voi
     }
 
     root.replaceChildren(
-      h(
-        'div',
-        { className: 'screen' },
-        h('h1', {}, 'Упражнения'),
-        ...(used.length === 0
-          ? [h('p', { className: 'hint' }, 'Здесь появятся упражнения из завершённых тренировок')]
-          : items),
-        backButton(onBack),
-      ),
+      ...(used.length === 0
+        ? [h('p', { className: 'hint' }, 'Здесь появятся упражнения из завершённых тренировок')]
+        : items),
     );
   }
 
@@ -64,7 +50,7 @@ export async function renderExercisesScreen(root: HTMLElement, onBack: () => voi
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, exercise.name),
+        h('h2', {}, exercise.name),
         ...(exercise.muscleGroup ? [h('p', { className: 'hint' }, exercise.muscleGroup)] : []),
         ...(best
           ? [
@@ -84,7 +70,15 @@ export async function renderExercisesScreen(root: HTMLElement, onBack: () => voi
             h('ol', { className: 'set-list' }, ...entry.sets.map((set) => h('li', {}, formatSet(set)))),
           ),
         ),
-        backButton(() => void showList()),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'button button-secondary bottom-action',
+            onclick: () => void showList(),
+          },
+          'Назад',
+        ),
       ),
     );
   }

@@ -1,14 +1,24 @@
 import './style.css';
 import { requestPersistentStorage, type Workout } from './db';
-import { renderExercisesScreen } from './exercisesScreen';
-import { renderHistoryScreen } from './historyScreen';
+import { h } from './dom';
+import { renderHistoryTab } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
+import { renderSettingsScreen } from './settingsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
 import { getActiveWorkout } from './workouts';
 
-const app = document.querySelector<HTMLDivElement>('#app');
+type Tab = 'workout' | 'history' | 'settings';
 
-async function render(message = ''): Promise<void> {
+const TABS: [Tab, string][] = [
+  ['workout', 'Тренировка'],
+  ['history', 'История'],
+  ['settings', 'Настройки'],
+];
+
+const app = document.querySelector<HTMLDivElement>('#app');
+const content = h('main', { className: 'tab-content' });
+
+async function showTab(tab: Tab, message = ''): Promise<void> {
   if (!app) {
     return;
   }
@@ -16,36 +26,39 @@ async function render(message = ''): Promise<void> {
   // Начатая тренировка хранится в базе, поэтому после перезапуска открывается снова
   const workout = await getActiveWorkout();
   if (workout) {
-    await renderWorkoutScreen(app, workout, (result) => void render(result));
+    await openWorkout(workout, (result) => void showTab('workout', result));
+    return;
+  }
+
+  const buttons = TABS.map(([id, label]) =>
+    h(
+      'button',
+      {
+        type: 'button',
+        className: id === tab ? 'tab tab-active' : 'tab',
+        onclick: () => void showTab(id),
+      },
+      label,
+    ),
+  );
+  app.replaceChildren(content, h('nav', { className: 'tabs' }, ...buttons));
+
+  if (tab === 'workout') {
+    renderHomeScreen(content, message, () => void showTab('workout'));
+  } else if (tab === 'history') {
+    await renderHistoryTab(content, (opened) => {
+      void openWorkout(opened, () => void showTab('history'));
+    });
   } else {
-    renderHomeScreen(
-      app,
-      message,
-      () => void render(),
-      () => void showHistory(),
-      () => void showExercises(),
-      (result) => void render(result),
-    );
+    renderSettingsScreen(content, message, (result) => void showTab('settings', result));
   }
 }
 
-async function showExercises(): Promise<void> {
+async function openWorkout(workout: Workout, onClosed: (message: string) => void): Promise<void> {
   if (app) {
-    await renderExercisesScreen(app, () => void render());
+    await renderWorkoutScreen(app, workout, onClosed);
   }
 }
 
-async function showHistory(): Promise<void> {
-  if (app) {
-    await renderHistoryScreen(app, (workout) => void openWorkout(workout), () => void render());
-  }
-}
-
-async function openWorkout(workout: Workout): Promise<void> {
-  if (app) {
-    await renderWorkoutScreen(app, workout, () => void showHistory());
-  }
-}
-
-void render();
+void showTab('workout');
 void requestPersistentStorage();
