@@ -1,6 +1,13 @@
 import { db } from './db';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light' | 'system';
+
+export const ACCENTS = ['pink', 'orange', 'green', 'blue', 'violet', 'red'] as const;
+export type Accent = (typeof ACCENTS)[number];
+
+const DEFAULT_MONTHLY_GOAL = 12;
+
+let chosenTheme: Theme = 'dark';
 
 export async function getSetting(key: string): Promise<string> {
   return (await db.settings.get(key))?.value ?? '';
@@ -10,20 +17,46 @@ export async function setSetting(key: string, value: string): Promise<void> {
   await db.settings.put({ key, value });
 }
 
-const DEFAULT_MONTHLY_GOAL = 12;
-
 export async function getMonthlyGoal(): Promise<number> {
   const goal = Number(await getSetting('monthlyGoal'));
   return Number.isInteger(goal) && goal > 0 ? goal : DEFAULT_MONTHLY_GOAL;
 }
 
+export function resolveTheme(theme: Theme, systemIsDark: boolean): 'dark' | 'light' {
+  if (theme === 'system') {
+    return systemIsDark ? 'dark' : 'light';
+  }
+  return theme;
+}
+
+export function parseTheme(value: string): Theme {
+  return value === 'light' || value === 'system' ? value : 'dark';
+}
+
+export function parseAccent(value: string): Accent {
+  return ACCENTS.find((accent) => accent === value) ?? 'pink';
+}
+
 export function applyTheme(theme: Theme): void {
-  document.documentElement.dataset.theme = theme;
+  chosenTheme = theme;
+  const resolved = resolveTheme(theme, matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = resolved;
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'light' ? '#f6f5fb' : '#17151f');
+    ?.setAttribute('content', resolved === 'light' ? '#f6f5fb' : '#17151f');
+}
+
+export function applyAccent(accent: Accent): void {
+  document.documentElement.dataset.accent = accent;
 }
 
 export async function loadTheme(): Promise<void> {
-  applyTheme((await getSetting('theme')) === 'light' ? 'light' : 'dark');
+  applyTheme(parseTheme(await getSetting('theme')));
+  applyAccent(parseAccent(await getSetting('accent')));
+
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (chosenTheme === 'system') {
+      applyTheme('system');
+    }
+  });
 }

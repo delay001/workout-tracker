@@ -1,5 +1,5 @@
 import './style.css';
-import { requestPersistentStorage, type Workout } from './db';
+import { markUpExercises, requestPersistentStorage, type Workout } from './db';
 import { h } from './dom';
 import { renderHistoryTab } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
@@ -95,5 +95,5 @@ async function openActive(): Promise<void> {
   }
 }
 
-void loadTheme().then(openActive);
+void loadTheme().then(markUpExercises).then(openActive);
 void requestPersistentStorage();

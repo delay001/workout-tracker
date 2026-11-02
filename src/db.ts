@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
 import { t } from './i18n';
+import { markupFor, type Movement, type Muscle } from './muscles';
 
 // upper, lower, other или название своего типа
 export type WorkoutType = string;
@@ -14,6 +15,9 @@ export interface Exercise {
   note?: string;
   // Скрытое упражнение не предлагается при выборе, но остаётся в истории
   hidden?: boolean;
+  primaryMuscle?: Muscle;
+  secondaryMuscles?: Muscle[];
+  movement?: Movement;
 }
 
 export interface WorkoutSet {
@@ -103,8 +107,20 @@ export async function findOrCreateExercise(name: string, muscleGroup?: string): 
     return existing;
   }
 
-  const id = await db.exercises.add({ name: cleanName, nameKey, muscleGroup });
-  return { id, name: cleanName, nameKey, muscleGroup };
+  const exercise = { name: cleanName, nameKey, muscleGroup, ...markupFor(cleanName) };
+  const id = await db.exercises.add(exercise);
+  return { ...exercise, id };
+}
+
+// Дополняет упражнения разметкой мышц из каталога. Структура базы не меняется, заполненное не трогается.
+export async function markUpExercises(): Promise<void> {
+  const exercises = await db.exercises.filter((exercise) => !exercise.primaryMuscle).toArray();
+  for (const exercise of exercises) {
+    const markup = markupFor(exercise.name);
+    if (markup.primaryMuscle) {
+      await db.exercises.update(exercise.id, markup);
+    }
+  }
 }
 
 export async function saveWorkout(draft: WorkoutDraft): Promise<number> {

@@ -2,7 +2,18 @@ import { renderBackupScreen } from './backupScreen';
 import { field, h } from './dom';
 import { renderExerciseSettings } from './exerciseSettingsScreen';
 import { renderImportScreen } from './importScreen';
-import { applyTheme, getMonthlyGoal, getSetting, setSetting, type Theme } from './settings';
+import {
+  ACCENTS,
+  applyAccent,
+  applyTheme,
+  getMonthlyGoal,
+  getSetting,
+  parseAccent,
+  parseTheme,
+  setSetting,
+  type Accent,
+  type Theme,
+} from './settings';
 import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes } from './workouts';
 import { t } from './i18n';
@@ -91,7 +102,24 @@ export async function renderSettingsScreen(
       value: String(await getMonthlyGoal()),
       onchange: () => void setSetting('monthlyGoal', goal.value.trim()),
     });
-    const theme = document.documentElement.dataset.theme;
+    const theme = parseTheme(await getSetting('theme'));
+    const accent = parseAccent(await getSetting('accent'));
+
+    const accentChip = (value: Accent): HTMLElement =>
+      h(
+        'label',
+        { className: `chip accent-chip accent-${value}` },
+        h('input', {
+          type: 'radio',
+          name: 'accent',
+          checked: accent === value,
+          onchange: () => {
+            applyAccent(value);
+            void setSetting('accent', value);
+          },
+        }),
+        t(`accent.${value}`),
+      );
 
     const themeChip = (label: string, value: Theme): HTMLElement =>
       h(
@@ -123,6 +151,17 @@ export async function renderSettingsScreen(
           { className: 'chips', role: 'radiogroup', ariaLabel: t('settings.theme') },
           themeChip(t('settings.themeDark'), 'dark'),
           themeChip(t('settings.themeLight'), 'light'),
+          themeChip(t('settings.themeSystem'), 'system'),
+        ),
+      ),
+      h(
+        'div',
+        { className: 'field' },
+        h('span', {}, t('settings.accent')),
+        h(
+          'div',
+          { className: 'chips', role: 'radiogroup', ariaLabel: t('settings.accent') },
+          ...ACCENTS.map(accentChip),
         ),
       ),
       h(

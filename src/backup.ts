@@ -1,5 +1,6 @@
 import {
   db,
+  markUpExercises,
   type BodyWeight,
   type Exercise,
   type Measurement,
@@ -159,4 +160,5 @@ export async function importData(backup: Backup): Promise<void> {
     await db.bodyWeights.bulkAdd(backup.bodyWeights);
     await db.measurements.bulkAdd(backup.measurements);
   });
+  await markUpExercises();
 }

@@ -7,9 +7,11 @@
   --text: #f4f2f8;
   --muted: #aaa5b8;
   --accent: #e8528f;
-  --grad-1: linear-gradient(135deg, #f58a6b, #e0559a);
-  --grad-2: linear-gradient(135deg, #d858b4, #8f5fe0);
-  --grad-3: linear-gradient(135deg, #9b63e4, #5f78e6);
+  --grad-1: linear-gradient(135deg, #c64b2c, #c04a85);
+  --grad-2: linear-gradient(135deg, #b44a96, #8759d2);
+  --grad-3: linear-gradient(135deg, #8e5ad0, #566ed2);
+  --on-accent: #fff;
+  --danger: #fb8a8a;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -22,6 +24,52 @@
   --text: #221f2e;
   --muted: #6c667c;
   --accent: #c92f7d;
+  --danger: #c02626;
+}
+
+:root[data-accent='orange'] {
+  --accent: #f0883e;
+  --grad-1: linear-gradient(135deg, #af5e17, #c3500f);
+}
+
+:root[data-accent='green'] {
+  --accent: #3fbf7f;
+  --grad-1: linear-gradient(135deg, #198356, #0f7c5c);
+}
+
+:root[data-accent='blue'] {
+  --accent: #5b9df5;
+  --grad-1: linear-gradient(135deg, #3573cc, #2a5fc9);
+}
+
+:root[data-accent='violet'] {
+  --accent: #a98bf5;
+  --grad-1: linear-gradient(135deg, #865cd9, #6a3fc9);
+}
+
+:root[data-accent='red'] {
+  --accent: #f26d6d;
+  --grad-1: linear-gradient(135deg, #ca4545, #b82e2e);
+}
+
+:root[data-theme='light'][data-accent='orange'] {
+  --accent: #a84f0c;
+}
+
+:root[data-theme='light'][data-accent='green'] {
+  --accent: #0f7050;
+}
+
+:root[data-theme='light'][data-accent='blue'] {
+  --accent: #2259b8;
+}
+
+:root[data-theme='light'][data-accent='violet'] {
+  --accent: #6236bd;
+}
+
+:root[data-theme='light'][data-accent='red'] {
+  --accent: #b02a2a;
 }
 
 * {
@@ -79,7 +127,7 @@ h2 {
   border: 0;
   border-radius: 16px;
   background: var(--grad-1);
-  color: #fff;
+  color: var(--on-accent);
   font: inherit;
   font-size: 1.125rem;
   font-weight: 600;
@@ -92,7 +140,7 @@ h2 {
 
 .button-danger {
   background: none;
-  color: #f87171;
+  color: var(--danger);
 }
 
 .centered {
@@ -131,7 +179,7 @@ h2 {
   padding: 16px;
   border-radius: 24px;
   background: var(--grad-2);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .stat:nth-child(even) {
@@ -275,7 +323,7 @@ h2 {
 
 .day-workout {
   background: var(--grad-1);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -291,7 +339,7 @@ h2 {
 
 .error {
   margin: 0 0 8px;
-  color: #f87171;
+  color: var(--danger);
 }
 
 .error:empty {
@@ -480,7 +528,7 @@ textarea {
   padding: 2px 8px;
   border-radius: 10px;
   background: var(--grad-1);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.8125rem;
   animation: pop 0.3s ease-out;
 }
@@ -560,6 +608,38 @@ textarea {
   background: var(--surface);
 }
 
+.accent-chip::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border-radius: 50%;
+}
+
+.accent-pink::before {
+  background: #e0559a;
+}
+
+.accent-orange::before {
+  background: #e0771f;
+}
+
+.accent-green::before {
+  background: #1f9d68;
+}
+
+.accent-blue::before {
+  background: #3b7fe0;
+}
+
+.accent-violet::before {
+  background: #8a5fe0;
+}
+
+.accent-red::before {
+  background: #dd4b4b;
+}
+
 .chip input {
   position: absolute;
   opacity: 0;
@@ -567,7 +647,7 @@ textarea {
 
 .chip:has(input:checked) {
   background: var(--grad-1);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
