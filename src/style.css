@@ -2,6 +2,9 @@
   color-scheme: dark;
   --bg: #121417;
   --text: #f2f4f7;
+  --muted: #a4abb6;
+  --accent: #f59e0b;
+  --surface: #23272e;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -23,4 +26,39 @@ body {
 h1 {
   margin: 0;
   font-size: 1.75rem;
+}
+
+h2 {
+  margin: 24px 0 8px;
+  font-size: 1.25rem;
+}
+
+.hint {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.button {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--bg);
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.button-secondary {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.status {
+  min-height: 1.5em;
+  margin: 4px 0 0;
 }
