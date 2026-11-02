@@ -1,6 +1,7 @@
-import { CATALOG, MUSCLE_GROUPS } from './catalog';
+import { CATALOG, DEFAULT_TEMPLATES, MUSCLE_GROUPS } from './catalog';
 import {
   db,
+  findOrCreateExercise,
   saveWorkout,
   type Exercise,
   type Workout,
@@ -104,6 +105,27 @@ function groupRank(group?: string): number {
 
 // Упражнения пользователя плюс каталог, без повторов. Каталог в базу не пишется:
 // упражнение попадает туда, только когда его выбрали.
+export async function getTemplate(type: WorkoutType): Promise<string[]> {
+  return (await db.templates.get(type))?.exerciseNames ?? DEFAULT_TEMPLATES[type] ?? [];
+}
+
+export async function saveTemplate(type: WorkoutType, exerciseNames: string[]): Promise<void> {
+  await db.templates.put({ type, exerciseNames });
+}
+
+// Активная тренировка с упражнениями из шаблона. Без подходов они при завершении уберутся.
+export async function startFromTemplate(date: string, type: WorkoutType): Promise<void> {
+  await startWorkout(date, type);
+  for (const name of await getTemplate(type)) {
+    const group = CATALOG.find((item) => item.name === name)?.group;
+    const exercise = await findOrCreateExercise(name, group);
+    const workout = await getActiveWorkout();
+    if (workout) {
+      await addExerciseToWorkout(workout, exercise.id);
+    }
+  }
+}
+
 export async function searchOptions(query: string): Promise<ExerciseOption[]> {
   const key = normalize(query);
   const saved = await db.exercises.toArray();
@@ -234,6 +256,45 @@ export function bestSet(sets: WorkoutSet[]): WorkoutSet | undefined {
         : best,
     undefined,
   );
+}
+
+// Расчётный одноповторный максимум по формуле Эпли
+export function epley(set: WorkoutSet): number {
+  return set.weight * (1 + set.reps / 30);
+}
+
+// Рабочие подходы упражнения из завершённых тренировок не позже этой
+export async function getPriorSets(exerciseId: number, workout: Workout): Promise<WorkoutSet[]> {
+  const candidates = await db.workouts.where('exerciseIds').equals(exerciseId).toArray();
+  return candidates
+    .filter((item) => item.status === 'finished' && item.id !== workout.id && item.date <= workout.date)
+    .flatMap((item) => item.exercises)
+    .filter((item) => item.exerciseId === exerciseId)
+    .flatMap((item) => item.sets)
+    .filter((set) => !set.warmup);
+}
+
+// Подпись рекорда для каждого подхода. Первый раз в упражнении рекордом не считается.
+export function recordLabels(sets: WorkoutSet[], priorSets: WorkoutSet[]): string[] {
+  if (priorSets.length === 0) {
+    return sets.map(() => '');
+  }
+
+  let bestWeight = Math.max(...priorSets.map((set) => set.weight));
+  let bestOneRepMax = Math.max(...priorSets.map(epley));
+
+  return sets.map((set) => {
+    if (set.warmup || set.weight === 0) {
+      return '';
+    }
+    const labels = [
+      set.weight > bestWeight ? 'вес' : '',
+      epley(set) > bestOneRepMax ? '1ПМ' : '',
+    ].filter(Boolean);
+    bestWeight = Math.max(bestWeight, set.weight);
+    bestOneRepMax = Math.max(bestOneRepMax, epley(set));
+    return labels.length > 0 ? `Рекорд: ${labels.join(', ')}` : '';
+  });
 }
 
 export function formatSet(set: WorkoutSet): string {

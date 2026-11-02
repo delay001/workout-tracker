@@ -2,6 +2,7 @@ import { renderBackupScreen } from './backupScreen';
 import { field, h } from './dom';
 import { renderExerciseSettings } from './exerciseSettingsScreen';
 import { applyTheme, getSetting, setSetting, type Theme } from './settings';
+import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes } from './workouts';
 
 export async function renderSettingsScreen(
@@ -126,6 +127,15 @@ export async function renderSettingsScreen(
         'button',
         { type: 'button', className: 'button button-secondary', onclick: () => void showTypes() },
         'Типы тренировок',
+      ),
+      h(
+        'button',
+        {
+          type: 'button',
+          className: 'button button-secondary',
+          onclick: () => void renderTemplateSettings(root, () => void showMain()),
+        },
+        'Шаблоны',
       ),
       backup,
     );

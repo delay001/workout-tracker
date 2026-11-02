@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CATALOG } from './catalog';
+import { CATALOG, DEFAULT_TEMPLATES } from './catalog';
 import { db, findOrCreateExercise, saveWorkout, type Workout } from './db';
 import {
   addExerciseToWorkout,
@@ -10,6 +10,7 @@ import {
   bestSet,
   deleteWorkout,
   deleteWorkoutType,
+  epley,
   finishWorkout,
   getActiveWorkout,
   getCustomWorkoutTypes,
@@ -17,17 +18,21 @@ import {
   getFinishedWorkouts,
   getHiddenExercises,
   getLastPerformance,
+  getPriorSets,
   getUsedExercises,
   getWorkoutTypes,
   isExactMatch,
   parseDuration,
   parseSet,
+  recordLabels,
   removeExercise,
   removeSet,
   replaceExercise,
+  saveTemplate,
   searchOptions,
   setExerciseHidden,
   setMuscleGroup,
+  startFromTemplate,
   startWorkout,
   stepValue,
   updateExercise,
@@ -400,6 +405,94 @@ describe('история по упражнению', () => {
       ['Жим лёжа', 100],
       ['Румынская тяга', 80],
     ]);
+  });
+});
+
+describe('шаблоны', () => {
+  beforeEach(async () => {
+    await db.templates.clear();
+  });
+
+  it('тренировка из шаблона по умолчанию получает упражнения с группами, без подходов', async () => {
+    await startFromTemplate('2026-11-02', 'lower');
+
+    const workout = await active();
+    const first = await db.exercises.get(workout.exercises[0].exerciseId);
+
+    expect(workout.exercises).toHaveLength(DEFAULT_TEMPLATES.lower.length);
+    expect(workout.exercises.every((item) => item.sets.length === 0)).toBe(true);
+    expect(first).toMatchObject({ name: 'Разгибание ног сидя', muscleGroup: 'Ноги' });
+  });
+
+  it('изменённый шаблон важнее шаблона по умолчанию, пустой тоже', async () => {
+    await saveTemplate('upper', []);
+    await startFromTemplate('2026-11-02', 'upper');
+
+    expect((await active()).exercises).toEqual([]);
+  });
+
+  it('у типа без шаблона упражнений нет', async () => {
+    await startFromTemplate('2026-11-02', 'Руки');
+
+    expect((await active()).exercises).toEqual([]);
+  });
+
+  it('все названия шаблонов по умолчанию есть в каталоге', () => {
+    const names = CATALOG.map((item) => item.name);
+
+    for (const name of Object.values(DEFAULT_TEMPLATES).flat()) {
+      expect(names).toContain(name);
+    }
+  });
+});
+
+describe('личные рекорды', () => {
+  const set = (weight: number, reps: number, warmup = false) => ({ weight, reps, warmup });
+
+  it('считает 1ПМ по формуле Эпли', () => {
+    expect(epley(set(90, 30))).toBe(180);
+  });
+
+  it('отмечает новый вес и новый 1ПМ', () => {
+    expect(recordLabels([set(105, 3)], [set(100, 3)])).toEqual(['Рекорд: вес, 1ПМ']);
+  });
+
+  it('больше повторений с тем же весом — рекорд только по 1ПМ', () => {
+    expect(recordLabels([set(100, 5)], [set(100, 3)])).toEqual(['Рекорд: 1ПМ']);
+  });
+
+  it('больший вес с малым числом повторений — рекорд только по весу', () => {
+    expect(recordLabels([set(105, 1)], [set(100, 10)])).toEqual(['Рекорд: вес']);
+  });
+
+  it('повторённый результат не рекорд, разминочные и свой вес не считаются', () => {
+    expect(recordLabels([set(100, 3), set(200, 1, true), set(0, 20)], [set(100, 3)])).toEqual(['', '', '']);
+  });
+
+  it('второй подход сравнивается и с первым подходом этой тренировки', () => {
+    expect(recordLabels([set(105, 3), set(105, 3)], [set(100, 3)])).toEqual(['Рекорд: вес, 1ПМ', '']);
+  });
+
+  it('первый раз в упражнении рекордом не считается', () => {
+    expect(recordLabels([set(50, 8)], [])).toEqual(['']);
+  });
+
+  it('прошлые подходы берутся из завершённых тренировок без разминочных', async () => {
+    await saveWorkout({
+      date: '2026-10-01',
+      type: 'upper',
+      status: 'finished',
+      exercises: [{ exerciseId: 1, sets: [set(40, 10, true), set(60, 8)] }],
+    });
+    await saveWorkout({
+      date: '2026-11-20',
+      type: 'upper',
+      status: 'finished',
+      exercises: [{ exerciseId: 1, sets: [set(99, 8)] }],
+    });
+    await startWorkout('2026-11-02', 'upper');
+
+    expect(await getPriorSets(1, await active())).toEqual([set(60, 8)]);
   });
 });
 

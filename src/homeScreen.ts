@@ -2,7 +2,7 @@ import { formatDate, todayLocal } from './dates';
 import type { Workout } from './db';
 import { field, h } from './dom';
 import { getSetting } from './settings';
-import { getFinishedWorkouts, getWorkoutTypes, startWorkout, workoutTypeName } from './workouts';
+import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
 
 export async function renderHomeScreen(
   root: HTMLElement,
@@ -19,7 +19,7 @@ export async function renderHomeScreen(
           type: 'button',
           className: 'button',
           onclick: async () => {
-            await startWorkout(dateInput.value || todayLocal(), type);
+            await startFromTemplate(dateInput.value || todayLocal(), type);
             onOpenActive();
           },
         },

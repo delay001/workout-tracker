@@ -16,11 +16,13 @@ import {
   finishWorkout,
   formatSet,
   getLastPerformance,
+  getPriorSets,
   getWorkoutTypes,
   isExactMatch,
   type LastPerformance,
   parseDuration,
   parseSet,
+  recordLabels,
   removeExercise,
   removeSet,
   replaceExercise,
@@ -86,7 +88,9 @@ export async function renderWorkoutScreen(
   const workoutTypes = await getWorkoutTypes();
   // Завершённая тренировка открыта из истории: изменения в ней сохраняются сразу же
   const isEditing = startedWorkout.status === 'finished';
-  let currentId = isEditing ? undefined : workout.exercises.at(-1)?.exerciseId;
+  const nextExercise =
+    workout.exercises.find((item) => item.sets.length === 0) ?? workout.exercises.at(-1);
+  let currentId = isEditing ? undefined : nextExercise?.exerciseId;
   // Номер подхода текущего упражнения, который сейчас исправляется
   let editedIndex: number | undefined;
 
@@ -186,6 +190,7 @@ export async function renderWorkoutScreen(
   function exerciseCard(
     item: WorkoutExercise,
     exercise: Exercise,
+    records: string[],
     last?: LastPerformance,
   ): HTMLElement {
     const isCurrent = item.exerciseId === currentId;
@@ -213,6 +218,7 @@ export async function renderWorkoutScreen(
             },
           },
           formatSet(set),
+          ...(records[index] ? [h('span', { className: 'record' }, records[index])] : []),
         ),
         h(
           'button',
@@ -285,9 +291,13 @@ export async function renderWorkoutScreen(
   async function showWorkout(): Promise<void> {
     const exercises = await db.exercises.bulkGet(workout.exercises.map((item) => item.exerciseId));
     const last = currentId === undefined ? undefined : await getLastPerformance(currentId, workout);
+    const priorSets = await Promise.all(
+      workout.exercises.map((item) => getPriorSets(item.exerciseId, workout)),
+    );
     const cards = workout.exercises.flatMap((item, index) => {
       const exercise = exercises[index];
-      return exercise ? [exerciseCard(item, exercise, last)] : [];
+      const records = recordLabels(item.sets, priorSets[index]);
+      return exercise ? [exerciseCard(item, exercise, records, last)] : [];
     });
 
     const addButton = h(
