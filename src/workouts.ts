@@ -174,10 +174,10 @@ export async function finishWorkout(
 }
 
 // Новое значение поля после нажатия на плюс или минус
-export function stepValue(text: string, delta: number, min: number): string {
+export function stepValue(text: string, delta: number, min: number, max = Infinity): string {
   const current = Number(text.replace(',', '.'));
   const base = Number.isFinite(current) ? current : 0;
-  return String(Math.max(base + delta, min));
+  return String(Math.min(Math.max(base + delta, min), max));
 }
 
 export function parseSet(
@@ -185,7 +185,6 @@ export function parseSet(
   repsText: string,
   warmup: boolean,
   toFailure = false,
-  rirText = '',
 ): WorkoutSet {
   const weight = Number(weightText.replace(',', '.'));
   const reps = Number(repsText);
@@ -197,29 +196,19 @@ export function parseSet(
     throw new Error('Повторения: целое число больше нуля');
   }
 
-  const rir = Number(rirText);
-  if (!Number.isInteger(rir) || rir < 0) {
-    throw new Error('RIR: целое число от нуля');
-  }
-
-  return {
-    weight,
-    reps,
-    warmup,
-    ...(toFailure ? { toFailure } : {}),
-    ...(rirText.trim() === '' ? {} : { rir }),
-  };
+  return { weight, reps, warmup, ...(toFailure ? { toFailure } : {}) };
 }
 
-// Время из поля вида 01:20 переводится в минуты
-export function parseDuration(text: string): number | undefined {
-  if (text === '') {
+// Часы и минуты из двух полей переводятся в минуты. Оба поля пустые — длительность не указана.
+export function parseDuration(hoursText: string, minutesText: string): number | undefined {
+  if (hoursText === '' && minutesText === '') {
     return undefined;
   }
-  const match = /^(\d{1,2}):(\d{2})$/.exec(text);
-  const minutes = match ? Number(match[1]) * 60 + Number(match[2]) : 0;
-  if (minutes < 1) {
-    throw new Error('Укажи длительность в часах и минутах');
+  const hours = Number(hoursText);
+  const minutes = Number(minutesText);
+  const isValid = Number.isInteger(hours) && Number.isInteger(minutes) && hours >= 0 && minutes >= 0;
+  if (!isValid || minutes > 59 || hours * 60 + minutes < 1) {
+    throw new Error('Длительность: часы и минуты, минут не больше 59');
   }
-  return minutes;
+  return hours * 60 + minutes;
 }

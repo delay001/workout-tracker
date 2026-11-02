@@ -32,7 +32,7 @@ import {
 
 const NO_GROUP = 'Без группы';
 
-function stepper(input: HTMLInputElement, step: number, min: number): HTMLElement {
+function stepper(input: HTMLInputElement, step: number, min: number, max?: number): HTMLElement {
   const stepButton = (label: string, name: string, delta: number): HTMLButtonElement =>
     h(
       'button',
@@ -41,7 +41,7 @@ function stepper(input: HTMLInputElement, step: number, min: number): HTMLElemen
         className: 'step-button',
         ariaLabel: name,
         onclick: () => {
-          input.value = stepValue(input.value, delta, min);
+          input.value = stepValue(input.value, delta, min, max);
         },
       },
       label,
@@ -56,12 +56,16 @@ function stepper(input: HTMLInputElement, step: number, min: number): HTMLElemen
   );
 }
 
+function digitsInput(): HTMLInputElement {
+  const input = h('input', { type: 'text', inputMode: 'numeric', autocomplete: 'off', maxLength: 2 });
+  input.oninput = () => {
+    input.value = input.value.replace(/\D/g, '');
+  };
+  return input;
+}
+
 function formatSet(set: WorkoutSet): string {
-  const marks = [
-    set.warmup ? 'разминка' : '',
-    set.toFailure ? 'в отказ' : '',
-    set.rir === undefined ? '' : `RIR ${set.rir}`,
-  ].filter(Boolean);
+  const marks = [set.warmup ? 'разминка' : '', set.toFailure ? 'в отказ' : ''].filter(Boolean);
   return `${set.weight} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
 }
 
@@ -119,12 +123,6 @@ export async function renderWorkoutScreen(
     });
     const warmup = h('input', { type: 'checkbox', checked: edited?.warmup ?? false });
     const toFailure = h('input', { type: 'checkbox', checked: edited?.toFailure ?? false });
-    const rir = h('input', {
-      type: 'text',
-      inputMode: 'numeric',
-      autocomplete: 'off',
-      value: edited?.rir === undefined ? '' : String(edited.rir),
-    });
     const error = h('p', { className: 'error', role: 'alert' });
 
     return h(
@@ -134,7 +132,7 @@ export async function renderWorkoutScreen(
         onsubmit: async (event: Event) => {
           event.preventDefault();
           try {
-            const set = parseSet(weight.value, reps.value, warmup.checked, toFailure.checked, rir.value);
+            const set = parseSet(weight.value, reps.value, warmup.checked, toFailure.checked);
             if (index === undefined) {
               await addSet(workout, exercise.id, set);
             } else {
@@ -158,7 +156,6 @@ export async function renderWorkoutScreen(
         h('label', { className: 'checkbox' }, warmup, 'Разминочный'),
         h('label', { className: 'checkbox' }, toFailure, 'В отказ'),
       ),
-      field('RIR, повторений в запасе (можно не заполнять)', stepper(rir, 1, 0)),
       error,
       h(
         'button',
@@ -438,7 +435,8 @@ export async function renderWorkoutScreen(
   }
 
   function showFinish(): void {
-    const duration = h('input', { type: 'time' });
+    const hours = digitsInput();
+    const minutes = digitsInput();
     const note = h('textarea', { rows: 3 });
     let rating: number | undefined;
     const ratingButtons = Array.from({ length: 10 }, (_, index) =>
@@ -468,7 +466,7 @@ export async function renderWorkoutScreen(
             event.preventDefault();
             try {
               const saved = await finishWorkout(workout, {
-                durationMin: parseDuration(duration.value),
+                durationMin: parseDuration(hours.value, minutes.value),
                 rating,
                 note: note.value.trim() || undefined,
               });
@@ -478,7 +476,12 @@ export async function renderWorkoutScreen(
             }
           },
         },
-        field('Длительность, часы и минуты', duration),
+        h(
+          'div',
+          { className: 'set-inputs' },
+          field('Часы', stepper(hours, 1, 0)),
+          field('Минуты', stepper(minutes, 5, 0, 59)),
+        ),
         h(
           'div',
           { className: 'field' },

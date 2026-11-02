@@ -236,9 +236,10 @@ describe('плюсы и минусы', () => {
     expect(stepValue('79,5', -0.5, 0)).toBe('79');
   });
 
-  it('не уходит ниже минимума', () => {
+  it('не выходит за минимум и максимум', () => {
     expect(stepValue('0', -0.5, 0)).toBe('0');
     expect(stepValue('1', -1, 1)).toBe('1');
+    expect(stepValue('55', 5, 0, 59)).toBe('59');
   });
 
   it('работает с пустым полем', () => {
@@ -346,12 +347,6 @@ describe('проверка ввода', () => {
     expect(parseSet('0', '12', true)).toEqual({ weight: 0, reps: 12, warmup: true });
   });
 
-  it('RIR необязателен и может быть нулём', () => {
-    expect(parseSet('66', '8', false, false, '')).toEqual({ weight: 66, reps: 8, warmup: false });
-    expect(parseSet('66', '8', false, false, '0')).toMatchObject({ rir: 0 });
-    expect(() => parseSet('66', '8', false, false, '-1')).toThrow();
-  });
-
   it('запоминает отметку «в отказ»', () => {
     expect(parseSet('66', '8', false, true)).toEqual({ weight: 66, reps: 8, warmup: false, toFailure: true });
   });
@@ -367,13 +362,18 @@ describe('проверка ввода', () => {
     expect(() => parseSet(weight, reps, false)).toThrow();
   });
 
-  it('длительность необязательна и переводится из времени в минуты', () => {
-    expect(parseDuration('')).toBeUndefined();
-    expect(parseDuration('01:20')).toBe(80);
-    expect(parseDuration('00:55')).toBe(55);
+  it('длительность необязательна и переводится в минуты', () => {
+    expect(parseDuration('', '')).toBeUndefined();
+    expect(parseDuration('1', '20')).toBe(80);
+    expect(parseDuration('', '55')).toBe(55);
+    expect(parseDuration('2', '')).toBe(120);
   });
 
-  it.each(['00:00', 'вапвквк234', '75'])('отклоняет длительность «%s»', (text) => {
-    expect(() => parseDuration(text)).toThrow();
+  it.each([
+    ['0', '0'],
+    ['1', '60'],
+    ['а', '5'],
+  ])('отклоняет длительность %s ч %s мин', (hours, minutes) => {
+    expect(() => parseDuration(hours, minutes)).toThrow();
   });
 });

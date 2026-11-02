@@ -85,7 +85,6 @@ h2 {
 
 input[type='text'],
 input[type='date'],
-input[type='time'],
 select,
 textarea {
   width: 100%;
