@@ -2,7 +2,7 @@ import { renderBackupScreen } from './backupScreen';
 import { field, h } from './dom';
 import { renderExerciseSettings } from './exerciseSettingsScreen';
 import { renderImportScreen } from './importScreen';
-import { applyTheme, getSetting, setSetting, type Theme } from './settings';
+import { applyTheme, getMonthlyGoal, getSetting, setSetting, type Theme } from './settings';
 import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes } from './workouts';
 
@@ -82,6 +82,14 @@ export async function renderSettingsScreen(
       value: await getSetting('name'),
       onchange: () => void setSetting('name', name.value.trim()),
     });
+    const goal = h('input', {
+      type: 'text',
+      inputMode: 'numeric',
+      autocomplete: 'off',
+      maxLength: 2,
+      value: String(await getMonthlyGoal()),
+      onchange: () => void setSetting('monthlyGoal', goal.value.trim()),
+    });
     const theme = document.documentElement.dataset.theme;
 
     const themeChip = (label: string, value: Theme): HTMLElement =>
@@ -104,6 +112,7 @@ export async function renderSettingsScreen(
       h('h1', {}, 'Настройки'),
       h('p', { className: 'status', role: 'status' }, message),
       field('Твоё имя', name),
+      field('Цель: тренировок в месяц', goal),
       h(
         'div',
         { className: 'field' },

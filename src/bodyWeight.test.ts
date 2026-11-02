@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { chartPoints, deleteBodyWeight, getBodyWeights, saveBodyWeight } from './bodyWeight';
+import { deleteBodyWeight, getBodyWeights, saveBodyWeight } from './bodyWeight';
+import { chartPoints } from './chart';
 import { db } from './db';
 
 const BOX = { left: 0, right: 100, top: 0, bottom: 50 };
@@ -41,11 +42,11 @@ describe('журнал веса', () => {
 });
 
 describe('график', () => {
-  it('крайние точки попадают в углы, большой вес выше', () => {
+  it('крайние точки попадают в углы, большее значение выше', () => {
     const points = chartPoints(
       [
-        { date: '2026-10-01', kg: 80 },
-        { date: '2026-10-11', kg: 90 },
+        { date: '2026-10-01', value: 80 },
+        { date: '2026-10-11', value: 90 },
       ],
       BOX,
     );
@@ -59,9 +60,9 @@ describe('график', () => {
   it('ось X учитывает пропуски между датами', () => {
     const points = chartPoints(
       [
-        { date: '2026-10-01', kg: 80 },
-        { date: '2026-10-02', kg: 81 },
-        { date: '2026-10-11', kg: 82 },
+        { date: '2026-10-01', value: 80 },
+        { date: '2026-10-02', value: 81 },
+        { date: '2026-10-11', value: 82 },
       ],
       BOX,
     );
@@ -70,7 +71,7 @@ describe('график', () => {
   });
 
   it('одна запись не ломает расчёт', () => {
-    const [point] = chartPoints([{ date: '2026-10-01', kg: 80 }], BOX);
+    const [point] = chartPoints([{ date: '2026-10-01', value: 80 }], BOX);
 
     expect(Number.isFinite(point.x) && Number.isFinite(point.y)).toBe(true);
   });

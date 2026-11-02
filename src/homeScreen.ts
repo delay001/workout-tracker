@@ -1,7 +1,8 @@
 import { formatDate, todayLocal } from './dates';
 import type { Workout } from './db';
 import { field, h } from './dom';
-import { getSetting } from './settings';
+import { getMonthlyGoal, getSetting } from './settings';
+import { goalBar } from './statsScreen';
 import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
 
 export async function renderHomeScreen(
@@ -81,6 +82,7 @@ export async function renderHomeScreen(
                 { type: 'button', className: 'button button-big', onclick: () => void showStart() },
                 'Новая запись',
               ),
+          goalBar(monthCount, await getMonthlyGoal()),
           h(
             'div',
             { className: 'stats' },

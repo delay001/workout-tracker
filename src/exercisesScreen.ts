@@ -1,6 +1,8 @@
+import { lineChart } from './chart';
 import { formatDate } from './dates';
 import type { Exercise } from './db';
 import { h } from './dom';
+import { exerciseProgress } from './stats';
 import {
   bestResult,
   formatSet,
@@ -45,6 +47,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
   async function showExercise(exercise: Exercise): Promise<void> {
     const history = await getExerciseHistory(exercise.id);
     const best = bestResult(history);
+    const progress = exerciseProgress(history);
 
     root.replaceChildren(
       h(
@@ -61,6 +64,9 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
                 h('p', {}, formatBest(best)),
               ),
             ]
+          : []),
+        ...(progress.length > 1 && progress.some((point) => point.value > 0)
+          ? [lineChart(progress, 'кг', `Прогресс: ${exercise.name}`)]
           : []),
         ...history.map((entry) =>
           h(

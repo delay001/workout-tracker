@@ -5,10 +5,11 @@ import { renderHistoryTab } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
 import { loadTheme } from './settings';
 import { renderSettingsScreen } from './settingsScreen';
+import { renderStatsScreen } from './statsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
 import { getActiveWorkout } from './workouts';
 
-type Tab = 'workout' | 'history' | 'settings';
+type Tab = 'workout' | 'history' | 'stats' | 'settings';
 
 const TABS: [Tab, string, string][] = [
   [
@@ -21,6 +22,7 @@ const TABS: [Tab, string, string][] = [
     'История',
     '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   ],
+  ['stats', 'Статистика', '<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10"/>'],
   [
     'settings',
     'Настройки',
@@ -67,6 +69,8 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
     await renderHistoryTab(content, (opened) => {
       void openWorkout(opened, () => void showTab('history'));
     });
+  } else if (tab === 'stats') {
+    await renderStatsScreen(content);
   } else {
     await renderSettingsScreen(content, message, (result) => void showTab('settings', result));
   }

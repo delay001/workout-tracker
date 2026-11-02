@@ -10,6 +10,13 @@ export async function setSetting(key: string, value: string): Promise<void> {
   await db.settings.put({ key, value });
 }
 
+const DEFAULT_MONTHLY_GOAL = 12;
+
+export async function getMonthlyGoal(): Promise<number> {
+  const goal = Number(await getSetting('monthlyGoal'));
+  return Number.isInteger(goal) && goal > 0 ? goal : DEFAULT_MONTHLY_GOAL;
+}
+
 export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
   document
