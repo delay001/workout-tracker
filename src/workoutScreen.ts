@@ -1,6 +1,13 @@
 import { guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
 import { formatDate } from './dates';
-import { db, findOrCreateExercise, type Exercise, type Workout, type WorkoutExercise } from './db';
+import {
+  db,
+  findOrCreateExercise,
+  type Exercise,
+  type Workout,
+  type WorkoutExercise,
+  type WorkoutSet,
+} from './db';
 import { field, h } from './dom';
 import {
   addExerciseToWorkout,
@@ -13,10 +20,41 @@ import {
   removeSet,
   searchOptions,
   setMuscleGroup,
+  stepValue,
+  updateSet,
   WORKOUT_TYPE_NAMES,
 } from './workouts';
 
 const NO_GROUP = 'Без группы';
+
+function stepper(input: HTMLInputElement, step: number, min: number): HTMLElement {
+  const stepButton = (label: string, name: string, delta: number): HTMLButtonElement =>
+    h(
+      'button',
+      {
+        type: 'button',
+        className: 'step-button',
+        ariaLabel: name,
+        onclick: () => {
+          input.value = stepValue(input.value, delta, min);
+        },
+      },
+      label,
+    );
+
+  return h(
+    'div',
+    { className: 'stepper' },
+    stepButton('−', 'Уменьшить', -step),
+    input,
+    stepButton('+', 'Увеличить', step),
+  );
+}
+
+function formatSet(set: WorkoutSet): string {
+  const marks = [set.warmup ? 'разминка' : '', set.toFailure ? 'в отказ' : ''].filter(Boolean);
+  return `${set.weight} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
+}
 
 function groupSelect(value?: string): HTMLSelectElement {
   const groups = value && !MUSCLE_GROUPS.includes(value) ? [...MUSCLE_GROUPS, value] : MUSCLE_GROUPS;
@@ -37,16 +75,33 @@ export async function renderWorkoutScreen(
 ): Promise<void> {
   let workout = startedWorkout;
   let currentId = workout.exercises.at(-1)?.exerciseId;
+  // Номер подхода текущего упражнения, который сейчас исправляется
+  let editedIndex: number | undefined;
 
   async function reload(): Promise<void> {
+    editedIndex = undefined;
     workout = (await getActiveWorkout()) ?? workout;
     await showWorkout();
   }
 
-  function setForm(exercise: Exercise): HTMLFormElement {
-    const weight = h('input', { type: 'text', inputMode: 'decimal', autocomplete: 'off' });
-    const reps = h('input', { type: 'text', inputMode: 'numeric', autocomplete: 'off' });
-    const warmup = h('input', { type: 'checkbox' });
+  function setForm(item: WorkoutExercise, exercise: Exercise): HTMLFormElement {
+    const index = editedIndex;
+    const edited = index === undefined ? undefined : item.sets[index];
+
+    const weight = h('input', {
+      type: 'text',
+      inputMode: 'decimal',
+      autocomplete: 'off',
+      value: edited ? String(edited.weight) : '',
+    });
+    const reps = h('input', {
+      type: 'text',
+      inputMode: 'numeric',
+      autocomplete: 'off',
+      value: edited ? String(edited.reps) : '',
+    });
+    const warmup = h('input', { type: 'checkbox', checked: edited?.warmup ?? false });
+    const toFailure = h('input', { type: 'checkbox', checked: edited?.toFailure ?? false });
     const error = h('p', { className: 'error', role: 'alert' });
 
     return h(
@@ -56,17 +111,49 @@ export async function renderWorkoutScreen(
         onsubmit: async (event: Event) => {
           event.preventDefault();
           try {
-            await addSet(workout, exercise.id, parseSet(weight.value, reps.value, warmup.checked));
+            const set = parseSet(weight.value, reps.value, warmup.checked, toFailure.checked);
+            if (index === undefined) {
+              await addSet(workout, exercise.id, set);
+            } else {
+              await updateSet(workout, exercise.id, index, set);
+            }
             await reload();
           } catch (problem) {
             error.textContent = problem instanceof Error ? problem.message : 'Не удалось сохранить';
           }
         },
       },
-      h('div', { className: 'set-inputs' }, field('Вес, кг', weight), field('Повторения', reps)),
-      h('label', { className: 'checkbox' }, warmup, 'Разминочный'),
+      h(
+        'div',
+        { className: 'set-inputs' },
+        field('Вес, кг', stepper(weight, 0.5, 0)),
+        field('Повторения', stepper(reps, 1, 1)),
+      ),
+      h(
+        'div',
+        { className: 'checkboxes' },
+        h('label', { className: 'checkbox' }, warmup, 'Разминочный'),
+        h('label', { className: 'checkbox' }, toFailure, 'В отказ'),
+      ),
       error,
-      h('button', { type: 'submit', className: 'button' }, 'Записать подход'),
+      h(
+        'button',
+        { type: 'submit', className: 'button' },
+        index === undefined ? 'Записать подход' : 'Сохранить изменения',
+      ),
+      ...(index === undefined
+        ? []
+        : [
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'button button-secondary',
+                onclick: () => void reload(),
+              },
+              'Отмена',
+            ),
+          ]),
     );
   }
 
@@ -82,8 +169,21 @@ export async function renderWorkoutScreen(
     const rows = item.sets.map((set, index) =>
       h(
         'li',
-        { className: 'set-row' },
-        h('span', {}, `${set.weight} × ${set.reps}${set.warmup ? ' (разминка)' : ''}`),
+        { className: isCurrent && index === editedIndex ? 'set-row set-row-edited' : 'set-row' },
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'set-text',
+            ariaLabel: `Исправить подход ${formatSet(set)}`,
+            onclick: () => {
+              currentId = item.exerciseId;
+              editedIndex = index;
+              void showWorkout();
+            },
+          },
+          formatSet(set),
+        ),
         h(
           'button',
           {
@@ -110,6 +210,7 @@ export async function renderWorkoutScreen(
           className: 'card-title',
           onclick: () => {
             currentId = item.exerciseId;
+            editedIndex = undefined;
             void showWorkout();
           },
         },
@@ -117,7 +218,7 @@ export async function renderWorkoutScreen(
         h('span', { className: 'muscle-group' }, exercise.muscleGroup ?? ''),
       ),
       h('ol', { className: 'set-list' }, ...rows),
-      ...(isCurrent ? [setForm(exercise), field('Группа мышц', group)] : []),
+      ...(isCurrent ? [setForm(item, exercise), field('Группа мышц', group)] : []),
     );
   }
 
@@ -163,6 +264,30 @@ export async function renderWorkoutScreen(
       results.hidden = false;
     };
 
+    let selectedGroup = '';
+    const groupFilter = h(
+      'div',
+      { className: 'chips', role: 'radiogroup', ariaLabel: 'Группа мышц' },
+      ...[['Все', ''], ...MUSCLE_GROUPS.map((group) => [group, group])].map(([label, value]) =>
+        h(
+          'label',
+          { className: 'chip' },
+          h('input', {
+            type: 'radio',
+            name: 'group-filter',
+            checked: value === '',
+            // click, а не change: «Все» выбрано сразу, но нажатие на него тоже открывает список
+            onclick: () => {
+              selectedGroup = value;
+              results.hidden = false;
+              void updateResults();
+            },
+          }),
+          label,
+        ),
+      ),
+    );
+
     const newExercise = h(
       'form',
       {
@@ -179,10 +304,13 @@ export async function renderWorkoutScreen(
     async function updateResults(): Promise<void> {
       const name = nameInput.value.trim();
       const found = await searchOptions(name);
+      const shown = selectedGroup
+        ? found.filter((option) => option.muscleGroup === selectedGroup)
+        : found;
 
       const items: HTMLElement[] = [];
       let lastGroup: string | undefined;
-      for (const option of found) {
+      for (const option of shown) {
         const group = option.muscleGroup ?? NO_GROUP;
         if (group !== lastGroup) {
           items.push(h('h2', { className: 'group-heading' }, group));
@@ -213,14 +341,23 @@ export async function renderWorkoutScreen(
     nameInput.oninput = () => void updateResults();
 
     root.replaceChildren(
-      h('h1', {}, 'Добавить упражнение'),
-      field('Название', nameInput),
-      newExercise,
-      results,
       h(
-        'button',
-        { type: 'button', className: 'button button-secondary', onclick: () => void showWorkout() },
-        'Назад',
+        'div',
+        { className: 'screen' },
+        h('h1', {}, 'Добавить упражнение'),
+        field('Название', nameInput),
+        groupFilter,
+        newExercise,
+        results,
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'button button-secondary bottom-action',
+            onclick: () => void showWorkout(),
+          },
+          'Назад',
+        ),
       ),
     );
     await updateResults();

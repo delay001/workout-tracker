@@ -17,6 +17,7 @@ export interface WorkoutSet {
   weight: number;
   reps: number;
   warmup: boolean;
+  toFailure?: boolean;
   rir?: number;
 }
 

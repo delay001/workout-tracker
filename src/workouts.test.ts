@@ -14,6 +14,8 @@ import {
   searchOptions,
   setMuscleGroup,
   startWorkout,
+  stepValue,
+  updateSet,
 } from './workouts';
 
 const SET = { weight: 66, reps: 8, warmup: false };
@@ -69,6 +71,39 @@ describe('ход тренировки', () => {
     await removeSet(await active(), 1, 1);
 
     expect((await active()).exercises[0].sets.map((set) => set.weight)).toEqual([66, 79]);
+  });
+});
+
+describe('правка подхода', () => {
+  it('меняет только выбранный подход', async () => {
+    await startWorkout('2026-11-02', 'upper');
+    await addExerciseToWorkout(await active(), 1);
+    await addSet(await active(), 1, SET);
+    await addSet(await active(), 1, { ...SET, weight: 73 });
+
+    await updateSet(await active(), 1, 0, { weight: 70, reps: 10, warmup: false, toFailure: true });
+
+    expect((await active()).exercises[0].sets).toEqual([
+      { weight: 70, reps: 10, warmup: false, toFailure: true },
+      { ...SET, weight: 73 },
+    ]);
+  });
+});
+
+describe('плюсы и минусы', () => {
+  it('меняет вес на 0.5 кг и понимает запятую', () => {
+    expect(stepValue('66', 0.5, 0)).toBe('66.5');
+    expect(stepValue('79,5', -0.5, 0)).toBe('79');
+  });
+
+  it('не уходит ниже минимума', () => {
+    expect(stepValue('0', -0.5, 0)).toBe('0');
+    expect(stepValue('1', -1, 1)).toBe('1');
+  });
+
+  it('работает с пустым полем', () => {
+    expect(stepValue('', 0.5, 0)).toBe('0.5');
+    expect(stepValue('', 1, 1)).toBe('1');
   });
 });
 
@@ -168,6 +203,10 @@ describe('проверка ввода', () => {
   it('принимает вес с запятой, шагом 0.5 и вес 0', () => {
     expect(parseSet('79,5', '6', false)).toEqual({ weight: 79.5, reps: 6, warmup: false });
     expect(parseSet('0', '12', true)).toEqual({ weight: 0, reps: 12, warmup: true });
+  });
+
+  it('запоминает отметку «в отказ»', () => {
+    expect(parseSet('66', '8', false, true)).toEqual({ weight: 66, reps: 8, warmup: false, toFailure: true });
   });
 
   it.each([

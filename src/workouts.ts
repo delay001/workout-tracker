@@ -84,6 +84,20 @@ export async function addSet(workout: Workout, exerciseId: number, set: WorkoutS
   await saveWorkout({ ...workout, exercises });
 }
 
+export async function updateSet(
+  workout: Workout,
+  exerciseId: number,
+  setIndex: number,
+  set: WorkoutSet,
+): Promise<void> {
+  const exercises = workout.exercises.map((item) =>
+    item.exerciseId === exerciseId
+      ? { ...item, sets: item.sets.map((old, index) => (index === setIndex ? set : old)) }
+      : item,
+  );
+  await saveWorkout({ ...workout, exercises });
+}
+
 export async function removeSet(workout: Workout, exerciseId: number, setIndex: number): Promise<void> {
   const exercises = workout.exercises.map((item) =>
     item.exerciseId === exerciseId
@@ -108,7 +122,19 @@ export async function finishWorkout(
   return true;
 }
 
-export function parseSet(weightText: string, repsText: string, warmup: boolean): WorkoutSet {
+// Новое значение поля после нажатия на плюс или минус
+export function stepValue(text: string, delta: number, min: number): string {
+  const current = Number(text.replace(',', '.'));
+  const base = Number.isFinite(current) ? current : 0;
+  return String(Math.max(base + delta, min));
+}
+
+export function parseSet(
+  weightText: string,
+  repsText: string,
+  warmup: boolean,
+  toFailure = false,
+): WorkoutSet {
   const weight = Number(weightText.replace(',', '.'));
   const reps = Number(repsText);
 
@@ -119,7 +145,7 @@ export function parseSet(weightText: string, repsText: string, warmup: boolean):
     throw new Error('Повторения: целое число больше нуля');
   }
 
-  return { weight, reps, warmup };
+  return { weight, reps, warmup, ...(toFailure ? { toFailure } : {}) };
 }
 
 export function parseDuration(text: string): number | undefined {
