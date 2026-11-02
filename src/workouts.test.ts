@@ -5,6 +5,7 @@ import { db, findOrCreateExercise, saveWorkout, type Workout } from './db';
 import {
   addExerciseToWorkout,
   addSet,
+  bestSet,
   defaultSet,
   finishWorkout,
   getActiveWorkout,
@@ -140,6 +141,30 @@ describe('прошлый раз', () => {
     await startWorkout('2026-11-02', 'upper');
 
     expect(await getLastPerformance(1, await active())).toBeUndefined();
+  });
+});
+
+describe('пиковый подход', () => {
+  const set = (weight: number, reps: number, warmup = false) => ({ weight, reps, warmup });
+
+  it('в приоритете вес, а не повторения', () => {
+    expect(bestSet([set(50, 20), set(52, 12)])).toEqual(set(52, 12));
+  });
+
+  it('при равном весе берёт больше повторений', () => {
+    expect(bestSet([set(52, 8), set(52, 12), set(52, 10)])).toEqual(set(52, 12));
+  });
+
+  it('не считает разминочные, если есть рабочие', () => {
+    expect(bestSet([set(60, 5, true), set(50, 8)])).toEqual(set(50, 8));
+  });
+
+  it('если подходы только разминочные, берёт из них', () => {
+    expect(bestSet([set(40, 10, true), set(50, 5, true)])).toEqual(set(50, 5, true));
+  });
+
+  it('без подходов возвращает пусто', () => {
+    expect(bestSet([])).toBeUndefined();
   });
 });
 

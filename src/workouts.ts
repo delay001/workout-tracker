@@ -123,6 +123,19 @@ export async function getLastPerformance(
   return last && sets ? { date: last.date, sets } : undefined;
 }
 
+// Пиковый подход: больше вес, при равном весе больше повторений. Разминочные считаются,
+// только если других подходов нет.
+export function bestSet(sets: WorkoutSet[]): WorkoutSet | undefined {
+  const working = sets.filter((set) => !set.warmup);
+  return (working.length > 0 ? working : sets).reduce<WorkoutSet | undefined>(
+    (best, set) =>
+      !best || set.weight > best.weight || (set.weight === best.weight && set.reps > best.reps)
+        ? set
+        : best,
+    undefined,
+  );
+}
+
 // Что подставить в форму: прошлый подход этой тренировки, иначе первый рабочий из прошлого раза
 export function defaultSet(sets: WorkoutSet[], lastSets: WorkoutSet[] = []): WorkoutSet | undefined {
   return sets.at(-1) ?? lastSets.find((set) => !set.warmup) ?? lastSets[0];

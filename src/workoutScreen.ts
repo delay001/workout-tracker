@@ -12,6 +12,7 @@ import { field, h } from './dom';
 import {
   addExerciseToWorkout,
   addSet,
+  bestSet,
   defaultSet,
   finishWorkout,
   getActiveWorkout,
@@ -179,13 +180,12 @@ export async function renderWorkoutScreen(
   }
 
   function lastTimeBlock(last?: LastPerformance): HTMLElement {
+    const peak = last && bestSet(last.sets);
     return h(
       'section',
       { className: 'last-time' },
       h('h2', {}, last ? `В прошлый раз, ${formatDate(last.date)}` : 'В прошлый раз'),
-      last
-        ? h('ul', {}, ...last.sets.map((set) => h('li', {}, formatSet(set))))
-        : h('p', {}, 'Записей ещё нет'),
+      h('p', {}, peak ? `${peak.weight} кг × ${peak.reps}` : 'Записей ещё нет'),
     );
   }
 

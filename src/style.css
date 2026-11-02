@@ -165,11 +165,8 @@ textarea {
   font-size: 0.875rem;
 }
 
-.last-time ul,
 .last-time p {
   margin: 0;
-  padding: 0;
-  list-style: none;
   font-size: 1.125rem;
 }
 
