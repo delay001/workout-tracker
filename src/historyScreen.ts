@@ -3,6 +3,7 @@ import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayL
 import type { Workout } from './db';
 import { h } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
+import { renderMeasurementsView } from './measurementsScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -21,7 +22,7 @@ function summary(workout: Workout): string {
     .join(', ');
 }
 
-let shownView: 'workouts' | 'exercises' | 'weight' = 'workouts';
+let shownView: 'workouts' | 'exercises' | 'weight' | 'measurements' = 'workouts';
 
 export async function renderHistoryTab(
   root: HTMLElement,
@@ -50,8 +51,10 @@ export async function renderHistoryTab(
       await renderWorkoutsView(body, onOpen);
     } else if (shownView === 'exercises') {
       await renderExercisesScreen(body);
-    } else {
+    } else if (shownView === 'weight') {
       await renderBodyWeightView(body);
+    } else {
+      await renderMeasurementsView(body);
     }
   }
 
@@ -63,6 +66,7 @@ export async function renderHistoryTab(
       viewChip('Тренировки', 'workouts'),
       viewChip('Упражнения', 'exercises'),
       viewChip('Вес тела', 'weight'),
+      viewChip('Замеры', 'measurements'),
     ),
     body,
   );

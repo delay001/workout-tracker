@@ -59,6 +59,12 @@ export interface BodyWeight {
   kg: number;
 }
 
+export interface Measurement {
+  date: string;
+  // Сантиметры по названию замера, заполненные не обязательно все
+  values: Record<string, number>;
+}
+
 export type WorkoutDraft = Omit<Workout, 'id' | 'exerciseIds'> & { id?: number };
 
 export const db = new Dexie('workout-tracker') as Dexie & {
@@ -68,6 +74,7 @@ export const db = new Dexie('workout-tracker') as Dexie & {
   settings: Table<Setting, string>;
   templates: Table<WorkoutTemplate, string>;
   bodyWeights: Table<BodyWeight, string>;
+  measurements: Table<Measurement, string>;
 };
 
 db.version(1).stores({
@@ -77,6 +84,7 @@ db.version(1).stores({
 
 db.version(2).stores({ workoutTypes: 'name' });
 db.version(3).stores({ settings: 'key', templates: 'type', bodyWeights: 'date' });
+db.version(4).stores({ measurements: 'date' });
 
 export async function findOrCreateExercise(name: string, muscleGroup?: string): Promise<Exercise> {
   const cleanName = name.trim();

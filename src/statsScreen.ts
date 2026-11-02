@@ -10,10 +10,7 @@ let shown = { year: now.getFullYear(), month: now.getMonth() };
 
 export function goalBar(count: number, goal: number): HTMLElement {
   const fill = h('div', { className: 'progress-fill' });
-  // Ширина задаётся кадром позже, чтобы полоса плавно заполнилась при показе
-  requestAnimationFrame(() => {
-    fill.style.width = `${goalPercent(count, goal)}%`;
-  });
+  fill.style.width = `${goalPercent(count, goal)}%`;
 
   return h(
     'div',

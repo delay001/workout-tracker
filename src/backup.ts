@@ -2,6 +2,7 @@ import {
   db,
   type BodyWeight,
   type Exercise,
+  type Measurement,
   type Setting,
   type Workout,
   type WorkoutTemplate,
@@ -9,7 +10,7 @@ import {
 } from './db';
 
 const APP_NAME = 'workout-tracker';
-const BACKUP_VERSION = 3;
+const BACKUP_VERSION = 4;
 
 export interface Backup {
   app: typeof APP_NAME;
@@ -21,6 +22,7 @@ export interface Backup {
   settings: Setting[];
   templates: WorkoutTemplate[];
   bodyWeights: BodyWeight[];
+  measurements: Measurement[];
 }
 
 export async function exportData(): Promise<Backup> {
@@ -34,6 +36,7 @@ export async function exportData(): Promise<Backup> {
     settings: await db.settings.toArray(),
     templates: await db.templates.toArray(),
     bodyWeights: await db.bodyWeights.toArray(),
+    measurements: await db.measurements.toArray(),
   };
 }
 
@@ -109,7 +112,12 @@ export function parseBackup(text: string): Backup {
   const settings = data.settings ?? [];
   const templates = data.templates ?? [];
   const bodyWeights = data.bodyWeights ?? [];
+  const measurements = data.measurements ?? [];
   if (
+    !Array.isArray(measurements) ||
+    !measurements.every(
+      (item) => isRecord(item) && typeof item.date === 'string' && isRecord(item.values),
+    ) ||
     !Array.isArray(workoutTypes) ||
     !workoutTypes.every((type) => typeof type === 'string') ||
     !Array.isArray(settings) ||
@@ -126,12 +134,20 @@ export function parseBackup(text: string): Backup {
     throw new Error('В файле не хватает данных или они записаны неверно');
   }
 
-  return { ...data, workoutTypes, settings, templates, bodyWeights } as unknown as Backup;
+  return { ...data, workoutTypes, settings, templates, bodyWeights, measurements } as unknown as Backup;
 }
 
 // Полностью заменяет данные. Транзакция: при любой ошибке старые данные останутся на месте.
 export async function importData(backup: Backup): Promise<void> {
-  const tables = [db.exercises, db.workouts, db.workoutTypes, db.settings, db.templates, db.bodyWeights];
+  const tables = [
+    db.exercises,
+    db.workouts,
+    db.workoutTypes,
+    db.settings,
+    db.templates,
+    db.bodyWeights,
+    db.measurements,
+  ];
   await db.transaction('rw', tables, async () => {
     await Promise.all(tables.map((table) => table.clear()));
     await db.exercises.bulkAdd(backup.exercises);
@@ -140,5 +156,6 @@ export async function importData(backup: Backup): Promise<void> {
     await db.settings.bulkAdd(backup.settings);
     await db.templates.bulkAdd(backup.templates);
     await db.bodyWeights.bulkAdd(backup.bodyWeights);
+    await db.measurements.bulkAdd(backup.measurements);
   });
 }

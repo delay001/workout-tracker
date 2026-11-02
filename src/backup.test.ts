@@ -10,9 +10,11 @@ beforeEach(async () => {
   await db.settings.clear();
   await db.templates.clear();
   await db.bodyWeights.clear();
+  await db.measurements.clear();
 });
 
 async function fillData(): Promise<void> {
+  await db.measurements.add({ date: '2026-11-02', values: { waist: 82.5 } });
   await db.workoutTypes.add({ name: 'Руки' });
   await db.settings.add({ key: 'name', value: 'Артём' });
   await db.templates.add({ type: 'upper', exerciseNames: ['Жим лёжа'] });
@@ -49,8 +51,10 @@ describe('экспорт и импорт', () => {
     await db.settings.clear();
     await db.templates.clear();
     await db.bodyWeights.clear();
+    await db.measurements.clear();
     await importData(parseBackup(file));
 
+    expect(await db.measurements.toArray()).toEqual([{ date: '2026-11-02', values: { waist: 82.5 } }]);
     expect(await db.settings.toArray()).toEqual([{ key: 'name', value: 'Артём' }]);
     expect(await db.templates.toArray()).toEqual([{ type: 'upper', exerciseNames: ['Жим лёжа'] }]);
     expect(await db.bodyWeights.toArray()).toEqual([{ date: '2026-11-02', kg: 85.5 }]);
