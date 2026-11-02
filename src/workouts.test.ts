@@ -1,15 +1,18 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { CATALOG } from './catalog';
 import { db, findOrCreateExercise, type Workout } from './db';
 import {
   addExerciseToWorkout,
   addSet,
   finishWorkout,
   getActiveWorkout,
+  isExactMatch,
   parseDuration,
   parseSet,
   removeSet,
-  searchExercises,
+  searchOptions,
+  setMuscleGroup,
   startWorkout,
 } from './workouts';
 
@@ -99,14 +102,65 @@ describe('завершение', () => {
 });
 
 describe('поиск упражнений', () => {
-  it('ищет по части названия без учёта регистра, по алфавиту', async () => {
-    await findOrCreateExercise('Тяга верхнего блока');
-    await findOrCreateExercise('Становая тяга');
-    await findOrCreateExercise('Жим лёжа');
+  async function names(query: string): Promise<string[]> {
+    return (await searchOptions(query)).map((option) => option.name);
+  }
 
-    const found = await searchExercises('ТЯГА');
+  it('без запроса показывает весь каталог, сгруппированный по мышцам', async () => {
+    const options = await searchOptions('');
 
-    expect(found.map((exercise) => exercise.name)).toEqual(['Становая тяга', 'Тяга верхнего блока']);
+    expect(options).toHaveLength(CATALOG.length);
+    expect(options[0].muscleGroup).toBe('Грудь');
+    expect(options.at(-1)?.muscleGroup).toBe('Ноги');
+  });
+
+  it('находит по части названия без учёта регистра', async () => {
+    expect(await names('МОЛОТ')).toEqual(['Молотки']);
+  });
+
+  it('находит по старому названию из записей', async () => {
+    expect(await names('жим платформы')).toEqual(['Жим ногами в тренажёре']);
+    expect(await names('брусья')).toEqual(['Отжимания на брусьях']);
+  });
+
+  it('не различает е и ё', async () => {
+    expect(await names('бабочка в тренажере')).toEqual(['Бабочка']);
+  });
+
+  it('своё упражнение показывается, а без группы идёт в конце', async () => {
+    await findOrCreateExercise('Армрестлинг');
+
+    expect((await names('')).at(-1)).toBe('Армрестлинг');
+  });
+
+  it('использованное упражнение не дублируется и хранит свою группу', async () => {
+    await findOrCreateExercise('Молотки', 'Предплечья');
+
+    const options = (await searchOptions('молотки'));
+
+    expect(options).toHaveLength(1);
+    expect(options[0].muscleGroup).toBe('Предплечья');
+  });
+
+  it('использованное упражнение находится и по старому названию', async () => {
+    await findOrCreateExercise('Жим ногами в тренажёре', 'Ноги');
+
+    expect(await names('жим платформы')).toEqual(['Жим ногами в тренажёре']);
+  });
+
+  it('точное совпадение учитывает другие названия', async () => {
+    const options = await searchOptions('жим лежа');
+
+    expect(isExactMatch(options, 'жим лежа')).toBe(true);
+    expect(isExactMatch(options, 'жим')).toBe(false);
+  });
+
+  it('группу мышц можно поменять', async () => {
+    const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
+
+    await setMuscleGroup(exercise.id, 'Предплечья');
+
+    expect((await db.exercises.get(exercise.id))?.muscleGroup).toBe('Предплечья');
   });
 });
 

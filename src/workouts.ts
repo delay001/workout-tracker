@@ -1,10 +1,18 @@
-import { db, saveWorkout, type Exercise, type Workout, type WorkoutSet, type WorkoutType } from './db';
+import { CATALOG, MUSCLE_GROUPS } from './catalog';
+import { db, saveWorkout, type Workout, type WorkoutSet, type WorkoutType } from './db';
 
 export const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
   upper: 'Верх',
   lower: 'Низ',
   other: 'Другое',
 };
+
+export interface ExerciseOption {
+  name: string;
+  muscleGroup?: string;
+  // Название и другие его варианты в виде для поиска
+  keys: string[];
+}
 
 export async function getActiveWorkout(): Promise<Workout | undefined> {
   return db.workouts.where('status').equals('active').first();
@@ -14,12 +22,52 @@ export async function startWorkout(date: string, type: WorkoutType): Promise<voi
   await saveWorkout({ date, type, status: 'active', exercises: [] });
 }
 
-export async function searchExercises(query: string): Promise<Exercise[]> {
-  const key = query.trim().toLowerCase();
-  const exercises = await db.exercises.toArray();
-  return exercises
-    .filter((exercise) => exercise.nameKey.includes(key))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+// «Жим лежа» и «жим лёжа» при поиске считаются одним и тем же
+function normalize(text: string): string {
+  return text.trim().toLowerCase().replaceAll('ё', 'е');
+}
+
+function groupRank(group?: string): number {
+  const index = group ? MUSCLE_GROUPS.indexOf(group) : -1;
+  return index === -1 ? MUSCLE_GROUPS.length : index;
+}
+
+// Упражнения пользователя плюс каталог, без повторов. Каталог в базу не пишется:
+// упражнение попадает туда, только когда его выбрали.
+export async function searchOptions(query: string): Promise<ExerciseOption[]> {
+  const key = normalize(query);
+  const saved = await db.exercises.toArray();
+  const savedKeys = new Set(saved.map((exercise) => normalize(exercise.name)));
+  const aliases = new Map(CATALOG.map((item) => [normalize(item.name), item.aliases ?? []]));
+
+  const options: ExerciseOption[] = [
+    ...saved.map((exercise) => ({
+      name: exercise.name,
+      muscleGroup: exercise.muscleGroup,
+      keys: [exercise.name, ...(aliases.get(normalize(exercise.name)) ?? [])].map(normalize),
+    })),
+    ...CATALOG.filter((item) => !savedKeys.has(normalize(item.name))).map((item) => ({
+      name: item.name,
+      muscleGroup: item.group,
+      keys: [item.name, ...(item.aliases ?? [])].map(normalize),
+    })),
+  ];
+
+  return options
+    .filter((option) => option.keys.some((optionKey) => optionKey.includes(key)))
+    .sort(
+      (a, b) =>
+        groupRank(a.muscleGroup) - groupRank(b.muscleGroup) || a.name.localeCompare(b.name, 'ru'),
+    );
+}
+
+export function isExactMatch(options: ExerciseOption[], query: string): boolean {
+  const key = normalize(query);
+  return options.some((option) => option.keys.includes(key));
+}
+
+export async function setMuscleGroup(exerciseId: number, muscleGroup?: string): Promise<void> {
+  await db.exercises.update(exerciseId, { muscleGroup });
 }
 
 export async function addExerciseToWorkout(workout: Workout, exerciseId: number): Promise<void> {

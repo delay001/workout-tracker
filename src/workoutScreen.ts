@@ -1,3 +1,4 @@
+import { guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
 import { formatDate } from './dates';
 import { db, findOrCreateExercise, type Exercise, type Workout, type WorkoutExercise } from './db';
 import { field, h } from './dom';
@@ -6,12 +7,28 @@ import {
   addSet,
   finishWorkout,
   getActiveWorkout,
+  isExactMatch,
   parseDuration,
   parseSet,
   removeSet,
-  searchExercises,
+  searchOptions,
+  setMuscleGroup,
   WORKOUT_TYPE_NAMES,
 } from './workouts';
+
+const NO_GROUP = 'Без группы';
+
+function groupSelect(value?: string): HTMLSelectElement {
+  const groups = value && !MUSCLE_GROUPS.includes(value) ? [...MUSCLE_GROUPS, value] : MUSCLE_GROUPS;
+  const select = h(
+    'select',
+    {},
+    h('option', { value: '' }, NO_GROUP),
+    ...groups.map((group) => h('option', { value: group }, group)),
+  );
+  select.value = value ?? '';
+  return select;
+}
 
 export async function renderWorkoutScreen(
   root: HTMLElement,
@@ -56,6 +73,12 @@ export async function renderWorkoutScreen(
   function exerciseCard(item: WorkoutExercise, exercise: Exercise): HTMLElement {
     const isCurrent = item.exerciseId === currentId;
 
+    const group = groupSelect(exercise.muscleGroup);
+    group.onchange = async () => {
+      await setMuscleGroup(exercise.id, group.value || undefined);
+      await reload();
+    };
+
     const rows = item.sets.map((set, index) =>
       h(
         'li',
@@ -94,7 +117,7 @@ export async function renderWorkoutScreen(
         h('span', { className: 'muscle-group' }, exercise.muscleGroup ?? ''),
       ),
       h('ol', { className: 'set-list' }, ...rows),
-      ...(isCurrent ? [setForm(exercise)] : []),
+      ...(isCurrent ? [setForm(exercise), field('Группа мышц', group)] : []),
     );
   }
 
@@ -129,36 +152,62 @@ export async function renderWorkoutScreen(
 
   async function showAddExercise(): Promise<void> {
     const nameInput = h('input', { type: 'text', autocomplete: 'off' });
-    const groupInput = h('input', { type: 'text', autocomplete: 'off' });
-    const results = h('div');
+    const groupInput = groupSelect();
+    let groupChanged = false;
+    groupInput.onchange = () => {
+      groupChanged = true;
+    };
+
+    const results = h('div', { hidden: true });
+    nameInput.onfocus = () => {
+      results.hidden = false;
+    };
+
     const newExercise = h(
       'form',
       {
         hidden: true,
         onsubmit: async (event: Event) => {
           event.preventDefault();
-          await choose(await findOrCreateExercise(nameInput.value, groupInput.value.trim() || undefined));
+          await choose(await findOrCreateExercise(nameInput.value, groupInput.value || undefined));
         },
       },
-      field('Группа мышц (можно не заполнять)', groupInput),
+      field('Группа мышц', groupInput),
       h('button', { type: 'submit', className: 'button' }, 'Создать упражнение'),
     );
 
     async function updateResults(): Promise<void> {
       const name = nameInput.value.trim();
-      const found = await searchExercises(name);
-      results.replaceChildren(
-        ...found.map((exercise) =>
+      const found = await searchOptions(name);
+
+      const items: HTMLElement[] = [];
+      let lastGroup: string | undefined;
+      for (const option of found) {
+        const group = option.muscleGroup ?? NO_GROUP;
+        if (group !== lastGroup) {
+          items.push(h('h2', { className: 'group-heading' }, group));
+          lastGroup = group;
+        }
+        items.push(
           h(
             'button',
-            { type: 'button', className: 'list-button', onclick: () => void choose(exercise) },
-            exercise.name,
-            h('span', { className: 'muscle-group' }, exercise.muscleGroup ?? ''),
+            {
+              type: 'button',
+              className: 'list-button',
+              onclick: async () => {
+                await choose(await findOrCreateExercise(option.name, option.muscleGroup));
+              },
+            },
+            option.name,
           ),
-        ),
-      );
-      const exactMatch = found.some((exercise) => exercise.nameKey === name.toLowerCase());
-      newExercise.hidden = name === '' || exactMatch;
+        );
+      }
+      results.replaceChildren(...items);
+
+      newExercise.hidden = name === '' || isExactMatch(found, name);
+      if (!groupChanged) {
+        groupInput.value = guessMuscleGroup(name) ?? '';
+      }
     }
 
     nameInput.oninput = () => void updateResults();
