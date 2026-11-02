@@ -73,7 +73,7 @@ export async function searchOptions(query: string): Promise<ExerciseOption[]> {
   const aliases = new Map(CATALOG.map((item) => [normalize(item.name), item.aliases ?? []]));
 
   const options: ExerciseOption[] = [
-    ...saved.map((exercise) => ({
+    ...saved.filter((exercise) => !exercise.hidden).map((exercise) => ({
       name: exercise.name,
       muscleGroup: exercise.muscleGroup,
       keys: [exercise.name, ...(aliases.get(normalize(exercise.name)) ?? [])].map(normalize),
@@ -96,6 +96,41 @@ export async function searchOptions(query: string): Promise<ExerciseOption[]> {
 export function isExactMatch(options: ExerciseOption[], query: string): boolean {
   const key = normalize(query);
   return options.some((option) => option.keys.includes(key));
+}
+
+export async function getHiddenExercises(): Promise<Exercise[]> {
+  return db.exercises.filter((exercise) => exercise.hidden === true).toArray();
+}
+
+export async function setExerciseHidden(exerciseId: number, hidden: boolean): Promise<void> {
+  await db.exercises.update(exerciseId, { hidden });
+}
+
+// История привязана к упражнению, а не к названию, поэтому переименование её не теряет
+export async function updateExercise(
+  exercise: Exercise,
+  name: string,
+  muscleGroup?: string,
+): Promise<void> {
+  const cleanName = name.trim();
+  const nameKey = cleanName.toLowerCase();
+  if (!cleanName) {
+    throw new Error('Название упражнения не может быть пустым');
+  }
+
+  const same = await db.exercises.where('nameKey').equals(nameKey).first();
+  if (same && same.id !== exercise.id) {
+    throw new Error('Такое упражнение уже есть');
+  }
+
+  await db.transaction('rw', db.exercises, async () => {
+    await db.exercises.update(exercise.id, { name: cleanName, nameKey, muscleGroup });
+    // Иначе старое название из каталога появится в списке снова
+    const wasInCatalog = CATALOG.some((item) => item.name.toLowerCase() === exercise.nameKey);
+    if (wasInCatalog && nameKey !== exercise.nameKey) {
+      await db.exercises.add({ name: exercise.name, nameKey: exercise.nameKey, hidden: true });
+    }
+  });
 }
 
 export async function setMuscleGroup(exerciseId: number, muscleGroup?: string): Promise<void> {

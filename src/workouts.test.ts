@@ -13,6 +13,7 @@ import {
   getActiveWorkout,
   getExerciseHistory,
   getFinishedWorkouts,
+  getHiddenExercises,
   getLastPerformance,
   getUsedExercises,
   isExactMatch,
@@ -22,9 +23,11 @@ import {
   removeSet,
   replaceExercise,
   searchOptions,
+  setExerciseHidden,
   setMuscleGroup,
   startWorkout,
   stepValue,
+  updateExercise,
   updateSet,
 } from './workouts';
 
@@ -407,6 +410,55 @@ describe('история по упражнению', () => {
       ['Жим лёжа', 100],
       ['Румынская тяга', 80],
     ]);
+  });
+});
+
+describe('управление упражнениями', () => {
+  it('скрытое упражнение не предлагается, но не теряется', async () => {
+    const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
+
+    await setExerciseHidden(exercise.id, true);
+
+    expect(await searchOptions('молотки')).toEqual([]);
+    expect((await getHiddenExercises()).map((item) => item.name)).toEqual(['Молотки']);
+  });
+
+  it('скрытое можно вернуть, в том числе выбрав его заново', async () => {
+    const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
+    await setExerciseHidden(exercise.id, true);
+
+    await findOrCreateExercise('Молотки');
+
+    expect(await searchOptions('молотки')).toHaveLength(1);
+    expect(await getHiddenExercises()).toEqual([]);
+  });
+
+  it('переименование сохраняет упражнение, и старое название из каталога не возвращается', async () => {
+    const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
+
+    await updateExercise(exercise, 'Хаммер сгибания', 'Предплечья');
+
+    expect(await db.exercises.get(exercise.id)).toMatchObject({
+      name: 'Хаммер сгибания',
+      muscleGroup: 'Предплечья',
+    });
+    expect((await searchOptions('молотки')).map((option) => option.name)).toEqual([]);
+  });
+
+  it('смена только группы не создаёт лишних записей', async () => {
+    const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
+
+    await updateExercise(exercise, 'Молотки', 'Предплечья');
+
+    expect(await db.exercises.count()).toBe(1);
+  });
+
+  it('нельзя переименовать в уже существующее или пустое название', async () => {
+    await findOrCreateExercise('Молотки');
+    const other = await findOrCreateExercise('Жим лёжа');
+
+    await expect(updateExercise(other, 'молотки')).rejects.toThrow('уже есть');
+    await expect(updateExercise(other, '  ')).rejects.toThrow('пустым');
   });
 });
 

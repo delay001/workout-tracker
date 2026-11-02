@@ -66,7 +66,7 @@ function digitsInput(): HTMLInputElement {
   return input;
 }
 
-function groupSelect(value?: string): HTMLSelectElement {
+export function groupSelect(value?: string): HTMLSelectElement {
   const groups = value && !MUSCLE_GROUPS.includes(value) ? [...MUSCLE_GROUPS, value] : MUSCLE_GROUPS;
   const select = h(
     'select',

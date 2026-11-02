@@ -10,6 +10,8 @@ export interface Exercise {
   nameKey: string;
   muscleGroup?: string;
   note?: string;
+  // Скрытое упражнение не предлагается при выборе, но остаётся в истории
+  hidden?: boolean;
 }
 
 export interface WorkoutSet {
@@ -61,6 +63,10 @@ export async function findOrCreateExercise(name: string, muscleGroup?: string): 
 
   const nameKey = cleanName.toLowerCase();
   const existing = await db.exercises.where('nameKey').equals(nameKey).first();
+  if (existing?.hidden) {
+    await db.exercises.update(existing.id, { hidden: false });
+    return { ...existing, hidden: false };
+  }
   if (existing) {
     return existing;
   }
