@@ -2,7 +2,7 @@ import { formatDate, todayLocal } from './dates';
 import type { Workout } from './db';
 import { field, h } from './dom';
 import { getMonthlyGoal, getSetting } from './settings';
-import { goalBar } from './statsScreen';
+import { goalBar, renderTotalsScreen } from './statsScreen';
 import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
 import { t } from './i18n';
 
@@ -10,6 +10,7 @@ export async function renderHomeScreen(
   root: HTMLElement,
   active: Workout | undefined,
   onOpenActive: () => void,
+  onOpenStats: () => void,
 ): Promise<void> {
   async function showStart(): Promise<void> {
     const dateInput = h('input', { type: 'date', value: todayLocal() });
@@ -55,6 +56,7 @@ export async function renderHomeScreen(
 
   async function showMain(): Promise<void> {
     const name = await getSetting('name');
+    const avatar = await getSetting('avatar');
     const workouts = await getFinishedWorkouts();
     const month = todayLocal().slice(0, 7);
     const monthCount = workouts.filter((workout) => workout.date.startsWith(month)).length;
@@ -63,7 +65,12 @@ export async function renderHomeScreen(
       h(
         'div',
         { className: 'screen' },
-        h('h1', {}, name ? t('home.helloName', { name }) : t('home.hello')),
+        h(
+          'div',
+          { className: 'home-header' },
+          h('h1', {}, name ? t('home.helloName', { name }) : t('home.hello')),
+          ...(avatar ? [h('img', { className: 'avatar', src: avatar, alt: t('settings.avatar') })] : []),
+        ),
         h(
           'div',
           { className: 'centered' },
@@ -87,8 +94,8 @@ export async function renderHomeScreen(
           h(
             'div',
             { className: 'stats' },
-            h('div', { className: 'stat' }, h('strong', {}, String(monthCount)), t('home.thisMonth')),
-            h('div', { className: 'stat' }, h('strong', {}, String(workouts.length)), t('home.totalWorkouts')),
+            h('button', { type: 'button', className: 'stat', onclick: onOpenStats }, h('strong', {}, String(monthCount)), t('home.thisMonth')),
+            h('button', { type: 'button', className: 'stat', onclick: () => void renderTotalsScreen(root, () => void showMain()) }, h('strong', {}, String(workouts.length)), t('home.totalWorkouts')),
           ),
         ),
       ),

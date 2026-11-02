@@ -65,7 +65,7 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
   app.replaceChildren(content, h('nav', { className: 'tabs' }, ...buttons));
 
   if (tab === 'workout') {
-    await renderHomeScreen(content, await getActiveWorkout(), () => void openActive());
+    await renderHomeScreen(content, await getActiveWorkout(), () => void openActive(), () => void showTab('stats'));
   } else if (tab === 'history') {
     await renderHistoryTab(content, (opened) => {
       void openWorkout(opened, () => void showTab('history'));

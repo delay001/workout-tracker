@@ -1,6 +1,13 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { deleteBodyWeight, getBodyWeights, saveBodyWeight } from './bodyWeight';
+import {
+  deleteBodyWeight,
+  getBodyWeights,
+  goalStatus,
+  movingAverage,
+  saveBodyWeight,
+  trendChange,
+} from './bodyWeight';
 import { chartPoints } from './chart';
 import { db } from './db';
 
@@ -38,6 +45,51 @@ describe('журнал веса', () => {
     await deleteBodyWeight('2026-11-02');
 
     expect(await getBodyWeights()).toEqual([]);
+  });
+});
+
+describe('тренд и цель', () => {
+  const weights = [
+    { date: '2026-10-01', kg: 90 },
+    { date: '2026-10-05', kg: 88 },
+    { date: '2026-10-20', kg: 86 },
+  ];
+
+  it('тренд усредняет только последние 7 дней, пропуски не мешают', () => {
+    expect(movingAverage(weights).map((item) => item.value)).toEqual([90, 89, 86]);
+  });
+
+  it('считает изменение тренда за период', () => {
+    expect(trendChange(movingAverage(weights), 14)).toBe(-3);
+    expect(trendChange(movingAverage(weights), 30)).toBeUndefined();
+  });
+
+  it('считает остаток, темп, долю и статус цели', () => {
+    const trend = [
+      { date: '2026-10-01', value: 90 },
+      { date: '2026-10-15', value: 88 },
+    ];
+    const goal = { targetKg: 80, deadline: '2026-12-10', startKg: 90, startDate: '2026-10-01' };
+
+    expect(goalStatus(goal, trend, '2026-10-15')).toEqual({
+      leftKg: -8,
+      leftDays: 56,
+      requiredPerWeek: -1,
+      actualPerWeek: -1,
+      status: 'onTrack',
+      percent: 20,
+      tooFast: false,
+    });
+  });
+
+  it('отстающий темп и слишком быстрая цель', () => {
+    const trend = [
+      { date: '2026-10-01', value: 90 },
+      { date: '2026-10-15', value: 90 },
+    ];
+    const goal = { targetKg: 80, deadline: '2026-11-15', startKg: 90, startDate: '2026-10-01' };
+
+    expect(goalStatus(goal, trend, '2026-10-15')).toMatchObject({ status: 'behind', tooFast: true });
   });
 });
 

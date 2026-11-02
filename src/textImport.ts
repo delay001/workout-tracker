@@ -1,4 +1,4 @@
-import { CATALOG } from './catalog';
+import { CARDIO_GROUP, CATALOG } from './catalog';
 import { db, findOrCreateExercise, saveWorkout, type WorkoutExercise, type WorkoutSet } from './db';
 import { normalize, searchOptions } from './workouts';
 
@@ -142,7 +142,13 @@ export function parseWorkoutsText(text: string, keys: NameKeys, today: string): 
     } else if (note) {
       current.note = [current.note, note[1]].filter(Boolean).join('. ');
     } else if (CARDIO.test(body) && !/\d\.\d{2}\.?$/.test(body)) {
-      current.note = [current.note, body].filter(Boolean).join('. ');
+      const cardio = findName(body, sortedKeys);
+      const minutes = Number(/(\d+)\s*мин/i.exec(body)?.[1]);
+      if (cardio && CATALOG.some((item) => item.name === cardio.name && item.group === CARDIO_GROUP)) {
+        current.entries.push({ name: cardio.name, sets: [{ weight: 0, reps: 0, warmup: false, minutes }] });
+      } else {
+        current.note = [current.note, body].filter(Boolean).join('. ');
+      }
     } else {
       const found = findName(body, sortedKeys);
       const sets = found ? parseSets(found.rest) : [];

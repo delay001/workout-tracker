@@ -28,26 +28,36 @@
 }
 
 :root[data-accent='orange'] {
+  --grad-2: linear-gradient(135deg, #c3500f, #af5e17);
+  --grad-3: linear-gradient(135deg, #af5e17, #c3500f);
   --accent: #f0883e;
   --grad-1: linear-gradient(135deg, #af5e17, #c3500f);
 }
 
 :root[data-accent='green'] {
+  --grad-2: linear-gradient(135deg, #0f7c5c, #198356);
+  --grad-3: linear-gradient(135deg, #198356, #0f7c5c);
   --accent: #3fbf7f;
   --grad-1: linear-gradient(135deg, #198356, #0f7c5c);
 }
 
 :root[data-accent='blue'] {
+  --grad-2: linear-gradient(135deg, #2a5fc9, #3573cc);
+  --grad-3: linear-gradient(135deg, #3573cc, #2a5fc9);
   --accent: #5b9df5;
   --grad-1: linear-gradient(135deg, #3573cc, #2a5fc9);
 }
 
 :root[data-accent='violet'] {
+  --grad-2: linear-gradient(135deg, #6a3fc9, #865cd9);
+  --grad-3: linear-gradient(135deg, #865cd9, #6a3fc9);
   --accent: #a98bf5;
   --grad-1: linear-gradient(135deg, #865cd9, #6a3fc9);
 }
 
 :root[data-accent='red'] {
+  --grad-2: linear-gradient(135deg, #b82e2e, #ca4545);
+  --grad-3: linear-gradient(135deg, #ca4545, #b82e2e);
   --accent: #f26d6d;
   --grad-1: linear-gradient(135deg, #ca4545, #b82e2e);
 }
@@ -180,6 +190,9 @@ h2 {
   border-radius: 24px;
   background: var(--grad-2);
   color: var(--on-accent);
+  font: inherit;
+  text-align: left;
+  border: 0;
 }
 
 .stat:nth-child(even) {
@@ -281,8 +294,53 @@ h2 {
   margin: 8px 0;
 }
 
-.month-nav h2 {
-  margin: 0;
+.month-nav select {
+  width: auto;
+  min-height: 48px;
+  padding: 8px;
+  font-size: 1rem;
+}
+
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar-row .button {
+  margin-bottom: 0;
+}
+
+.hint-inline {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.chart-goal {
+  stroke: var(--text);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.chart-trend {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
 }
 
 .month-nav .step-button {

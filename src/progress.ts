@@ -3,9 +3,9 @@ import type { Workout, WorkoutSet } from './db';
 import { tonnage } from './stats';
 import { bestSet, oneRepMax, recordLabels, type LastPerformance } from './workouts';
 
-export type Period = '1m' | '3m' | '1y' | 'all';
+export type Period = '1m' | '3m' | '6m' | '1y' | 'all';
 
-const PERIOD_DAYS: Record<Exclude<Period, 'all'>, number> = { '1m': 30, '3m': 91, '1y': 365 };
+const PERIOD_DAYS: Record<Exclude<Period, 'all'>, number> = { '1m': 30, '3m': 91, '6m': 182, '1y': 365 };
 
 const DAY_MS = 86_400_000;
 
@@ -57,6 +57,11 @@ export function oneRepMaxSeries(history: LastPerformance[]): ChartDatum[] {
 
 export function workingWeightSeries(history: LastPerformance[]): ChartDatum[] {
   return dailySeries(history, (sets) => bestSet(sets)?.weight, Math.max);
+}
+
+export function minutesSeries(history: LastPerformance[]): ChartDatum[] {
+  const total = (sets: WorkoutSet[]): number => sets.reduce((sum, set) => sum + (set.minutes ?? 0), 0);
+  return dailySeries(history, total, (a, b) => a + b);
 }
 
 export function tonnageSeries(history: LastPerformance[]): ChartDatum[] {
@@ -122,6 +127,15 @@ export function overdueExercises(
     .map(([exerciseId, date]) => ({ exerciseId, days: daysBetween(date, today) }))
     .filter((item) => item.days >= days)
     .sort((a, b) => b.days - a.days);
+}
+
+export function workoutStats(workout: Workout): { exercises: number; sets: number; tonnage: number } {
+  const sets = workout.exercises.flatMap((item) => item.sets);
+  return {
+    exercises: workout.exercises.length,
+    sets: sets.filter((set) => !set.warmup).length,
+    tonnage: tonnage(sets),
+  };
 }
 
 export interface PeriodTotal {

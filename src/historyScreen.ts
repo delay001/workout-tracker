@@ -4,6 +4,7 @@ import type { Workout } from './db';
 import { h } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
 import { renderMeasurementsView } from './measurementsScreen';
+import { select } from './ui';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { t } from './i18n';
 
@@ -80,6 +81,9 @@ async function renderWorkoutsView(
 ): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const today = todayLocal();
+  const firstYear = Number((workouts.at(-1)?.date ?? today).slice(0, 4));
+  const lastYear = Number(today.slice(0, 4));
+  const years = Array.from({ length: lastYear - firstYear + 1 }, (_, index) => firstYear + index);
 
   function show(selectedDate?: string): void {
     const cells = monthCells(shown.year, shown.month);
@@ -140,7 +144,25 @@ async function renderWorkoutsView(
         'div',
         { className: 'month-nav' },
         monthButton('‹', t('common.prevMonth'), -1),
-        h('h2', {}, formatMonth(shown.year, shown.month)),
+        select(
+          Array.from({ length: 12 }, (_, month): [string, string] => [
+            String(month),
+            formatMonth(2000, month).replace(' 2000', ''),
+          ]),
+          String(shown.month),
+          (value) => {
+            shown = { ...shown, month: Number(value) };
+            show();
+          },
+        ),
+        select(
+          years.map((year): [string, string] => [String(year), String(year)]),
+          String(shown.year),
+          (value) => {
+            shown = { ...shown, year: Number(value) };
+            show();
+          },
+        ),
         monthButton('›', t('common.nextMonth'), 1),
       ),
       h(

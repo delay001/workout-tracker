@@ -1,10 +1,12 @@
 import { lineChart } from './chart';
-import { formatDuration, formatMonth, shiftMonth, todayLocal } from './dates';
+import { formatDate, formatDuration, formatMonth, shiftMonth, todayLocal } from './dates';
 import { db } from './db';
 import { h } from './dom';
-import { overdueExercises, periodTotals, topExercises } from './progress';
+import { renderCalcScreen } from './calcScreen';
+import { overdueExercises, periodTotals, topExercises, workoutStats } from './progress';
+import { formatWeight, toWeight, weightUnit } from './units';
 import { getMonthlyGoal, getOverdueDays } from './settings';
-import { goalPercent, monthlyTonnage, monthStats } from './stats';
+import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage } from './stats';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { LOCALE, t } from './i18n';
 
@@ -33,6 +35,41 @@ export function goalBar(count: number, goal: number): HTMLElement {
   );
 }
 
+// Сводка за всё время, открывается с главного экрана
+export async function renderTotalsScreen(root: HTMLElement, onBack: () => void): Promise<void> {
+  const workouts = await getFinishedWorkouts();
+  const minutes = workouts.reduce((sum, workout) => sum + (workout.durationMin ?? 0), 0);
+  const allSets = workouts.flatMap((workout) => workout.exercises).flatMap((item) => item.sets);
+  const rating = averageRating(workouts);
+  const years = new Map<string, number>();
+  for (const workout of workouts) {
+    const year = workout.date.slice(0, 4);
+    years.set(year, (years.get(year) ?? 0) + 1);
+  }
+  const row = (name: string, value: string): HTMLElement =>
+    h('p', { className: 'set-row' }, name, h('strong', {}, value));
+
+  root.replaceChildren(
+    h(
+      'div',
+      { className: 'screen' },
+      h('h1', {}, t('stats.allTime')),
+      row(t('stats.allWorkouts'), String(workouts.length)),
+      row(t('stats.allHours'), formatDuration(minutes)),
+      row(t('stats.allTonnage'), formatWeight(tonnage(allSets))),
+      row(t('stats.allRating'), rating === undefined ? '—' : String(rating)),
+      ...(workouts.length > 0 ? [row(t('stats.since'), formatDate(workouts[workouts.length - 1].date))] : []),
+      h('h2', {}, t('stats.perYear')),
+      ...[...years].map(([year, count]) => row(year, String(count))),
+      h(
+        'button',
+        { type: 'button', className: 'button button-secondary bottom-action', onclick: onBack },
+        t('common.back'),
+      ),
+    ),
+  );
+}
+
 export async function renderStatsScreen(root: HTMLElement): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const goal = await getMonthlyGoal();
@@ -56,6 +93,13 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
 
   function show(): void {
     const stats = monthStats(workouts, shown.year, shown.month);
+    const prefix = `${shown.year}-${String(shown.month + 1).padStart(2, '0')}`;
+    const monthWorkouts = workouts.filter((workout) => workout.date.startsWith(prefix));
+    const rating = averageRating(monthWorkouts);
+    const monthPoints = [...monthWorkouts].reverse().map((workout) => ({
+      date: workout.date,
+      value: toWeight(workoutStats(workout).tonnage),
+    }));
 
     const monthButton = (label: string, name: string, delta: number): HTMLButtonElement =>
       h(
@@ -89,18 +133,28 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
         'div',
         { className: 'stats' },
         tile(String(stats.count), t('stats.workouts')),
-        tile(stats.tonnage.toLocaleString(LOCALE), t('stats.tonnage')),
+        tile(toWeight(stats.tonnage).toLocaleString(LOCALE), t('stats.tonnage', { unit: weightUnit() })),
         tile(String(stats.sets), t('stats.workingSets')),
         tile(formatDuration(stats.durationMin), t('stats.hours')),
+        tile(rating === undefined ? '—' : String(rating), t('stats.averageRating')),
+        h(
+          'button',
+          { type: 'button', className: 'stat', onclick: () => void renderCalcScreen(root, () => show()) },
+          t('stats.calc'),
+        ),
       ),
       h('h2', {}, t('stats.byType')),
       ...(stats.byType.length > 0
-        ? stats.byType.map(([type, count]) =>
+        ? sortTypes(stats.byType).map(([type, count]) =>
             h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),
           )
         : [h('p', { className: 'hint' }, t('stats.noWorkouts'))]),
+      h('h2', {}, t('stats.tonnageMonth')),
+      ...(monthPoints.length > 0
+        ? [lineChart(monthPoints, weightUnit(), t('stats.tonnageMonth'))]
+        : [h('p', { className: 'hint' }, t('stats.noWorkouts'))]),
       h('h2', {}, t('stats.tonnageHalfYear')),
-      lineChart(monthlyTonnage(workouts, shown.year, shown.month, 6), t('unit.kg'), t('stats.tonnageByMonth'), (date) => {
+      lineChart(monthlyTonnage(workouts, shown.year, shown.month, 6).map((point) => ({ ...point, value: toWeight(point.value) })), weightUnit(), t('stats.tonnageByMonth'), (date) => {
         const [year, month] = date.split('-').map(Number);
         return formatMonth(year, month - 1);
       }),
@@ -116,7 +170,7 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
             t('stats.totalRow', {
               workouts: totals[period].workouts,
               hours: formatDuration(totals[period].durationMin),
-              tonnage: totals[period].tonnage.toLocaleString(LOCALE),
+              tonnage: formatWeight(totals[period].tonnage),
             }),
           ),
         ),

@@ -12,6 +12,13 @@ export interface ChartPoint extends ChartDatum {
   y: number;
 }
 
+export interface ChartExtras {
+  // Линия тренда той же длины, что и основной ряд
+  trend?: ChartDatum[];
+  // Горизонтальная линия цели
+  goal?: number;
+}
+
 export interface ChartBox {
   left: number;
   right: number;
@@ -50,9 +57,17 @@ export function lineChart(
   unit: string,
   label: string,
   formatWhen: (date: string) => string = formatDate,
+  extras: ChartExtras = {},
 ): HTMLElement {
   const points = chartPoints(data, BOX);
-  const values = data.map((item) => item.value);
+  const trend = (extras.trend ?? []).map((item, index) => ({ ...item, x: points[index]?.x ?? 0 }));
+  const values = [...data, ...(extras.trend ?? [])].map((item) => item.value);
+  if (extras.goal !== undefined) {
+    values.push(extras.goal);
+  }
+  const min = Math.min(...values);
+  const span = Math.max(...values) - min || 1;
+  const yOf = (value: number): number => BOX.bottom - ((value - min) / span) * (BOX.bottom - BOX.top);
   const number = (value: number): string => value.toLocaleString(LOCALE);
   const readout = h('p', { className: 'chart-readout' });
   const show = (item: ChartDatum): void => {
@@ -60,7 +75,6 @@ export function lineChart(
   };
   show(data[data.length - 1]);
 
-  const line = points.map(({ x, y }) => `${x},${y}`).join(' ');
   const figure = h('figure', { className: 'chart' }, readout);
   figure.insertAdjacentHTML(
     'beforeend',
@@ -71,9 +85,11 @@ export function lineChart(
       <text x="${BOX.left - 6}" y="${BOX.bottom + 4}" text-anchor="end">${number(Math.min(...values))}</text>
       <text x="${BOX.left}" y="${HEIGHT - 6}">${formatWhen(data[0].date)}</text>
       <text x="${BOX.right}" y="${HEIGHT - 6}" text-anchor="end">${formatWhen(data[data.length - 1].date)}</text>
-      <polyline class="chart-line" points="${line}"/>
-      ${points.map(({ x, y }) => `<circle class="chart-dot" cx="${x}" cy="${y}" r="4"/>`).join('')}
-      ${points.map(({ x, y }) => `<circle class="chart-hit" cx="${x}" cy="${y}" r="16"/>`).join('')}
+      ${extras.goal === undefined ? '' : `<line class="chart-goal" x1="${BOX.left}" x2="${BOX.right}" y1="${yOf(extras.goal)}" y2="${yOf(extras.goal)}"/>`}
+      ${extras.trend ? `<polyline class="chart-trend" points="${trend.map(({ x, value }) => `${x},${yOf(value)}`).join(' ')}"/>` : ''}
+      <polyline class="chart-line" points="${points.map(({ x, value }) => `${x},${yOf(value)}`).join(' ')}"/>
+      ${points.map(({ x, value }) => `<circle class="chart-dot" cx="${x}" cy="${yOf(value)}" r="4"/>`).join('')}
+      ${points.map(({ x, value }) => `<circle class="chart-hit" cx="${x}" cy="${yOf(value)}" r="16"/>`).join('')}
     </svg>`,
   );
 

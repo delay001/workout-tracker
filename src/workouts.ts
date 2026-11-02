@@ -1,4 +1,4 @@
-import { CATALOG, DEFAULT_TEMPLATES, MUSCLE_GROUPS } from './catalog';
+import { CARDIO_GROUP, CATALOG, MUSCLE_GROUPS } from './catalog';
 import {
   db,
   findOrCreateExercise,
@@ -9,6 +9,7 @@ import {
   type WorkoutType,
 } from './db';
 import { t } from './i18n';
+import { fromWeight, getUnits, toWeight } from './units';
 
 const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
   upper: t('type.upper'),
@@ -25,7 +26,7 @@ export async function getCustomWorkoutTypes(): Promise<WorkoutType[]> {
 }
 
 export async function getWorkoutTypes(): Promise<WorkoutType[]> {
-  return [...Object.keys(WORKOUT_TYPE_NAMES), ...(await getCustomWorkoutTypes())];
+  return ['upper', 'lower', ...(await getCustomWorkoutTypes()), 'other'];
 }
 
 export async function addWorkoutType(name: string): Promise<void> {
@@ -50,6 +51,10 @@ export async function deleteWorkoutType(name: string): Promise<void> {
   }
   await db.workoutTypes.delete(name);
 }
+
+const MAX_WEIGHT_KG = 700;
+const MAX_REPS = 200;
+const MAX_MINUTES = 600;
 
 export interface LastPerformance {
   date: string;
@@ -107,7 +112,7 @@ function groupRank(group?: string): number {
 // Упражнения пользователя плюс каталог, без повторов. Каталог в базу не пишется:
 // упражнение попадает туда, только когда его выбрали.
 export async function getTemplate(type: WorkoutType): Promise<string[]> {
-  return (await db.templates.get(type))?.exerciseNames ?? DEFAULT_TEMPLATES[type] ?? [];
+  return (await db.templates.get(type))?.exerciseNames ?? [];
 }
 
 export async function saveTemplate(type: WorkoutType, exerciseNames: string[]): Promise<void> {
@@ -192,10 +197,6 @@ export async function updateExercise(
       await db.exercises.add({ name: exercise.name, nameKey: exercise.nameKey, hidden: true });
     }
   });
-}
-
-export async function setMuscleGroup(exerciseId: number, muscleGroup?: string): Promise<void> {
-  await db.exercises.update(exerciseId, { muscleGroup });
 }
 
 export async function addExerciseToWorkout(workout: Workout, exerciseId: number): Promise<void> {
@@ -310,8 +311,11 @@ export function recordLabels(sets: WorkoutSet[], priorSets: WorkoutSet[]): strin
 }
 
 export function formatSet(set: WorkoutSet): string {
+  if (set.minutes !== undefined) {
+    return t('unit.minutesValue', { value: set.minutes });
+  }
   const marks = [set.warmup ? t('set.warmupMark') : '', set.toFailure ? t('set.failureMark') : ''].filter(Boolean);
-  return `${set.weight} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
+  return `${toWeight(set.weight)} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
 }
 
 // Все подходы упражнения по завершённым тренировкам, новые сверху
@@ -404,19 +408,32 @@ export function stepValue(text: string, delta: number, min: number, max = Infini
   return String(Math.min(Math.max(base + delta, min), max));
 }
 
+export function isCardio(exercise: Exercise): boolean {
+  return exercise.muscleGroup === CARDIO_GROUP;
+}
+
+export function parseCardioSet(minutesText: string): WorkoutSet {
+  const minutes = Number(minutesText);
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > MAX_MINUTES) {
+    throw new Error(t('set.invalidMinutes', { max: MAX_MINUTES }));
+  }
+  return { weight: 0, reps: 0, warmup: false, minutes };
+}
+
 export function parseSet(
   weightText: string,
   repsText: string,
   warmup: boolean,
   toFailure = false,
 ): WorkoutSet {
-  const weight = Number(weightText.replace(',', '.'));
+  const entered = Number(weightText.replace(',', '.'));
+  const weight = fromWeight(entered);
   const reps = Number(repsText);
 
-  if (weightText.trim() === '' || !Number.isFinite(weight) || weight < 0 || !Number.isInteger(weight * 2)) {
+  if (weightText.trim() === '' || !Number.isFinite(weight) || weight < 0 || weight > MAX_WEIGHT_KG || (getUnits() === 'metric' && !Number.isInteger(weight * 2))) {
     throw new Error(t('set.invalidWeight'));
   }
-  if (!Number.isInteger(reps) || reps < 1) {
+  if (!Number.isInteger(reps) || reps < 1 || reps > MAX_REPS) {
     throw new Error(t('set.invalidReps'));
   }
 
@@ -431,7 +448,7 @@ export function parseDuration(hoursText: string, minutesText: string): number | 
   const hours = Number(hoursText);
   const minutes = Number(minutesText);
   const isValid = Number.isInteger(hours) && Number.isInteger(minutes) && hours >= 0 && minutes >= 0;
-  if (!isValid || minutes > 59 || hours * 60 + minutes < 1) {
+  if (!isValid || minutes > 59 || hours > 12 || hours * 60 + minutes < 1) {
     throw new Error(t('workout.invalidDuration'));
   }
   return hours * 60 + minutes;

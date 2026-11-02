@@ -51,6 +51,18 @@ export function monthlyTonnage(workouts: Workout[], year: number, month: number,
   });
 }
 
+export function averageRating(workouts: Workout[]): number | undefined {
+  const ratings = workouts.flatMap((workout) => workout.rating ?? []);
+  return ratings.length > 0
+    ? Math.round((ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length) * 10) / 10
+    : undefined;
+}
+
+// Тип «Другое» всегда внизу списка, остальные по убыванию
+export function sortTypes(byType: [string, number][]): [string, number][] {
+  return [...byType].sort((a, b) => Number(a[0] === 'other') - Number(b[0] === 'other') || b[1] - a[1]);
+}
+
 // Доля цели для полосы прогресса: от 0 до 100
 export function goalPercent(count: number, goal: number): number {
   return goal > 0 ? Math.min(100, Math.round((count / goal) * 100)) : 0;

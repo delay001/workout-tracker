@@ -2,45 +2,53 @@ import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
 import { h } from './dom';
+import { t } from './i18n';
 import {
   exerciseSummary,
   filterByPeriod,
   historyRecords,
+  minutesSeries,
   oneRepMaxSeries,
   tonnageSeries,
   workingWeightSeries,
   type Period,
 } from './progress';
+import { periodChips, radioChips } from './ui';
+import { formatWeight, toWeight, weightUnit } from './units';
 import {
   bestResult,
   formatSet,
   getExerciseHistory,
   getUsedExercises,
+  isCardio,
   type BestResult,
   type LastPerformance,
 } from './workouts';
-import { LOCALE, t } from './i18n';
 
 type Metric = 'oneRepMax' | 'weight' | 'tonnage';
 
-const METRICS: Record<Metric, (history: LastPerformance[]) => [ChartDatum[], string]> = {
-  oneRepMax: (history) => [oneRepMaxSeries(history), t('unit.kg')],
-  weight: (history) => [workingWeightSeries(history), t('unit.kg')],
-  tonnage: (history) => [tonnageSeries(history), t('unit.kg')],
-};
+const inUnits = (series: ChartDatum[]): ChartDatum[] =>
+  series.map((point) => ({ ...point, value: toWeight(point.value) }));
 
-const PERIODS: Period[] = ['1m', '3m', '1y', 'all'];
+const METRICS: Record<Metric, (history: LastPerformance[]) => ChartDatum[]> = {
+  oneRepMax: (history) => inUnits(oneRepMaxSeries(history)),
+  weight: (history) => inUnits(workingWeightSeries(history)),
+  tonnage: (history) => inUnits(tonnageSeries(history)),
+};
 
 let shownMetric: Metric = 'oneRepMax';
 let shownPeriod: Period = 'all';
 
-function kilograms(value?: number): string | undefined {
-  return value === undefined ? undefined : t('unit.kgValue', { value: value.toLocaleString(LOCALE) });
+function formatBest(best: BestResult): string {
+  const set =
+    best.set.minutes === undefined
+      ? t('unit.setValue', { weight: formatWeight(best.set.weight), reps: best.set.reps })
+      : formatSet(best.set);
+  return t('exercise.bestValue', { set, date: formatDate(best.date) });
 }
 
-function formatBest(best: BestResult): string {
-  return t('exercise.bestValue', { weight: best.set.weight, reps: best.set.reps, date: formatDate(best.date) });
-}
+const kilograms = (value?: number): string | undefined =>
+  value === undefined ? undefined : formatWeight(value);
 
 export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
   async function showList(): Promise<void> {
@@ -65,9 +73,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     }
 
     root.replaceChildren(
-      ...(used.length === 0
-        ? [h('p', { className: 'hint' }, t('exercise.noneYet'))]
-        : items),
+      ...(used.length === 0 ? [h('p', { className: 'hint' }, t('exercise.noneYet'))] : items),
     );
   }
 
@@ -76,61 +82,45 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     const best = bestResult(history);
     const summary = exerciseSummary(history, todayLocal());
     const records = historyRecords(history);
+    const cardio = isCardio(exercise);
     const chartBox = h('div');
 
+    const currentSeries = (): ChartDatum[] =>
+      cardio ? minutesSeries(history) : METRICS[shownMetric](history);
+    const unit = (): string => (cardio ? t('unit.minutes') : weightUnit());
+
     function showChart(): void {
-      const [series, unit] = METRICS[shownMetric](history);
-      const points = filterByPeriod(series, shownPeriod, todayLocal());
+      const points = filterByPeriod(currentSeries(), shownPeriod, todayLocal());
       chartBox.replaceChildren(
-        points.length > 1
-          ? lineChart(points, unit, t('exercise.progress', { name: exercise.name }))
-          : h('p', { className: 'hint' }, t('summary.noChart')),
+        points.length > 0
+          ? lineChart(points, unit(), t('exercise.progress', { name: exercise.name }))
+          : h('p', { className: 'hint' }, t('summary.noPeriodData')),
       );
     }
 
-    function radioChips<T extends string>(
-      group: string,
-      label: string,
-      options: [T, string][],
-      isChecked: (value: T) => boolean,
-      choose: (value: T) => void,
-    ): HTMLElement {
-      return h(
-        'div',
-        { className: 'chips', role: 'radiogroup', ariaLabel: label },
-        ...options.map(([value, text]) =>
-          h(
-            'label',
-            { className: 'chip' },
-            h('input', {
-              type: 'radio',
-              name: group,
-              checked: isChecked(value),
-              onchange: () => {
-                choose(value);
-                showChart();
-              },
-            }),
-            text,
-          ),
-        ),
-      );
-    }
+    // Фильтры нужны только там, где есть что сравнивать
+    const hasChart = history.length > 1;
 
     const summaryRows: [string, string | undefined][] = [
       [t('summary.times'), String(summary.times)],
       [t('summary.first'), summary.firstDate && formatDate(summary.firstDate)],
       [t('summary.last'), summary.lastDate && formatDate(summary.lastDate)],
-      [t('summary.bestOneRepMax'), kilograms(summary.bestOneRepMax)],
-      [t('summary.currentOneRepMax'), kilograms(summary.currentOneRepMax)],
-      [
-        t('summary.fromPeak'),
-        summary.fromPeak === undefined ? undefined : t('summary.percent', { value: summary.fromPeak }),
-      ],
-      [t('summary.maxTonnage'), kilograms(summary.maxTonnage)],
+      ...(cardio
+        ? []
+        : ([
+            [t('summary.bestOneRepMax'), kilograms(summary.bestOneRepMax)],
+            [t('summary.currentOneRepMax'), kilograms(summary.currentOneRepMax)],
+            [
+              t('summary.fromPeak'),
+              summary.fromPeak === undefined ? undefined : t('summary.percent', { value: summary.fromPeak }),
+            ],
+            [t('summary.maxTonnage'), kilograms(summary.maxTonnage)],
+          ] as [string, string | undefined][])),
     ];
 
-    showChart();
+    if (hasChart) {
+      showChart();
+    }
 
     root.replaceChildren(
       h(
@@ -148,29 +138,33 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
               ),
             ]
           : []),
-        radioChips(
-          'exercise-metric',
-          t('summary.metric'),
-          [
-            ['oneRepMax', t('metric.oneRepMax')],
-            ['weight', t('metric.weight')],
-            ['tonnage', t('metric.tonnage')],
-          ],
-          (value) => value === shownMetric,
-          (value) => {
-            shownMetric = value;
-          },
-        ),
-        radioChips(
-          'exercise-period',
-          t('summary.period'),
-          PERIODS.map((period) => [period, t(`period.${period}`)]),
-          (value) => value === shownPeriod,
-          (value) => {
-            shownPeriod = value;
-          },
-        ),
-        chartBox,
+        ...(hasChart
+          ? [
+              ...(cardio
+                ? []
+                : [
+                    radioChips<Metric>(
+                      'exercise-metric',
+                      t('summary.metric'),
+                      [
+                        ['oneRepMax', t('metric.oneRepMax')],
+                        ['weight', t('metric.weight')],
+                        ['tonnage', t('metric.tonnage')],
+                      ],
+                      shownMetric,
+                      (value) => {
+                        shownMetric = value;
+                        showChart();
+                      },
+                    ),
+                  ]),
+              periodChips('exercise-period', shownPeriod, (value) => {
+                shownPeriod = value;
+                showChart();
+              }),
+              chartBox,
+            ]
+          : []),
         ...summaryRows.flatMap(([label, value]) =>
           value === undefined ? [] : [h('p', { className: 'set-row' }, label, h('strong', {}, value))],
         ),

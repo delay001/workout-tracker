@@ -1,4 +1,8 @@
 import { guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
+import { motivationMessage } from './motivation';
+import { getMonthlyGoal, getWeightStep } from './settings';
+import { numberInput, stepper } from './ui';
+import { formatWeight, toWeight, weightUnit } from './units';
 import { formatDate, formatDuration } from './dates';
 import {
   db,
@@ -6,8 +10,10 @@ import {
   type Exercise,
   type Workout,
   type WorkoutExercise,
+  type WorkoutSet,
 } from './db';
 import { field, h, showToast } from './dom';
+import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
   addSet,
@@ -15,6 +21,9 @@ import {
   deleteWorkout,
   finishWorkout,
   formatSet,
+  getFinishedWorkouts,
+  isCardio,
+  parseCardioSet,
   getLastPerformance,
   getPriorSets,
   getWorkoutTypes,
@@ -27,46 +36,12 @@ import {
   removeSet,
   replaceExercise,
   searchOptions,
-  setMuscleGroup,
-  stepValue,
   updateSet,
   workoutTypeName,
 } from './workouts';
 import { t } from './i18n';
 
 const NO_GROUP = t('common.noGroup');
-
-function stepper(input: HTMLInputElement, step: number, min: number, max?: number): HTMLElement {
-  const stepButton = (label: string, name: string, delta: number): HTMLButtonElement =>
-    h(
-      'button',
-      {
-        type: 'button',
-        className: 'step-button',
-        ariaLabel: name,
-        onclick: () => {
-          input.value = stepValue(input.value, delta, min, max);
-        },
-      },
-      label,
-    );
-
-  return h(
-    'div',
-    { className: 'stepper' },
-    stepButton('−', t('set.decrease'), -step),
-    input,
-    stepButton('+', t('set.increase'), step),
-  );
-}
-
-function digitsInput(): HTMLInputElement {
-  const input = h('input', { type: 'text', inputMode: 'numeric', autocomplete: 'off', maxLength: 2 });
-  input.oninput = () => {
-    input.value = input.value.replace(/\D/g, '');
-  };
-  return input;
-}
 
 export function groupSelect(value?: string): HTMLSelectElement {
   const groups = value && !MUSCLE_GROUPS.includes(value) ? [...MUSCLE_GROUPS, value] : MUSCLE_GROUPS;
@@ -87,6 +62,7 @@ export async function renderWorkoutScreen(
 ): Promise<void> {
   let workout = startedWorkout;
   const workoutTypes = await getWorkoutTypes();
+  const weightStep = await getWeightStep();
   // Завершённая тренировка открыта из истории: изменения в ней сохраняются сразу же
   const isEditing = startedWorkout.status === 'finished';
   const nextExercise =
@@ -109,18 +85,10 @@ export async function renderWorkoutScreen(
     const edited = index === undefined ? undefined : item.sets[index];
     const filled = edited ?? item.sets.at(-1);
 
-    const weight = h('input', {
-      type: 'text',
-      inputMode: 'decimal',
-      autocomplete: 'off',
-      value: filled ? String(filled.weight) : '',
-    });
-    const reps = h('input', {
-      type: 'text',
-      inputMode: 'numeric',
-      autocomplete: 'off',
-      value: filled ? String(filled.reps) : '',
-    });
+    const cardio = isCardio(exercise);
+    const weight = numberInput('decimal', filled ? String(toWeight(filled.weight)) : '');
+    const reps = numberInput('integer', filled ? String(filled.reps) : '', 3);
+    const minutes = numberInput('integer', filled?.minutes === undefined ? '' : String(filled.minutes), 3);
     const warmup = h('input', { type: 'checkbox', checked: edited?.warmup ?? false });
     const toFailure = h('input', { type: 'checkbox', checked: edited?.toFailure ?? false });
     const error = h('p', { className: 'error', role: 'alert' });
@@ -132,7 +100,9 @@ export async function renderWorkoutScreen(
         onsubmit: async (event: Event) => {
           event.preventDefault();
           try {
-            const set = parseSet(weight.value, reps.value, warmup.checked, toFailure.checked);
+            const set = cardio
+              ? parseCardioSet(minutes.value)
+              : parseSet(weight.value, reps.value, warmup.checked, toFailure.checked);
             if (index === undefined) {
               await addSet(workout, exercise.id, set);
               const prior = await getPriorSets(exercise.id, workout);
@@ -140,7 +110,7 @@ export async function renderWorkoutScreen(
               if (record) {
                 showToast(
                   t('record.toast', {
-                    set: `${set.weight}×${set.reps}`,
+                    set: `${toWeight(set.weight)}×${set.reps}`,
                     name: exercise.name,
                     kinds: record.replace(t('record.prefix', { kinds: '' }), ''),
                   }),
@@ -156,18 +126,22 @@ export async function renderWorkoutScreen(
           }
         },
       },
-      h(
-        'div',
-        { className: 'set-inputs' },
-        field(t('weight.input'), stepper(weight, 0.5, 0)),
-        field(t('set.reps'), stepper(reps, 1, 1)),
-      ),
-      h(
-        'div',
-        { className: 'checkboxes' },
-        h('label', { className: 'checkbox' }, warmup, t('set.warmup')),
-        h('label', { className: 'checkbox' }, toFailure, t('set.toFailure')),
-      ),
+      ...(cardio
+        ? [field(t('workout.minutes'), stepper(minutes, 5, 1, 600))]
+        : [
+            h(
+              'div',
+              { className: 'set-inputs' },
+              field(t('weight.input', { unit: weightUnit() }), stepper(weight, weightStep, 0)),
+              field(t('set.reps'), stepper(reps, 1, 1)),
+            ),
+            h(
+              'div',
+              { className: 'checkboxes' },
+              h('label', { className: 'checkbox' }, warmup, t('set.warmup')),
+              h('label', { className: 'checkbox' }, toFailure, t('set.toFailure')),
+            ),
+          ]),
       error,
       h(
         'button',
@@ -190,13 +164,19 @@ export async function renderWorkoutScreen(
     );
   }
 
+  function peakText(peak: WorkoutSet): string {
+    return peak.minutes === undefined
+      ? t('unit.setValue', { weight: formatWeight(peak.weight), reps: peak.reps })
+      : formatSet(peak);
+  }
+
   function lastTimeBlock(last?: LastPerformance): HTMLElement {
     const peak = last && bestSet(last.sets);
     return h(
       'section',
       { className: 'last-time' },
       h('h2', {}, last ? t('workout.lastTimeDate', { date: formatDate(last.date) }) : t('workout.lastTime')),
-      h('p', {}, peak ? t('unit.setValue', { weight: peak.weight, reps: peak.reps }) : t('workout.noRecords')),
+      h('p', {}, peak ? peakText(peak) : t('workout.noRecords')),
     );
   }
 
@@ -207,12 +187,6 @@ export async function renderWorkoutScreen(
     last?: LastPerformance,
   ): HTMLElement {
     const isCurrent = item.exerciseId === currentId;
-
-    const group = groupSelect(exercise.muscleGroup);
-    group.onchange = async () => {
-      await setMuscleGroup(exercise.id, group.value || undefined);
-      await reload();
-    };
 
     const rows = item.sets.map((set, index) =>
       h(
@@ -297,7 +271,7 @@ export async function renderWorkoutScreen(
       ),
       ...(isCurrent ? [lastTimeBlock(last)] : []),
       h('ol', { className: 'set-list' }, ...rows),
-      ...(isCurrent ? [setForm(item, exercise), field(t('common.muscleGroup'), group), actions] : []),
+      ...(isCurrent ? [setForm(item, exercise), actions] : []),
     );
   }
 
@@ -312,6 +286,22 @@ export async function renderWorkoutScreen(
       const records = recordLabels(item.sets, priorSets[index]);
       return exercise ? [exerciseCard(item, exercise, records, last)] : [];
     });
+
+    const stats = workoutStats(workout);
+    const previous = (await getFinishedWorkouts()).find(
+      (item) => item.type === workout.type && item.date < workout.date,
+    );
+    const change = previous ? stats.tonnage - workoutStats(previous).tonnage : undefined;
+    const statRow = (label: string, value: string): HTMLElement =>
+      h('p', { className: 'set-row' }, label, h('strong', {}, value));
+    const statRows = [
+      statRow(t('workoutStats.exercises'), String(stats.exercises)),
+      statRow(t('workoutStats.sets'), String(stats.sets)),
+      statRow(t('workoutStats.tonnage'), formatWeight(stats.tonnage)),
+      ...(change === undefined
+        ? []
+        : [statRow(t('workoutStats.change'), `${change > 0 ? '+' : ''}${formatWeight(change)}`)]),
+    ];
 
     const addButton = h(
       'button',
@@ -372,6 +362,7 @@ export async function renderWorkoutScreen(
         h('h1', {}, `${workoutTypeName(workout.type)}, ${formatDate(workout.date)}`),
         ...(isEditing && details ? [h('p', { className: 'hint' }, details)] : []),
         ...(isEditing && workout.note ? [h('p', { className: 'hint' }, workout.note)] : []),
+        ...(isEditing ? statRows : []),
         ...cards,
         cards.length > 0 ? addButton : h('div', { className: 'centered' }, addButton),
         ...closeButtons,
@@ -392,10 +383,8 @@ export async function renderWorkoutScreen(
 
     const nameInput = h('input', { type: 'text', autocomplete: 'off' });
     const groupInput = groupSelect();
-    let groupChanged = false;
-    groupInput.onchange = () => {
-      groupChanged = true;
-    };
+    // Группа меняется только в настройках, здесь она лишь показывается
+    groupInput.disabled = true;
 
     const results = h('div', { hidden: true });
     nameInput.onfocus = () => {
@@ -471,9 +460,7 @@ export async function renderWorkoutScreen(
       results.replaceChildren(...items);
 
       newExercise.hidden = name === '' || isExactMatch(found, name);
-      if (!groupChanged) {
-        groupInput.value = guessMuscleGroup(name) ?? '';
-      }
+      groupInput.value = guessMuscleGroup(name) ?? '';
     }
 
     nameInput.oninput = () => void updateResults();
@@ -502,8 +489,8 @@ export async function renderWorkoutScreen(
   }
 
   function showFinish(): void {
-    const hours = digitsInput();
-    const minutes = digitsInput();
+    const hours = numberInput('integer', '', 2);
+    const minutes = numberInput('integer', '', 2);
     if (workout.durationMin !== undefined) {
       hours.value = String(Math.floor(workout.durationMin / 60));
       minutes.value = String(workout.durationMin % 60);
@@ -544,13 +531,18 @@ export async function renderWorkoutScreen(
           onsubmit: async (event: Event) => {
             event.preventDefault();
             try {
-              await finishWorkout(workout, {
+              const saved = await finishWorkout(workout, {
                 date: (isEditing && date.value) || workout.date,
                 type: isEditing ? type.value : workout.type,
                 durationMin: parseDuration(hours.value, minutes.value),
                 rating,
                 note: note.value.trim() || undefined,
               });
+              if (saved && !isEditing) {
+                const month = workout.date.slice(0, 7);
+                const count = (await getFinishedWorkouts()).filter((item) => item.date.startsWith(month)).length;
+                showToast(motivationMessage(count, await getMonthlyGoal()));
+              }
               onClosed();
             } catch (problem) {
               error.textContent = problem instanceof Error ? problem.message : t('common.saveFailed');

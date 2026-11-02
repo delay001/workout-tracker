@@ -9,14 +9,17 @@ import {
   getMonthlyGoal,
   getOverdueDays,
   getSetting,
+  getWeightStep,
   parseAccent,
   parseTheme,
   setSetting,
-  type Accent,
   type Theme,
 } from './settings';
+import { numberInput, select } from './ui';
+import { getUnits, setUnits } from './units';
+import { resizeAvatar } from './avatar';
 import { renderTemplateSettings } from './templateSettingsScreen';
-import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes } from './workouts';
+import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeName } from './workouts';
 import { t } from './i18n';
 
 export async function renderSettingsScreen(
@@ -36,6 +39,15 @@ export async function renderSettingsScreen(
         error.textContent = problem instanceof Error ? problem.message : t('common.failed');
       }
     }
+
+    const builtInRows = ['upper', 'lower', 'other'].map((type) =>
+      h(
+        'li',
+        { className: 'set-row' },
+        workoutTypeName(type),
+        h('span', { className: 'hint-inline' }, t('settings.builtInType')),
+      ),
+    );
 
     const rows = (await getCustomWorkoutTypes()).map((type) =>
       h(
@@ -61,7 +73,7 @@ export async function renderSettingsScreen(
         { className: 'screen' },
         h('h1', {}, t('settings.workoutTypes')),
         h('p', { className: 'hint' }, t('settings.typesHint')),
-        h('ol', { className: 'set-list' }, ...rows),
+        h('ol', { className: 'set-list' }, ...builtInRows, ...rows),
         h(
           'form',
           {
@@ -95,40 +107,61 @@ export async function renderSettingsScreen(
       value: await getSetting('name'),
       onchange: () => void setSetting('name', name.value.trim()),
     });
-    const goal = h('input', {
-      type: 'text',
-      inputMode: 'numeric',
-      autocomplete: 'off',
-      maxLength: 2,
-      value: String(await getMonthlyGoal()),
-      onchange: () => void setSetting('monthlyGoal', goal.value.trim()),
-    });
-    const overdueDays = h('input', {
-      type: 'text',
-      inputMode: 'numeric',
-      autocomplete: 'off',
-      maxLength: 3,
-      value: String(await getOverdueDays()),
-      onchange: () => void setSetting('overdueDays', overdueDays.value.trim()),
-    });
+    const goal = numberInput('integer', String(await getMonthlyGoal()), 2);
+    goal.onchange = () => void setSetting('monthlyGoal', goal.value);
+    const overdueDays = numberInput('integer', String(await getOverdueDays()), 3);
+    overdueDays.onchange = () => void setSetting('overdueDays', overdueDays.value);
+    const height = numberInput('integer', await getSetting('heightCm'), 3);
+    height.onchange = () => void setSetting('heightCm', height.value);
+    const sex = select(
+      [
+        ['male', t('settings.sexMale')],
+        ['female', t('settings.sexFemale')],
+      ],
+      (await getSetting('sex')) || 'male',
+      (value) => void setSetting('sex', value),
+    );
+    const weightStep = select(
+      ['0.5', '1', '2.5', '5', '10'].map((step): [string, string] => [step, step]),
+      String(await getWeightStep()),
+      (value) => void setSetting('weightStep', value),
+    );
+    const units = select(
+      [
+        ['metric', t('settings.unitsMetric')],
+        ['imperial', t('settings.unitsImperial')],
+      ],
+      getUnits(),
+      (value) => {
+        setUnits(value);
+        void setSetting('units', value);
+      },
+    );
+    const avatarFile = h('input', { type: 'file', accept: 'image/*', hidden: true });
+    const avatarError = h('p', { className: 'error', role: 'alert' });
+    avatarFile.onchange = async () => {
+      const file = avatarFile.files?.[0];
+      if (file) {
+        try {
+          await setSetting('avatar', await resizeAvatar(file));
+          await showMain();
+        } catch {
+          avatarError.textContent = t('settings.avatarFailed');
+        }
+      }
+    };
+    const avatar = await getSetting('avatar');
     const theme = parseTheme(await getSetting('theme'));
     const accent = parseAccent(await getSetting('accent'));
 
-    const accentChip = (value: Accent): HTMLElement =>
-      h(
-        'label',
-        { className: `chip accent-chip accent-${value}` },
-        h('input', {
-          type: 'radio',
-          name: 'accent',
-          checked: accent === value,
-          onchange: () => {
-            applyAccent(value);
-            void setSetting('accent', value);
-          },
-        }),
-        t(`accent.${value}`),
-      );
+    const accentSelect = select(
+      ACCENTS.map((value): [string, string] => [value, t(`accent.${value}`)]),
+      accent,
+      (value) => {
+        applyAccent(parseAccent(value));
+        void setSetting('accent', value);
+      },
+    );
 
     const themeChip = (label: string, value: Theme): HTMLElement =>
       h(
@@ -164,16 +197,40 @@ export async function renderSettingsScreen(
           themeChip(t('settings.themeSystem'), 'system'),
         ),
       ),
+      field(t('settings.accent'), accentSelect),
+      field(t('settings.weightStep'), weightStep),
+      field(t('settings.units'), units),
+      h('h2', {}, t('settings.profile')),
+      field(t('settings.height'), height),
+      field(t('settings.sex'), sex),
       h(
         'div',
-        { className: 'field' },
-        h('span', {}, t('settings.accent')),
+        { className: 'avatar-row' },
+        ...(avatar ? [h('img', { className: 'avatar', src: avatar, alt: t('settings.avatar') })] : []),
         h(
-          'div',
-          { className: 'chips', role: 'radiogroup', ariaLabel: t('settings.accent') },
-          ...ACCENTS.map(accentChip),
+          'button',
+          { type: 'button', className: 'button button-secondary', onclick: () => avatarFile.click() },
+          t('settings.avatarChoose'),
         ),
+        ...(avatar
+          ? [
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'button button-secondary',
+                  onclick: async () => {
+                    await setSetting('avatar', '');
+                    await showMain();
+                  },
+                },
+                t('settings.avatarRemove'),
+              ),
+            ]
+          : []),
       ),
+      avatarFile,
+      avatarError,
       h(
         'button',
         {

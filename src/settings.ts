@@ -1,4 +1,5 @@
 import { db } from './db';
+import { setUnits } from './units';
 
 export type Theme = 'dark' | 'light' | 'system';
 
@@ -7,6 +8,7 @@ export type Accent = (typeof ACCENTS)[number];
 
 const DEFAULT_MONTHLY_GOAL = 12;
 const DEFAULT_OVERDUE_DAYS = 21;
+const DEFAULT_WEIGHT_STEP = 5;
 
 let chosenTheme: Theme = 'dark';
 
@@ -21,6 +23,11 @@ export async function setSetting(key: string, value: string): Promise<void> {
 export async function getMonthlyGoal(): Promise<number> {
   const goal = Number(await getSetting('monthlyGoal'));
   return Number.isInteger(goal) && goal > 0 ? goal : DEFAULT_MONTHLY_GOAL;
+}
+
+export async function getWeightStep(): Promise<number> {
+  const step = Number(await getSetting('weightStep'));
+  return step > 0 ? step : DEFAULT_WEIGHT_STEP;
 }
 
 export async function getOverdueDays(): Promise<number> {
@@ -59,6 +66,7 @@ export function applyAccent(accent: Accent): void {
 export async function loadTheme(): Promise<void> {
   applyTheme(parseTheme(await getSetting('theme')));
   applyAccent(parseAccent(await getSetting('accent')));
+  setUnits(await getSetting('units'));
 
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (chosenTheme === 'system') {

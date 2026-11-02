@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CATALOG, DEFAULT_TEMPLATES } from './catalog';
+import { CATALOG } from './catalog';
 import { db, findOrCreateExercise, saveWorkout, type Workout } from './db';
 import {
   addExerciseToWorkout,
@@ -31,7 +31,6 @@ import {
   saveTemplate,
   searchOptions,
   setExerciseHidden,
-  setMuscleGroup,
   startFromTemplate,
   startWorkout,
   stepValue,
@@ -413,19 +412,19 @@ describe('шаблоны', () => {
     await db.templates.clear();
   });
 
-  it('тренировка из шаблона по умолчанию получает упражнения с группами, без подходов', async () => {
+  it('тренировка из шаблона получает упражнения с группами, без подходов', async () => {
+    await saveTemplate('lower', ['Разгибание ног сидя', 'Молотки']);
     await startFromTemplate('2026-11-02', 'lower');
 
     const workout = await active();
     const first = await db.exercises.get(workout.exercises[0].exerciseId);
 
-    expect(workout.exercises).toHaveLength(DEFAULT_TEMPLATES.lower.length);
+    expect(workout.exercises).toHaveLength(2);
     expect(workout.exercises.every((item) => item.sets.length === 0)).toBe(true);
     expect(first).toMatchObject({ name: 'Разгибание ног сидя', muscleGroup: 'Ноги' });
   });
 
-  it('изменённый шаблон важнее шаблона по умолчанию, пустой тоже', async () => {
-    await saveTemplate('upper', []);
+  it('по умолчанию шаблоны пустые', async () => {
     await startFromTemplate('2026-11-02', 'upper');
 
     expect((await active()).exercises).toEqual([]);
@@ -437,13 +436,6 @@ describe('шаблоны', () => {
     expect((await active()).exercises).toEqual([]);
   });
 
-  it('все названия шаблонов по умолчанию есть в каталоге', () => {
-    const names = CATALOG.map((item) => item.name);
-
-    for (const name of Object.values(DEFAULT_TEMPLATES).flat()) {
-      expect(names).toContain(name);
-    }
-  });
 });
 
 describe('личные рекорды', () => {
@@ -463,11 +455,11 @@ describe('личные рекорды', () => {
   });
 
   it('отмечает новый вес и новый 1ПМ', () => {
-    expect(recordLabels([set(105, 3)], [set(100, 3)])).toEqual(['Рекорд: вес, 1ПМ']);
+    expect(recordLabels([set(105, 3)], [set(100, 3)])).toEqual(['Рекорд: Вес, 1ПМ']);
   });
 
   it('больше повторений с тем же весом — рекорд по 1ПМ и повторениям', () => {
-    expect(recordLabels([set(100, 5)], [set(100, 3)])).toEqual(['Рекорд: 1ПМ, повторы']);
+    expect(recordLabels([set(100, 5)], [set(100, 3)])).toEqual(['Рекорд: 1ПМ, Повторы']);
   });
 
   it('больший вес при меньшем числе повторений, чем у прежнего, сравнивается с ним', () => {
@@ -475,11 +467,11 @@ describe('личные рекорды', () => {
   });
 
   it('в упражнении со своим весом рекорд по повторениям', () => {
-    expect(recordLabels([set(0, 6)], [set(0, 5)])).toEqual(['Рекорд: повторы']);
+    expect(recordLabels([set(0, 6)], [set(0, 5)])).toEqual(['Рекорд: Повторы']);
   });
 
   it('больший вес с малым числом повторений — рекорд только по весу', () => {
-    expect(recordLabels([set(105, 1)], [set(100, 10)])).toEqual(['Рекорд: вес']);
+    expect(recordLabels([set(105, 1)], [set(100, 10)])).toEqual(['Рекорд: Вес']);
   });
 
   it('повторённый результат не рекорд, разминочные и свой вес не считаются', () => {
@@ -487,7 +479,7 @@ describe('личные рекорды', () => {
   });
 
   it('второй подход сравнивается и с первым подходом этой тренировки', () => {
-    expect(recordLabels([set(105, 3), set(105, 3)], [set(100, 3)])).toEqual(['Рекорд: вес, 1ПМ', '']);
+    expect(recordLabels([set(105, 3), set(105, 3)], [set(100, 3)])).toEqual(['Рекорд: Вес, 1ПМ', '']);
   });
 
   it('первый раз в упражнении рекордом не считается', () => {
@@ -521,7 +513,7 @@ describe('типы тренировок', () => {
   it('свой тип добавляется после встроенных и показывается своим названием', async () => {
     await addWorkoutType('  Руки ');
 
-    expect(await getWorkoutTypes()).toEqual(['upper', 'lower', 'other', 'Руки']);
+    expect(await getWorkoutTypes()).toEqual(['upper', 'lower', 'Руки', 'other']);
     expect(workoutTypeName('Руки')).toBe('Руки');
     expect(workoutTypeName('upper')).toBe('Верх');
   });
@@ -609,7 +601,7 @@ describe('поиск упражнений', () => {
 
     expect(options).toHaveLength(CATALOG.length);
     expect(options[0].muscleGroup).toBe('Грудь');
-    expect(options.at(-1)?.muscleGroup).toBe('Ноги');
+    expect(options.at(-1)?.muscleGroup).toBe('Кардио');
   });
 
   it('находит по части названия без учёта регистра', async () => {
@@ -656,7 +648,7 @@ describe('поиск упражнений', () => {
   it('группу мышц можно поменять', async () => {
     const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
 
-    await setMuscleGroup(exercise.id, 'Предплечья');
+    await updateExercise(exercise, 'Молотки', 'Предплечья');
 
     expect((await db.exercises.get(exercise.id))?.muscleGroup).toBe('Предплечья');
   });

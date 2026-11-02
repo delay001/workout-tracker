@@ -89,6 +89,11 @@ export const CATALOG_MARKUP: Record<string, MuscleMarkup> = {
   'Подъём на носки стоя': mark('calves', 'push'),
   'Подъём на носки сидя': mark('calves', 'push'),
   'Разведение ног в тренажёре': mark('glutes', 'other'),
+
+  Элипс: mark('quads', 'other'),
+  Лестница: mark('quads', 'other'),
+  Дорожка: mark('quads', 'other'),
+  Скакалка: mark('calves', 'other'),
 };
 
 export function markupFor(name: string): Partial<MuscleMarkup> {

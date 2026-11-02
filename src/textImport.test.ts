@@ -54,8 +54,9 @@ describe('разбор текста', () => {
         date: '2026-10-13',
         type: 'upper',
         durationMin: 80,
-        note: 'элипс 7 минут. хорошо пошло',
+        note: 'хорошо пошло',
         entries: [
+          { name: 'Элипс', sets: [{ weight: 0, reps: 0, warmup: false, minutes: 7 }] },
           { name: 'Жим лёжа', sets: Array(2).fill({ weight: 100, reps: 3, warmup: false }) },
           { name: 'Подтягивания', sets: [{ weight: 0, reps: 5, warmup: false }] },
         ],
