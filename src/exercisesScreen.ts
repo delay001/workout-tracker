@@ -1,4 +1,5 @@
 import { getBodyWeights } from './bodyWeight';
+import { CARDIO_GROUP } from './catalog';
 import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
@@ -74,8 +75,12 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     for (const item of all) {
       groupTimes.set(groupOf(item), (groupTimes.get(groupOf(item)) ?? 0) + item.times);
     }
+    // Кардио — разминка почти в каждой тренировке, поэтому оно всегда в конце
+    const isCardioGroup = (item: UsedExercise): number => Number(item.exercise.muscleGroup === CARDIO_GROUP);
     const used = all.sort(
-      (a, b) => (groupTimes.get(groupOf(b)) ?? 0) - (groupTimes.get(groupOf(a)) ?? 0),
+      (a, b) =>
+        isCardioGroup(a) - isCardioGroup(b) ||
+        (groupTimes.get(groupOf(b)) ?? 0) - (groupTimes.get(groupOf(a)) ?? 0),
     );
 
     const items: HTMLElement[] = [];
