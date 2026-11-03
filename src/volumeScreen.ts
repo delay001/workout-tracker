@@ -29,66 +29,74 @@ export async function getNorms(): Promise<Record<Muscle, [number, number]>> {
   return saved ? { ...DEFAULT_NORMS, ...(JSON.parse(saved) as Record<Muscle, [number, number]>) } : DEFAULT_NORMS;
 }
 
-// Простые фигуры поверх силуэта: [мышца, x, y, ширина, высота]
-const FRONT: [Muscle, number, number, number, number][] = [
-  ['frontDelt', 22, 44, 18, 16],
-  ['frontDelt', 80, 44, 18, 16],
-  ['sideDelt', 12, 50, 10, 16],
-  ['sideDelt', 98, 50, 10, 16],
-  ['chest', 40, 46, 40, 24],
-  ['biceps', 14, 68, 13, 26],
-  ['biceps', 93, 68, 13, 26],
-  ['forearms', 8, 96, 12, 28],
-  ['forearms', 100, 96, 12, 28],
-  ['abs', 44, 72, 32, 42],
-  ['quads', 36, 124, 21, 56],
-  ['quads', 63, 124, 21, 56],
-  ['calves', 38, 192, 16, 42],
-  ['calves', 66, 192, 16, 42],
+// Силуэт рисуется в рамке 120 × 240. Парные части заданы для левой половины
+// и отражаются на правую, поэтому фигура всегда симметрична.
+const MIRROR = 'matrix(-1 0 0 1 120 0)';
+
+const BODY_CENTER = [
+  'M60 3 C68 3 73 9 73 17 C73 26 67 31 60 31 C53 31 47 26 47 17 C47 9 52 3 60 3 Z',
+  'M53 28 L67 28 L68 38 L52 38 Z',
+  'M60 36 C70 36 82 37 88 42 C93 46 93 52 92 58 L87 90 C86 102 84 112 82 122 L38 122 C36 112 34 102 33 90 L28 58 C27 52 27 46 32 42 C38 37 50 36 60 36 Z',
 ];
 
-const BACK: [Muscle, number, number, number, number][] = [
-  ['traps', 40, 34, 40, 18],
-  ['rearDelt', 22, 44, 18, 16],
-  ['rearDelt', 80, 44, 18, 16],
-  ['lats', 38, 54, 44, 42],
-  ['triceps', 14, 68, 13, 26],
-  ['triceps', 93, 68, 13, 26],
-  ['forearms', 8, 96, 12, 28],
-  ['forearms', 100, 96, 12, 28],
-  ['glutes', 38, 98, 44, 26],
-  ['hamstrings', 36, 126, 21, 54],
-  ['hamstrings', 63, 126, 21, 54],
-  ['calves', 38, 192, 16, 42],
-  ['calves', 66, 192, 16, 42],
+const BODY_SIDE = [
+  // Плечо и рука
+  'M30 44 C22 46 18 52 17 62 L13 92 C12 98 16 101 21 100 C25 99 27 96 28 90 L33 62 Z',
+  'M14 100 C10 104 9 110 8 118 L6 132 C6 137 10 139 14 138 C17 137 19 134 19 130 L24 102 Z',
+  'M7 139 C4 142 4 150 8 152 C12 153 15 150 15 145 L14 139 Z',
+  // Нога
+  'M38 118 L60 118 L60 128 C59 148 57 162 55 174 C52 178 45 178 42 174 C38 160 36 142 38 118 Z',
+  'M42 176 L55 176 C57 192 56 206 53 222 C51 225 46 225 45 222 C41 206 40 192 42 176 Z',
+  'M44 222 L54 222 C57 228 57 233 53 235 L42 235 C39 233 40 227 44 222 Z',
+];
+
+// [мышца, контур, есть ли пара на правой стороне]
+type Shape = [Muscle, string, boolean];
+
+const FRONT: Shape[] = [
+  ['chest', 'M42 46 C49 42 56 43 59 45 L59 62 C52 66 45 65 40 60 C37 55 38 49 42 46 Z', true],
+  ['frontDelt', 'M33 45 C37 41 42 42 43 45 C40 50 37 55 34 59 C30 55 30 49 33 45 Z', true],
+  ['sideDelt', 'M28 48 C29 45 31 44 33 45 C31 51 30 56 29 61 C26 57 26 52 28 48 Z', true],
+  ['biceps', 'M23 62 C26 58 30 59 31 63 L28 87 C26 92 21 92 20 88 Z', true],
+  ['forearms', 'M16 103 C19 99 23 100 24 104 L19 129 C17 133 12 132 12 128 Z', true],
+  ['abs', 'M50 67 C55 65 65 65 70 67 L70 104 C66 110 54 110 50 104 Z', false],
+  ['quads', 'M41 126 C47 121 54 122 58 127 C58 148 56 160 53 169 C49 173 45 172 43 168 C39 154 38 140 41 126 Z', true],
+  ['calves', 'M43 181 C46 177 51 177 53 181 C54 194 53 203 50 213 C48 216 45 215 44 211 C41 200 41 190 43 181 Z', true],
+];
+
+const BACK: Shape[] = [
+  ['traps', 'M50 33 L70 33 C74 37 79 40 84 42 C74 46 66 52 60 60 C54 52 46 46 36 42 C41 40 46 37 50 33 Z', false],
+  ['rearDelt', 'M31 46 C35 41 41 41 43 44 C40 50 37 55 33 59 C29 55 29 50 31 46 Z', true],
+  ['lats', 'M38 52 C46 54 53 60 58 66 L58 92 C50 93 43 89 39 82 C35 72 35 60 38 52 Z', true],
+  ['triceps', 'M22 62 C25 58 30 59 31 63 L29 88 C27 92 21 92 20 88 Z', true],
+  ['forearms', 'M16 103 C19 99 23 100 24 104 L19 129 C17 133 12 132 12 128 Z', true],
+  ['glutes', 'M40 104 C47 100 55 101 59 106 L59 124 C52 130 45 129 41 124 C37 117 37 110 40 104 Z', true],
+  ['hamstrings', 'M41 130 C47 127 54 127 58 131 C58 150 56 160 53 169 C49 173 45 172 43 168 C39 156 38 142 41 130 Z', true],
+  ['calves', 'M42 178 C46 173 52 174 54 179 C56 193 55 202 51 210 C48 213 45 212 43 208 C39 197 39 187 42 178 Z', true],
 ];
 
 function bodyFigure(
-  shapes: [Muscle, number, number, number, number][],
+  shapes: Shape[],
   label: string,
   statusOf: (muscle: Muscle) => string,
   onPick: (muscle: Muscle) => void,
 ): HTMLElement {
+  const base = (d: string): string => `<path class="body-base" d="${d}"/>`;
+  const muscle = ([name, d]: Shape, index: number): string =>
+    `<path class="muscle muscle-${statusOf(name)}" data-index="${index}" d="${d}"/>`;
   const figure = h('figure', { className: 'body-figure' });
   figure.insertAdjacentHTML(
     'beforeend',
     `<svg viewBox="0 0 120 240" role="img" aria-label="${label}">
-      <circle class="body-base" cx="60" cy="18" r="15"/>
-      <rect class="body-base" x="34" y="36" width="52" height="88" rx="16"/>
-      <rect class="body-base" x="6" y="42" width="22" height="86" rx="10"/>
-      <rect class="body-base" x="92" y="42" width="22" height="86" rx="10"/>
-      <rect class="body-base" x="34" y="118" width="24" height="118" rx="10"/>
-      <rect class="body-base" x="62" y="118" width="24" height="118" rx="10"/>
-      ${shapes
-        .map(
-          ([muscle, x, y, width, height], index) =>
-            `<rect class="muscle muscle-${statusOf(muscle)}" data-index="${index}" x="${x}" y="${y}" width="${width}" height="${height}" rx="6"/>`,
-        )
-        .join('')}
+      ${BODY_CENTER.map(base).join('')}
+      ${BODY_SIDE.map(base).join('')}
+      <g transform="${MIRROR}">${BODY_SIDE.map(base).join('')}</g>
+      ${shapes.map(muscle).join('')}
+      <g transform="${MIRROR}">${shapes.map((shape, index) => (shape[2] ? muscle(shape, index) : '')).join('')}</g>
     </svg>`,
   );
   figure.append(h('figcaption', {}, label));
-  figure.querySelectorAll<SVGRectElement>('.muscle').forEach((shape) => {
+  figure.querySelectorAll<SVGPathElement>('.muscle').forEach((shape) => {
     shape.addEventListener('click', () => onPick(shapes[Number(shape.dataset.index)][0]));
   });
   return figure;
