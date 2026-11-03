@@ -397,9 +397,11 @@ export const ru = {
   'level.next': 'До уровня «{level}» не хватает {weight}',
   'level.needWeight': 'Для уровня нужна запись веса тела',
 
-  'achievement.title': 'Ачивки',
+  'achievement.title': 'Достижения',
+  'achievement.tileValue': '{earned} из {total}',
+  'achievement.tileLabel': 'достижений получено',
   'achievement.summary': 'Получено {earned} из {total}',
-  'achievement.toast': '🏅 Новая ачивка: {name}',
+  'achievement.toast': '🏅 Новое достижение: {name}',
   'achievement.earned': 'Получено ×{count}',
   'achievement.progress': '{value} из {target}',
   'achievement.month8': '8 тренировок за месяц',

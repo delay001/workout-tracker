@@ -401,6 +401,8 @@ export const en: Record<keyof typeof ru, string> = {
   'level.needWeight': 'A body weight entry is needed for the level',
 
   'achievement.title': 'Achievements',
+  'achievement.tileValue': '{earned} of {total}',
+  'achievement.tileLabel': 'achievements earned',
   'achievement.summary': 'Earned {earned} of {total}',
   'achievement.toast': '🏅 New achievement: {name}',
   'achievement.earned': 'Earned ×{count}',

@@ -19,7 +19,7 @@ function goalReached(goal: WeightGoal, currentKg: number): boolean {
   return goal.targetKg < goal.startKg ? currentKg <= goal.targetKg : currentKg >= goal.targetKg;
 }
 
-async function currentStates(): Promise<AchievementState[]> {
+export async function currentStates(): Promise<AchievementState[]> {
   const workouts = await getFinishedWorkouts();
   const current = (await getBodyWeights()).at(-1)?.kg;
   const active = await getWeightGoal();

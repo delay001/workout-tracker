@@ -4,7 +4,7 @@ import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, 
 import { db } from './db';
 import { h } from './dom';
 import { renderCalcScreen } from './calcScreen';
-import { renderAchievementsScreen, renderYearScreen } from './motivationScreens';
+import { currentStates, renderAchievementsScreen, renderYearScreen } from './motivationScreens';
 import { overdueExercises, periodTotals, topExercises, workoutStats } from './progress';
 import { formatWeight, toWeight, weightUnit } from './units';
 import { getMonthlyGoal, getOverdueDays } from './settings';
@@ -131,6 +131,8 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
   const back = (): void => void renderStatsScreen(page, onOpenSettings);
   const workouts = await getFinishedWorkouts();
   const goal = await getMonthlyGoal();
+  const achievements = await currentStates();
+  const earnedAchievements = achievements.filter((state) => state.count > 0).length;
   const today = todayLocal();
   const totals = periodTotals(workouts, today);
   const top = topExercises(workouts, Infinity);
@@ -230,7 +232,8 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
         h(
           'button',
           { type: 'button', className: 'stat', onclick: () => void renderAchievementsScreen(page, back) },
-          t('achievement.title'),
+          h('strong', {}, t('achievement.tileValue', { earned: earnedAchievements, total: achievements.length })),
+          t('achievement.tileLabel'),
         ),
         h(
           'button',
