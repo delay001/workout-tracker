@@ -71,7 +71,6 @@ export async function renderHomeScreen(
     }
     const trend = movingAverage(await getBodyWeights());
     const status = goalStatus(weightGoal, trend, today);
-    const current = trend.at(-1)?.value ?? weightGoal.startKg;
     const reached = status.percent >= 100;
     const weight = h(
       'div',
@@ -81,7 +80,6 @@ export async function renderHomeScreen(
         'div',
         {},
         h('p', { className: 'goal-title' }, t('home.weightGoal')),
-        h('p', { className: 'hint' }, `${formatWeight(current)} → ${formatWeight(weightGoal.targetKg)}`),
         h(
           'p',
           { className: 'hint' },
