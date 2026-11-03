@@ -89,13 +89,13 @@ export async function renderHomeScreen(
                 { type: 'button', className: 'button button-big', onclick: () => void showStart() },
                 t('home.newEntry'),
               ),
-          goalRing(monthCount, await getMonthlyGoal(), weekStreak(workouts, todayLocal())),
           h(
             'div',
             { className: 'stats' },
             h('button', { type: 'button', className: 'stat', onclick: onOpenStats }, h('strong', {}, String(monthCount)), t('home.thisMonth', { count: monthCount })),
             h('button', { type: 'button', className: 'stat', onclick: () => void renderTotalsScreen(root, () => void showMain()) }, h('strong', {}, String(workouts.length)), t('home.totalWorkouts', { count: workouts.length })),
           ),
+          goalRing(monthCount, await getMonthlyGoal(), weekStreak(workouts, todayLocal())),
         ),
       ),
     );
