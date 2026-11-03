@@ -373,7 +373,7 @@ export const ru = {
   'volume.warn.noLower': 'За 14 дней не было тренировки низа',
   'volume.warn.ratio': 'Перекос между верхом и низом хуже заданного порога',
   'stats.viewMonth': 'Обзор',
-  'stats.viewWeek': 'Неделя и мышцы',
+  'stats.viewWeek': 'Мышцы',
   'stats.view': 'Что показать',
   'settings.norms': 'Нормы подходов в неделю',
   'settings.normsHint': 'Минимум и максимум рабочих подходов для каждой мышцы.',

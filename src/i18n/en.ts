@@ -236,7 +236,7 @@ export const en: Record<keyof typeof ru, string> = {
   'stats.overdueRow': '{days} d',
   'stats.noOverdue': 'No such exercises',
   'stats.viewMonth': 'Overview',
-  'stats.viewWeek': 'Week and muscles',
+  'stats.viewWeek': 'Muscles',
   'stats.view': 'What to show',
 
   'template.remove': 'Remove {name}',
