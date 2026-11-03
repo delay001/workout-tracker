@@ -12,7 +12,7 @@ import {
 } from './bodyWeight';
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
-import { emptyState, field, h } from './dom';
+import { collapsible, emptyState, field, h } from './dom';
 import { t } from './i18n';
 import { filterByPeriod, type Period } from './progress';
 import { numberInput, periodChips } from './ui';
@@ -154,7 +154,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
 
   const rows = [...weights].reverse().map((item) =>
     h(
-      'li',
+      'div',
       { className: 'set-row' },
       t('weight.entry', { date: formatDate(item.date), weight: formatWeight(item.kg) }),
       h(
@@ -217,6 +217,6 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
       error,
       h('button', { type: 'submit', className: 'button' }, t('weight.record')),
     ),
-    h('ol', { className: 'set-list' }, ...rows),
+    h('div', { className: 'set-list' }, ...collapsible(rows, 3)),
   );
 }
