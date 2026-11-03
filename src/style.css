@@ -952,6 +952,7 @@ textarea {
   border-radius: 8px;
   background: var(--surface);
   box-shadow: inset 4px 0 0 var(--accent);
+  padding-left: 8px;
 }
 
 .set-text {
