@@ -87,6 +87,7 @@ export const ru = {
   'history.bodyWeight': 'Вес тела',
   'history.measurements': 'Замеры',
   'history.monthCount': 'Тренировок за месяц: {count}',
+  'history.pickMonth': 'Выбрать месяц',
   'weekday.mon': 'Пн',
   'weekday.tue': 'Вт',
   'weekday.wed': 'Ср',

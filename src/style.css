@@ -476,16 +476,21 @@ h2 {
   margin: 8px 0;
 }
 
-.month-select {
-  display: flex;
-  gap: 8px;
+.month-picker {
+  position: relative;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 
-.month-nav select {
-  width: auto;
-  min-height: 48px;
-  padding: 8px;
-  font-size: 1rem;
+/* Системный выбор месяца лежит поверх подписи и невидим: нажатие по подписи открывает его */
+.month-picker-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
 }
 
 .home-header {

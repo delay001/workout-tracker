@@ -97,6 +97,7 @@ export const en: Record<keyof typeof ru, string> = {
   'history.bodyWeight': 'Body weight',
   'history.measurements': 'Measurements',
   'history.monthCount': 'Workouts this month: {count}',
+  'history.pickMonth': 'Pick a month',
   'weekday.mon': 'Mo',
   'weekday.tue': 'Tu',
   'weekday.wed': 'We',

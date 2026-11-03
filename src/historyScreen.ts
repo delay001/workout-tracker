@@ -5,7 +5,6 @@ import type { Workout } from './db';
 import { emptyState, h } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
 import { renderMeasurementsView } from './measurementsScreen';
-import { select } from './ui';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { t } from './i18n';
 
@@ -92,15 +91,6 @@ async function renderWorkoutsView(
 ): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const today = todayLocal();
-  const firstYear = Number((workouts.at(-1)?.date ?? today).slice(0, 4));
-  const lastYear = Number(today.slice(0, 4));
-  // Стрелками можно уйти за пределы лет с тренировками, тогда этот год тоже нужен в списке
-  const yearOptions = (): number[] => {
-    const from = Math.min(firstYear, shown.year);
-    const to = Math.max(lastYear, shown.year);
-    return Array.from({ length: to - from + 1 }, (_, index) => from + index);
-  };
-
   function show(selectedDate?: string): void {
     const cells = monthCells(shown.year, shown.month);
     const shownPrefix = cells.find(Boolean)!.slice(0, 7);
@@ -150,6 +140,31 @@ async function renderWorkoutsView(
         label,
       );
 
+    // Месяц и год выбираются одним полем: название месяца поверх невидимого системного выбора месяца
+    const monthPicker = (): HTMLElement => {
+      const input = h('input', {
+        type: 'month',
+        className: 'month-picker-input',
+        ariaLabel: t('history.pickMonth'),
+        value: `${shown.year}-${String(shown.month + 1).padStart(2, '0')}`,
+        onchange: () => {
+          const [year, month] = input.value.split('-').map(Number);
+          if (year && month) {
+            shown = { year, month: month - 1 };
+            show();
+          }
+        },
+      });
+      input.onclick = () => {
+        try {
+          input.showPicker();
+        } catch {
+          // Старые браузеры открывают выбор сами по нажатию на поле
+        }
+      };
+      return h('label', { className: 'month-picker' }, h('span', {}, `${formatMonth(shown.year, shown.month)} ▾`), input);
+    };
+
     const monthCount = workouts.filter((workout) => workout.date.startsWith(shownPrefix)).length;
     const listed = workouts.filter((workout) =>
       selectedDate ? workout.date === selectedDate : workout.date.startsWith(shownPrefix),
@@ -160,29 +175,7 @@ async function renderWorkoutsView(
         'div',
         { className: 'month-nav' },
         monthButton('‹', t('common.prevMonth'), -1),
-        h(
-          'div',
-          { className: 'month-select' },
-          select(
-            Array.from({ length: 12 }, (_, month): [string, string] => [
-              String(month),
-              formatMonth(2000, month).replace(' 2000', ''),
-            ]),
-            String(shown.month),
-            (value) => {
-              shown = { ...shown, month: Number(value) };
-              show();
-            },
-          ),
-          select(
-            yearOptions().map((year): [string, string] => [String(year), String(year)]),
-            String(shown.year),
-            (value) => {
-              shown = { ...shown, year: Number(value) };
-              show();
-            },
-          ),
-        ),
+        monthPicker(),
         monthButton('›', t('common.nextMonth'), 1),
       ),
       h(
