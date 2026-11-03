@@ -97,7 +97,7 @@ export async function renderSettingsScreen(
       }
     }
 
-    const builtInRows = ['upper', 'lower', 'other'].map((type) =>
+    const builtInRows = ['upper', 'lower', 'cardio', 'other'].map((type) =>
       h(
         'li',
         { className: 'set-row' },

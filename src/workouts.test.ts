@@ -513,7 +513,7 @@ describe('типы тренировок', () => {
   it('свой тип добавляется после встроенных и показывается своим названием', async () => {
     await addWorkoutType('  Руки ');
 
-    expect(await getWorkoutTypes()).toEqual(['upper', 'lower', 'Руки', 'other']);
+    expect(await getWorkoutTypes()).toEqual(['upper', 'lower', 'cardio', 'Руки', 'other']);
     expect(workoutTypeName('Руки')).toBe('Руки');
     expect(workoutTypeName('upper')).toBe('Верх');
   });

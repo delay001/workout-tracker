@@ -41,6 +41,7 @@ export const en: Record<keyof typeof ru, string> = {
 
   'type.upper': 'Upper',
   'type.lower': 'Lower',
+  'type.cardio': 'Cardio',
   'type.other': 'Other',
   'type.emptyName': 'Type name cannot be empty',
   'type.exists': 'This type already exists',
@@ -343,7 +344,8 @@ export const en: Record<keyof typeof ru, string> = {
   'workoutStats.exercises': 'Exercises',
   'workoutStats.sets': 'Working sets',
   'workoutStats.tonnage': 'Volume',
-  'workoutStats.change': 'Compared to the last such workout',
+  'workoutStats.change': 'Volume vs. last “{type}” workout',
+  'workoutStats.changeHint': 'How much more or less weight was lifted than in the same type of workout on {date}',
 
   'calc.title': 'Calculators',
   'calc.oneRepMax': 'One-rep max',

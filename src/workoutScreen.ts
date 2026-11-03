@@ -299,9 +299,15 @@ export async function renderWorkoutScreen(
       statRow(t('workoutStats.exercises'), String(stats.exercises)),
       statRow(t('workoutStats.sets'), String(stats.sets)),
       statRow(t('workoutStats.tonnage'), formatWeight(stats.tonnage)),
-      ...(change === undefined
+      ...(change === undefined || !previous
         ? []
-        : [statRow(t('workoutStats.change'), `${change > 0 ? '+' : ''}${formatWeight(change)}`)]),
+        : [
+            statRow(
+              t('workoutStats.change', { type: workoutTypeName(workout.type) }),
+              `${change > 0 ? '+' : ''}${formatWeight(change)}`,
+            ),
+            h('p', { className: 'hint' }, t('workoutStats.changeHint', { date: formatDate(previous.date) })),
+          ]),
     ];
 
     const addButton = h(

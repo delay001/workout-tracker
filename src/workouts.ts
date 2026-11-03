@@ -14,6 +14,7 @@ import { fromWeight, getUnits, toWeight } from './units';
 const WORKOUT_TYPE_NAMES: Record<WorkoutType, string> = {
   upper: t('type.upper'),
   lower: t('type.lower'),
+  cardio: t('type.cardio'),
   other: t('type.other'),
 };
 
@@ -26,7 +27,7 @@ export async function getCustomWorkoutTypes(): Promise<WorkoutType[]> {
 }
 
 export async function getWorkoutTypes(): Promise<WorkoutType[]> {
-  return ['upper', 'lower', ...(await getCustomWorkoutTypes()), 'other'];
+  return ['upper', 'lower', 'cardio', ...(await getCustomWorkoutTypes()), 'other'];
 }
 
 export async function addWorkoutType(name: string): Promise<void> {

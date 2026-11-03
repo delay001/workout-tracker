@@ -39,6 +39,7 @@ export const ru = {
 
   'type.upper': 'Верх',
   'type.lower': 'Низ',
+  'type.cardio': 'Кардио',
   'type.other': 'Другое',
   'type.emptyName': 'Название типа не может быть пустым',
   'type.exists': 'Такой тип уже есть',
@@ -326,7 +327,8 @@ export const ru = {
   'workoutStats.exercises': 'Упражнений',
   'workoutStats.sets': 'Рабочих подходов',
   'workoutStats.tonnage': 'Тоннаж',
-  'workoutStats.change': 'К прошлой такой тренировке',
+  'workoutStats.change': 'Тоннаж к прошлой тренировке «{type}»',
+  'workoutStats.changeHint': 'Насколько больше или меньше килограммов поднято, чем в тренировке того же типа {date}',
 
   'calc.title': 'Расчёты',
   'calc.oneRepMax': 'Максимум на 1 повторение',
