@@ -21,6 +21,23 @@ export function estimateOneRepMax(weight: number, reps: number): OneRepMaxEstima
   };
 }
 
+export type Activity = 'low' | 'medium' | 'high' | 'veryHigh';
+
+// Коэффициенты активности к базовому обмену: 1–3, 3–5, 6–7 тренировок в неделю и тяжелый физический труд
+export const ACTIVITY: Record<Activity, number> = { low: 1.375, medium: 1.55, high: 1.725, veryHigh: 1.9 };
+
+// Калории в день по формуле Миффлина — Сан Жеора, округлено до 10 ккал
+export function dailyCalories(sex: Sex, kg: number, heightCm: number, age: number, activity: Activity): number {
+  const base = 10 * kg + 6.25 * heightCm - 5 * age + (sex === 'male' ? 5 : -161);
+  return Math.round((base * ACTIVITY[activity]) / 10) * 10;
+}
+
+// Активность по умолчанию по среднему числу тренировок в неделю
+export function activityFor(workoutsPerWeek: number): Activity {
+  if (workoutsPerWeek >= 6) return 'high';
+  return workoutsPerWeek >= 3 ? 'medium' : 'low';
+}
+
 export function bodyMassIndex(kg: number, heightCm: number): number {
   return round(kg / (heightCm / 100) ** 2);
 }

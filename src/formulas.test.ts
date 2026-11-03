@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bodyMassIndex, estimateOneRepMax, navyBodyFat } from './formulas';
+import { activityFor, bodyMassIndex, dailyCalories, estimateOneRepMax, navyBodyFat } from './formulas';
 
 describe('расчет 1ПМ', () => {
   it('считает три формулы и среднее', () => {
@@ -13,6 +13,21 @@ describe('расчет 1ПМ', () => {
 
   it('для одного повторения все формулы дают вес', () => {
     expect(estimateOneRepMax(100, 1).average).toBe(100);
+  });
+});
+
+describe('калории в день', () => {
+  it('Миффлин — Сан Жеор с коэффициентом активности', () => {
+    // 10·97 + 6.25·180 − 5·30 + 5 = 1950; ×1.55 = 3022.5
+    expect(dailyCalories('male', 97, 180, 30, 'medium')).toBe(3020);
+    // 10·60 + 6.25·165 − 5·25 − 161 = 1345.25; ×1.375 = 1849.7
+    expect(dailyCalories('female', 60, 165, 25, 'low')).toBe(1850);
+  });
+
+  it('активность по тренировкам в неделю', () => {
+    expect(activityFor(1)).toBe('low');
+    expect(activityFor(3)).toBe('medium');
+    expect(activityFor(6)).toBe('high');
   });
 });
 

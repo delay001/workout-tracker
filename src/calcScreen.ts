@@ -1,14 +1,16 @@
 import { getBodyWeights } from './bodyWeight';
-import { formatDate } from './dates';
+import { formatDate, todayLocal } from './dates';
 import { db } from './db';
 import { field, h } from './dom';
-import { bodyMassIndex, estimateOneRepMax, navyBodyFat, type Sex } from './formulas';
-import { t } from './i18n';
+import { radioChips, segmented } from './ui';
+import { activityFor, bodyMassIndex, dailyCalories, estimateOneRepMax, navyBodyFat, type Activity, type Sex } from './formulas';
+import { LOCALE, t } from './i18n';
 import { getMeasurements } from './measurements';
-import { getSetting } from './settings';
+import { getSetting, setSetting } from './settings';
 import { numberInput } from './ui';
 import { formatWeight, fromWeight, toWeight, weightUnit } from './units';
-import { bestSet, getExerciseHistory } from './workouts';
+import { bestSet, getExerciseHistory, getFinishedWorkouts } from './workouts';
+import { shiftDays } from './volume';
 
 export async function renderCalcScreen(root: HTMLElement, onBack: () => void): Promise<void> {
   const bench = await db.exercises.where('nameKey').equals('жим лежа').first();
@@ -51,6 +53,30 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       ? navyBodyFat(sex, heightCm, measured.values.waist, measured.values.neck, measured.values.hips)
       : undefined;
 
+  // Калории: возраст берется из знакомства и сохраняется, если его поправить здесь
+  const age = numberInput('integer', await getSetting('age'), 3);
+  const recent = (await getFinishedWorkouts()).filter((workout) => workout.date >= shiftDays(todayLocal(), -28)).length;
+  let activity: Activity = activityFor(recent / 4);
+  const calories = h('div');
+  function showCalories(): void {
+    const years = Number(age.value);
+    if (!(heightCm > 0) || !bodyKg || !(years >= 14 && years <= 100)) {
+      calories.replaceChildren(h('p', { className: 'hint' }, t('calc.needCalories')));
+      return;
+    }
+    const keep = dailyCalories(sex, bodyKg, heightCm, years, activity);
+    const row = (label: string, value: number): HTMLElement =>
+      h('p', { className: 'set-row' }, label, h('strong', {}, t('calc.kcal', { value: value.toLocaleString(LOCALE) })));
+    calories.replaceChildren(
+      row(t('calc.keep'), keep),
+      row(t('calc.cut'), Math.round((keep * 0.85) / 10) * 10),
+      row(t('calc.bulk'), Math.round((keep * 1.1) / 10) * 10),
+    );
+  }
+  age.addEventListener('input', showCalories);
+  age.addEventListener('change', () => void setSetting('age', age.value));
+  showCalories();
+
   root.replaceChildren(
     h(
       'div',
@@ -84,6 +110,33 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
         fat === undefined || !measured ? t('calc.needMeasurements') : t('calc.bodyFatFrom', { date: formatDate(measured.date) }),
       ),
       h('p', { className: 'hint' }, t('calc.bodyFatNote')),
+      h('h2', {}, t('calc.calories')),
+      field(t('calc.age'), age),
+      h(
+        'div',
+        { className: 'field' },
+        h('span', {}, t('calc.activity')),
+        segmented(
+        radioChips<Activity>(
+          'activity',
+          t('calc.activity'),
+          [
+            ['low', t('calc.activityLow')],
+            ['medium', t('calc.activityMedium')],
+            ['high', t('calc.activityHigh')],
+            ['veryHigh', t('calc.activityVeryHigh')],
+          ],
+          activity,
+          (value) => {
+            activity = value;
+            showCalories();
+          },
+        ),
+      ),
+      ),
+      calories,
+      ...(lastWeight ? [h('p', { className: 'hint' }, t('calc.caloriesFrom', { weight: formatWeight(lastWeight.kg), date: formatDate(lastWeight.date) }))] : []),
+      h('p', { className: 'hint' }, t('calc.caloriesNote')),
       h(
         'button',
         { type: 'button', className: 'button button-secondary bottom-action', onclick: onBack },
