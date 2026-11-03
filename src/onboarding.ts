@@ -10,11 +10,24 @@ import {
   setSetting,
 } from './settings';
 import { numberInput, select } from './ui';
-import { weightUnit } from './units';
+import { fromWeight, weightUnit } from './units';
 
 // Знакомство нужно только совсем новому пользователю, текущие данные его не вызывают
 export async function needsOnboarding(): Promise<boolean> {
   return !(await getSetting('onboarded')) && (await db.workouts.count()) === 0;
+}
+
+// Проверка полей прямо при вводе: красная подсказка про первое неверное поле. Пустое поле можно оставить.
+type Rule = [HTMLInputElement, (input: HTMLInputElement) => boolean, string];
+
+function checker(error: HTMLElement, rules: Rule[]): () => boolean {
+  const check = (): boolean => {
+    const broken = rules.find(([input, valid]) => input.value.trim() !== '' && !valid(input));
+    error.textContent = broken ? broken[2] : '';
+    return !broken;
+  };
+  for (const [input] of rules) input.addEventListener('input', check);
+  return check;
 }
 
 export async function renderOnboarding(root: HTMLElement, onDone: () => void): Promise<void> {
@@ -70,7 +83,11 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         void setSetting('theme', value);
       },
     );
-    const name = h('input', { type: 'text', autocomplete: 'given-name', value: await getSetting('name') });
+    const name = h('input', { type: 'text', autocomplete: 'given-name', maxLength: 30, value: await getSetting('name') });
+    // Имя — только буквы, пробел, дефис и апостроф: цифры и знаки убираются прямо при вводе
+    name.oninput = () => {
+      name.value = name.value.replace(/[^\p{L}\s'-]/gu, '');
+    };
     // Имя сохраняется сразу, чтобы не потерять его, если дальше нажать «Пропустить»
     name.onchange = () => void setSetting('name', name.value.trim());
 
@@ -112,12 +129,19 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
       (await getSetting('goalType')) || 'mass',
       () => undefined,
     );
-    const weight = numberInput('decimal');
-    const target = numberInput('decimal');
+    const weight = numberInput('decimal', '', 5);
+    const target = numberInput('decimal', '', 5);
     const deadline = h('input', { type: 'date' });
     const height = numberInput('integer', await getSetting('heightCm'), 3);
     const age = numberInput('integer', await getSetting('age'), 3);
     const error = h('p', { className: 'error', role: 'alert' });
+    const kg = (input: HTMLInputElement): number => fromWeight(Number(input.value));
+    const check = checker(error, [
+      [weight, (input) => kg(input) >= 20 && kg(input) <= 400, t('onboarding.badWeight')],
+      [height, (input) => Number(input.value) >= 100 && Number(input.value) <= 250, t('onboarding.badHeight')],
+      [age, (input) => Number(input.value) >= 14 && Number(input.value) <= 100, t('onboarding.badAge')],
+      [target, (input) => kg(input) >= 20 && kg(input) <= 400, t('onboarding.badTarget')],
+    ]);
 
     layout(
       t('onboarding.step2'),
@@ -132,6 +156,7 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         error,
       ],
       async () => {
+        if (!check()) return;
         try {
           await setSetting('goalType', type.value);
           await setSetting('heightCm', height.value);
@@ -163,6 +188,11 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
     );
     const perWeek = numberInput('integer', await getSetting('perWeek'), 1);
     const duration = numberInput('integer', await getSetting('usualDuration'), 3);
+    const error = h('p', { className: 'error', role: 'alert' });
+    const check = checker(error, [
+      [perWeek, (input) => Number(input.value) >= 1 && Number(input.value) <= 7, t('onboarding.badPerWeek')],
+      [duration, (input) => Number(input.value) >= 10 && Number(input.value) <= 300, t('onboarding.badDuration')],
+    ]);
 
     layout(
       t('onboarding.step3'),
@@ -171,8 +201,10 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         field(t('onboarding.experience'), experience),
         field(t('onboarding.perWeek'), perWeek),
         field(t('onboarding.duration'), duration),
+        error,
       ],
       async () => {
+        if (!check()) return;
         await setSetting('experience', experience.value);
         await setSetting('perWeek', perWeek.value);
         await setSetting('usualDuration', duration.value);
