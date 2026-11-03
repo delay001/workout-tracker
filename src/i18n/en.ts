@@ -138,6 +138,7 @@ export const en: Record<keyof typeof ru, string> = {
   'measure.new': 'New measurements',
   'measure.record': 'Save measurements',
   'measure.invalid': '{name}: unrealistic value',
+  'measure.replaceDate': 'There are already measurements for {date}. Replace them?',
   'measure.fillOne': 'Fill in at least one measurement',
 
   'settings.deleteType': 'Delete type {type}',

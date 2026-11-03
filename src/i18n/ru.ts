@@ -128,6 +128,7 @@ export const ru = {
   'measure.new': 'Новые замеры',
   'measure.record': 'Записать замеры',
   'measure.invalid': '{name}: нереальное значение',
+  'measure.replaceDate': 'За {date} уже есть замеры. Заменить их?',
   'measure.fillOne': 'Заполни хотя бы один замер',
 
   'settings.deleteType': 'Удалить тип {type}',

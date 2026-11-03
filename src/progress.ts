@@ -107,14 +107,19 @@ export function historyRecords(history: LastPerformance[]): string[][] {
 }
 
 // Давно не выполнявшиеся упражнения, сначала самые старые
+// Разовые упражнения не напоминаются: считаются только сделанные хотя бы столько раз
+const OVERDUE_MIN_TIMES = 3;
+
 export function overdueExercises(
   workouts: Workout[],
   days: number,
   today: string,
 ): { exerciseId: number; days: number }[] {
   const lastDates = new Map<number, string>();
+  const times = new Map<number, number>();
   for (const workout of workouts) {
     for (const id of workout.exerciseIds) {
+      times.set(id, (times.get(id) ?? 0) + 1);
       const last = lastDates.get(id);
       if (!last || workout.date > last) {
         lastDates.set(id, workout.date);
@@ -122,6 +127,7 @@ export function overdueExercises(
     }
   }
   return [...lastDates]
+    .filter(([id]) => (times.get(id) ?? 0) >= OVERDUE_MIN_TIMES)
     .map(([exerciseId, date]) => ({ exerciseId, days: daysBetween(date, today) }))
     .filter((item) => item.days >= days)
     .sort((a, b) => b.days - a.days);

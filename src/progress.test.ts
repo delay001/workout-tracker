@@ -129,14 +129,23 @@ describe('давно не делал', () => {
   it('показывает упражнения старше порога, сначала самые старые', () => {
     const workouts = [
       workout('2026-10-01', [1, 2]),
-      workout('2026-09-01', [3]),
+      workout('2026-09-01', [2, 3]),
+      workout('2026-08-20', [2, 3]),
+      workout('2026-08-10', [3]),
       workout('2026-11-01', [1]),
+      workout('2026-07-01', [1]),
     ];
 
     expect(overdueExercises(workouts, 21, TODAY)).toEqual([
       { exerciseId: 3, days: 64 },
       { exerciseId: 2, days: 34 },
     ]);
+  });
+
+  it('не напоминает об упражнениях, сделанных меньше трёх раз', () => {
+    const workouts = [workout('2025-01-01', [1]), workout('2025-02-01', [1])];
+
+    expect(overdueExercises(workouts, 21, TODAY)).toEqual([]);
   });
 
   it('считает дни между датами', () => {

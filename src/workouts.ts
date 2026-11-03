@@ -191,8 +191,17 @@ export async function updateExercise(
     throw new Error(t('exercise.exists'));
   }
 
-  await db.transaction('rw', db.exercises, async () => {
+  await db.transaction('rw', db.exercises, db.templates, async () => {
     await db.exercises.update(exercise.id, { name: cleanName, nameKey, muscleGroup });
+    // Шаблоны хранят названия, поэтому переименование переносится и в них
+    if (cleanName !== exercise.name) {
+      for (const template of await db.templates.toArray()) {
+        if (template.exerciseNames.includes(exercise.name)) {
+          const exerciseNames = template.exerciseNames.map((item) => (item === exercise.name ? cleanName : item));
+          await db.templates.put({ ...template, exerciseNames });
+        }
+      }
+    }
     // Иначе старое название из каталога появится в списке снова
     const wasInCatalog = CATALOG.some((item) => item.name.toLowerCase() === exercise.nameKey);
     if (wasInCatalog && nameKey !== exercise.nameKey) {

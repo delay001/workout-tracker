@@ -574,6 +574,15 @@ describe('управление упражнениями', () => {
     expect((await searchOptions('молотки')).map((option) => option.name)).toEqual([]);
   });
 
+  it('переименование меняет название и в шаблонах', async () => {
+    const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
+    await saveTemplate('upper', ['Жим лёжа', 'Молотки']);
+
+    await updateExercise(exercise, 'Хаммер сгибания', 'Бицепс');
+
+    expect((await db.templates.get('upper'))?.exerciseNames).toEqual(['Жим лёжа', 'Хаммер сгибания']);
+  });
+
   it('смена только группы не создаёт лишних записей', async () => {
     const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
 

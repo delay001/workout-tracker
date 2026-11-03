@@ -1,7 +1,7 @@
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Measurement } from './db';
-import { field, h } from './dom';
+import { confirmDialog, field, h } from './dom';
 import { t } from './i18n';
 import {
   compareMeasurements,
@@ -169,8 +169,14 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
           event.preventDefault();
           try {
             const texts = Object.fromEntries(inputs.map(([key, input]) => [key, input.value]));
-            await saveMeasurement(date.value || today, texts);
-            if (edited && date.value !== edited.date) {
+            const target = date.value || today;
+            // За один день хранится одна запись, поэтому чужую запись на этой дате нельзя затирать молча
+            const taken = target !== edited?.date && measurements.some((item) => item.date === target);
+            if (taken && !(await confirmDialog(t('measure.replaceDate', { date: formatDate(target) })))) {
+              return;
+            }
+            await saveMeasurement(target, texts);
+            if (edited && target !== edited.date) {
               await deleteMeasurement(edited.date);
             }
             await refresh();
