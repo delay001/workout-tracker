@@ -219,6 +219,8 @@ export function pickDate(value: string): Promise<string | undefined> {
 export function dateField(input: HTMLInputElement): HTMLElement {
   input.tabIndex = -1;
   input.classList.add('date-input');
+  // label повторяет нажатие на самом поле, и браузер открыл бы еще и системный календарь: запрещаем
+  input.addEventListener('click', (event) => event.preventDefault());
   const open = async (): Promise<void> => {
     const picked = await pickDate(input.value);
     if (picked) {
