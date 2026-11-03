@@ -91,10 +91,10 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
       h(
         'div',
         { className: 'set-inputs' },
-        field(t('goal.start', { unit: weightUnit() }), start),
-        field(t('goal.target', { unit: weightUnit() }), target),
+        field(t('goal.start', { unit: weightUnit() }), start, true),
+        field(t('goal.target', { unit: weightUnit() }), target, true),
       ),
-      field(t('goal.deadline'), dateField(deadline)),
+      field(t('goal.deadline'), dateField(deadline), true),
       goalError,
       h('button', { type: 'submit', className: 'button' }, t('goal.set')),
     );
@@ -221,7 +221,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
         'div',
         { className: 'set-inputs' },
         field(t('common.date'), dateField(date)),
-        field(t('weight.input', { unit: weightUnit() }), kg),
+        field(t('weight.input', { unit: weightUnit() }), kg, true),
       ),
       error,
       h('button', { type: 'submit', className: 'button' }, t('weight.record')),

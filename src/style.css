@@ -628,6 +628,11 @@ h2 {
   margin-bottom: 12px;
 }
 
+.required-mark {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .field span {
   display: block;
   margin-bottom: 4px;

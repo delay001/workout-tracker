@@ -278,6 +278,11 @@ export function confirmDialog(text: string): Promise<boolean> {
   });
 }
 
-export function field(label: string, control: HTMLElement): HTMLLabelElement {
-  return h('label', { className: 'field' }, h('span', {}, label), control);
+// required: красная звездочка у подписи обязательного поля
+export function field(label: string, control: HTMLElement, required = false): HTMLLabelElement {
+  return h('label', { className: 'field' }, h('span', {}, label, ...(required ? [requiredMark()] : [])), control);
+}
+
+export function requiredMark(): HTMLElement {
+  return h('b', { className: 'required-mark', ariaHidden: 'true' }, ' *');
 }

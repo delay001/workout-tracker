@@ -96,7 +96,7 @@ export async function renderExerciseForm(
               }
             },
           },
-          field(t('common.name'), name),
+          field(t('common.name'), name, true),
           field(t('common.muscleGroup'), group),
           h('h2', {}, t('exercise.markup')),
           field(t('exercise.primary'), primary),

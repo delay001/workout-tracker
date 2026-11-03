@@ -15,7 +15,7 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { confetti, confirmDialog, dateField, field, h, showToast } from './dom';
+import { confetti, confirmDialog, dateField, field, h, requiredMark, showToast } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -134,13 +134,13 @@ export async function renderWorkoutScreen(
         },
       },
       ...(cardio
-        ? [field(t('workout.minutes'), stepper(minutes, 5, 1, 600))]
+        ? [field(t('workout.minutes'), stepper(minutes, 5, 1, 600), true)]
         : [
             h(
               'div',
               { className: 'set-inputs' },
-              field(t('weight.input', { unit: weightUnit() }), stepper(weight, weightStep, 0)),
-              field(t('set.reps'), stepper(reps, 1, 1)),
+              field(t('weight.input', { unit: weightUnit() }), stepper(weight, weightStep, 0), true),
+              field(t('set.reps'), stepper(reps, 1, 1), true),
             ),
             h(
               'div',
@@ -626,13 +626,13 @@ export async function renderWorkoutScreen(
         h(
           'div',
           { className: 'set-inputs' },
-          field(t('workout.hours'), stepper(hours, 1, 0)),
-          field(t('workout.minutes'), stepper(minutes, 5, 0, 59)),
+          field(t('workout.hours'), stepper(hours, 1, 0), true),
+          field(t('workout.minutes'), stepper(minutes, 5, 0, 59), true),
         ),
         h(
           'div',
           { className: 'field' },
-          h('span', {}, t('workout.ratingTitle')),
+          h('span', {}, t('workout.ratingTitle'), requiredMark()),
           h('div', { className: 'rating', role: 'radiogroup', ariaLabel: t('workout.ratingLabel') }, ...ratingButtons),
         ),
         field(t('workout.note'), note),

@@ -140,7 +140,7 @@ export async function renderSettingsScreen(
               void run(() => addWorkoutType(name.value));
             },
           },
-          field(t('settings.newType'), name),
+          field(t('settings.newType'), name, true),
           error,
           h('button', { type: 'submit', className: 'button' }, t('common.add')),
         ),
