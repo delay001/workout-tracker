@@ -433,8 +433,8 @@ export const en: Record<keyof typeof ru, string> = {
   'volume.ok': 'on target',
   'volume.high': 'high',
   'volume.balance': 'Balance',
-  'volume.upperLower': 'Upper : lower, 4 weeks',
-  'volume.pushPull': 'Push : pull this week',
+  'volume.upperLower': 'Upper : lower',
+  'volume.pushPull': 'Push : pull',
   'volume.warn.noLower': 'No lower-body workout in 14 days',
   'volume.warn.ratio': 'Upper and lower imbalance is over your limit',
 

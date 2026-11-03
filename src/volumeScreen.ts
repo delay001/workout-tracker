@@ -18,6 +18,7 @@ import {
   type Volume,
 } from './volume';
 import { getFinishedWorkouts } from './workouts';
+import { daysBetween } from './progress';
 
 type Span = 'current' | 'previous' | 'average' | 'all';
 
@@ -172,8 +173,9 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
   const span = spans[shownSpan];
   const to = shownSpan === 'current' ? today : shiftDays(lastWeek, 6);
   const volume = span.volume();
-  const balance = upperLowerBalance(workouts, today, 28, maxRatio);
-  const moves = pushPull(workouts, exercises, ...week(thisWeek));
+  // Баланс за тот же период, что выбран вверху
+  const balance = upperLowerBalance(workouts, to, daysBetween(span.from, to) + 1, maxRatio);
+  const moves = pushPull(workouts, exercises, span.from, to);
   const detail = h('p', { className: 'hint' }, t('volume.tapMuscle'));
   const round = (value: number): string => String(Math.round(value * 10) / 10);
 
