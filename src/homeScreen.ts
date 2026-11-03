@@ -3,7 +3,8 @@ import type { Workout } from './db';
 import { field, h } from './dom';
 import { pageHeader } from './avatar';
 import { getMonthlyGoal, getSetting } from './settings';
-import { goalBar, renderTotalsScreen } from './statsScreen';
+import { goalRing, renderTotalsScreen } from './statsScreen';
+import { weekStreak } from './achievements';
 import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
 import { t } from './i18n';
 
@@ -86,7 +87,7 @@ export async function renderHomeScreen(
                 { type: 'button', className: 'button button-big', onclick: () => void showStart() },
                 t('home.newEntry'),
               ),
-          goalBar(monthCount, await getMonthlyGoal()),
+          goalRing(monthCount, await getMonthlyGoal(), weekStreak(workouts, todayLocal())),
           h(
             'div',
             { className: 'stats' },

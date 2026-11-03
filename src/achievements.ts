@@ -70,7 +70,7 @@ function countRecords(workouts: Workout[]): number {
 }
 
 // Сколько недель подряд, включая текущую или прошлую, было хотя бы две тренировки
-function weekStreak(workouts: Workout[], today: string): number {
+export function weekStreak(workouts: Workout[], today: string): number {
   const counts = new Map<string, number>();
   for (const workout of workouts) {
     const week = weekStart(workout.date);

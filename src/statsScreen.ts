@@ -38,24 +38,38 @@ function collapsible(rows: HTMLElement[], limit = 6): HTMLElement[] {
   return [...rows.slice(0, limit), rest, toggle];
 }
 
-export function goalBar(count: number, goal: number): HTMLElement {
-  const fill = h('div', { className: 'progress-fill' });
-  fill.style.width = `${goalPercent(count, goal)}%`;
+// Кольцо прогресса к цели месяца. Справа подпись и, если передана, серия недель.
+export function goalRing(count: number, goal: number, streak?: number): HTMLElement {
+  const radius = 40;
+  const length = 2 * Math.PI * radius;
+  const ring = h('div', {
+    className: 'goal-ring',
+    role: 'progressbar',
+    ariaValueNow: String(count),
+    ariaValueMax: String(goal),
+    ariaLabel: t('stats.goalLabel'),
+  });
+  ring.insertAdjacentHTML(
+    'beforeend',
+    `<svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="goal-ring-track" cx="50" cy="50" r="${radius}"/>
+      <circle class="goal-ring-fill" cx="50" cy="50" r="${radius}"
+        stroke-dasharray="${length}" style="--ring-offset: ${length * (1 - goalPercent(count, goal) / 100)}; --ring-length: ${length}"/>
+    </svg>`,
+  );
+  ring.append(h('strong', {}, t('stats.goalRingValue', { count, goal })));
 
+  const left = Math.max(0, goal - count);
   return h(
     'div',
-    { className: 'progress' },
-    h('p', {}, t('stats.goal', { count, goal })),
+    { className: 'goal' },
+    ring,
     h(
       'div',
-      {
-        className: 'progress-track',
-        role: 'progressbar',
-        ariaValueNow: String(count),
-        ariaValueMax: String(goal),
-        ariaLabel: t('stats.goalLabel'),
-      },
-      fill,
+      {},
+      h('p', { className: 'goal-title' }, t('stats.goalLabel')),
+      h('p', { className: 'hint' }, left > 0 ? t('stats.goalLeft', { count: left }) : t('stats.goalDone')),
+      ...(streak ? [h('p', { className: 'goal-streak' }, t('stats.streak', { count: streak }))] : []),
     ),
   );
 }
@@ -220,7 +234,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
         h('h2', {}, formatMonthRange(shown.year, shown.month, months)),
         monthButton('›', t('common.nextMonth'), 1),
       ),
-      ...(months === 1 ? [goalBar(stats.count, goal)] : []),
+      ...(months === 1 ? [goalRing(stats.count, goal)] : []),
       h(
         'div',
         { className: 'stats' },

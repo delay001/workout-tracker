@@ -228,6 +228,66 @@ h2 {
   }
 }
 
+.goal {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 12px 0;
+}
+
+.goal p {
+  margin: 0 0 4px;
+}
+
+.goal-title {
+  font-weight: 600;
+}
+
+.goal-streak {
+  font-weight: 600;
+}
+
+.goal-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+}
+
+.goal-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.goal-ring circle {
+  fill: none;
+  stroke-width: 10;
+}
+
+.goal-ring-track {
+  stroke: var(--surface);
+}
+
+.goal-ring-fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dashoffset: var(--ring-offset);
+  animation: ring-grow 0.8s ease-out;
+}
+
+.goal-ring strong {
+  font-size: 1.125rem;
+}
+
+@keyframes ring-grow {
+  from {
+    stroke-dashoffset: var(--ring-length);
+  }
+}
+
 .stat strong {
   font-size: 2rem;
   line-height: 1.1;

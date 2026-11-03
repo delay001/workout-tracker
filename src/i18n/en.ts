@@ -203,8 +203,11 @@ export const en: Record<keyof typeof ru, string> = {
   'muscle.calves': 'Calves',
   'muscle.abs': 'Abs',
 
-  'stats.goal': 'Monthly goal: {count} of {goal}',
   'stats.goalLabel': 'Monthly goal',
+  'stats.goalRingValue': '{count} of {goal}',
+  'stats.goalLeft': '{count} more {count:workout|workouts}',
+  'stats.goalDone': 'Goal reached 🏆',
+  'stats.streak': '🔥 {count} {count:week|weeks} in a row with 2 workouts',
   'stats.workouts': '{count:workout|workouts}',
   'stats.tonnage': '{unit} volume',
   'stats.workingSets': '{count:working set|working sets}',
@@ -440,7 +443,7 @@ export const en: Record<keyof typeof ru, string> = {
   'year.weight': 'Body weight change',
   'year.save': 'Save as image',
 
-  'motivation.goal': '🏆 Monthly goal reached: {goal} workouts! Great job!',
+  'motivation.goal': '🏆 Monthly goal reached: {goal} {goal:workout|workouts}! Great job!',
   'motivation.1': 'Great workout! One more step to your goal 💪',
   'motivation.2': 'Done! Discipline beats motivation',
   'motivation.3': 'Today you got stronger than yesterday',

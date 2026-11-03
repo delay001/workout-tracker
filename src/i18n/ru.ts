@@ -187,8 +187,11 @@ export const ru = {
   'muscle.calves': 'Икры',
   'muscle.abs': 'Пресс',
 
-  'stats.goal': 'Цель месяца: {count} из {goal}',
   'stats.goalLabel': 'Цель месяца',
+  'stats.goalRingValue': '{count} из {goal}',
+  'stats.goalLeft': 'Еще {count} {count:тренировка|тренировки|тренировок}',
+  'stats.goalDone': 'Цель выполнена 🏆',
+  'stats.streak': '🔥 {count} {count:неделя|недели|недель} подряд по 2 тренировки',
   'stats.workouts': '{count:тренировка|тренировки|тренировок}',
   'stats.tonnage': '{unit} тоннаж',
   'stats.workingSets': '{count:рабочий подход|рабочих подхода|рабочих подходов}',
@@ -466,7 +469,7 @@ export const ru = {
   'onboarding.splitFullBody': 'Фулбади',
   'onboarding.splitCustom': 'Свой сплит',
 
-  'motivation.goal': '🏆 Цель месяца выполнена: {goal} тренировок! Отличная работа!',
+  'motivation.goal': '🏆 Цель месяца выполнена: {goal} {goal:тренировка|тренировки|тренировок}! Отличная работа!',
   'motivation.1': 'Отличная тренировка! Еще один шаг к цели 💪',
   'motivation.2': 'Сделано! Дисциплина сильнее мотивации',
   'motivation.3': 'Сегодня ты стал сильнее, чем вчера',
