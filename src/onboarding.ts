@@ -70,11 +70,22 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         void setSetting('theme', value);
       },
     );
+    const name = h('input', { type: 'text', autocomplete: 'given-name', value: await getSetting('name') });
+    // Имя сохраняется сразу, чтобы не потерять его, если дальше нажать «Пропустить»
+    name.onchange = () => void setSetting('name', name.value.trim());
+
     layout(
       t('onboarding.step1'),
       1,
-      [field(t('settings.language'), language), field(t('settings.theme'), theme)],
-      goalStep,
+      [
+        field(t('settings.language'), language),
+        field(t('onboarding.name'), name),
+        field(t('settings.theme'), theme),
+      ],
+      async () => {
+        await setSetting('name', name.value.trim());
+        await goalStep();
+      },
     );
   }
 
