@@ -142,31 +142,6 @@ export function workoutStats(workout: Workout): { exercises: number; sets: numbe
   };
 }
 
-export interface PeriodTotal {
-  workouts: number;
-  durationMin: number;
-  tonnage: number;
-}
-
-function totalFrom(workouts: Workout[], start: string): PeriodTotal {
-  const shown = workouts.filter((workout) => workout.date >= start);
-  return {
-    workouts: shown.length,
-    durationMin: shown.reduce((sum, workout) => sum + (workout.durationMin ?? 0), 0),
-    tonnage: tonnage(shown.flatMap((workout) => workout.exercises).flatMap((item) => item.sets)),
-  };
-}
-
-// Итоги текущих недели (с понедельника), месяца и года
-export function periodTotals(workouts: Workout[], today: string): Record<'week' | 'month' | 'year', PeriodTotal> {
-  const weekday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7;
-  return {
-    week: totalFrom(workouts, shiftDate(today, -weekday)),
-    month: totalFrom(workouts, `${today.slice(0, 7)}-01`),
-    year: totalFrom(workouts, `${today.slice(0, 4)}-01-01`),
-  };
-}
-
 export function topExercises(workouts: Workout[], limit: number): { exerciseId: number; count: number }[] {
   const counts = new Map<number, number>();
   for (const workout of workouts) {

@@ -227,9 +227,7 @@ export const ru = {
   'period.6m': 'Полгода',
   'period.1y': 'Год',
   'period.all': 'Все',
-  'period.week': 'Неделя',
   'period.month': 'Месяц',
-  'period.year': 'Год',
 
   'summary.times': 'Выполнялось раз',
   'summary.last': 'Последний раз',
@@ -244,8 +242,6 @@ export const ru = {
   'summary.metric': 'Что показать на графике',
   'summary.period': 'Период графика',
 
-  'stats.totals': 'Итоги',
-  'stats.totalRow': '{workouts} {workouts:тренировка|тренировки|тренировок}, {hours} ч, {tonnage}',
   'stats.averageRating': 'средняя оценка',
   'stats.tonnageMonth': 'Тоннаж за месяц',
   'stats.calc': 'Калькуляторы',

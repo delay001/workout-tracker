@@ -222,8 +222,6 @@ export const en: Record<keyof typeof ru, string> = {
   'common.showAll': 'Show all ({count})',
   'common.collapse': 'Collapse',
   'stats.tonnageByMonth': 'Volume by month',
-  'stats.totals': 'Totals',
-  'stats.totalRow': '{workouts} {workouts:workout|workouts}, {hours} h, {tonnage}',
   'stats.averageRating': 'average rating',
   'stats.tonnageMonth': 'Volume this month',
   'stats.calc': 'Calculators',
@@ -263,9 +261,7 @@ export const en: Record<keyof typeof ru, string> = {
   'period.6m': '6 mo',
   'period.1y': 'Year',
   'period.all': 'All',
-  'period.week': 'Week',
   'period.month': 'Month',
-  'period.year': 'Year',
 
   'summary.times': 'Times done',
   'summary.last': 'Last time',

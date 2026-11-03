@@ -5,7 +5,7 @@ import { db } from './db';
 import { collapsible, emptyState, h } from './dom';
 import { renderCalcScreen } from './calcScreen';
 import { currentStates, renderAchievementsScreen, renderYearScreen } from './motivationScreens';
-import { overdueExercises, periodTotals, topExercises, workoutStats } from './progress';
+import { overdueExercises, topExercises, workoutStats } from './progress';
 import { formatWeight, toWeight, weightUnit } from './units';
 import { getMonthlyGoal, getOverdueDays } from './settings';
 import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage } from './stats';
@@ -129,7 +129,6 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
   const achievements = await currentStates();
   const earnedAchievements = achievements.filter((state) => state.count > 0).length;
   const today = todayLocal();
-  const totals = periodTotals(workouts, today);
   const top = topExercises(workouts, Infinity);
   const overdue = overdueExercises(workouts, await getOverdueDays(), today);
   const exercises = await db.exercises.toArray();
@@ -265,23 +264,6 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
                 formatChartMonth,
               ),
             ]),
-      h('h2', {}, t('stats.totals')),
-      ...(['week', 'month', 'year'] as const).map((period) =>
-        h(
-          'p',
-          { className: 'set-row' },
-          t(`period.${period}`),
-          h(
-            'span',
-            {},
-            t('stats.totalRow', {
-              workouts: totals[period].workouts,
-              hours: formatDuration(totals[period].durationMin),
-              tonnage: formatWeight(totals[period].tonnage),
-            }),
-          ),
-        ),
-      ),
       h('h2', {}, t('stats.top')),
       ...collapsible(topRows),
       h('h2', {}, t('stats.overdue')),

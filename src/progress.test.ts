@@ -8,7 +8,6 @@ import {
   historyRecords,
   oneRepMaxSeries,
   overdueExercises,
-  periodTotals,
   tonnageSeries,
   topExercises,
   workingWeightSeries,
@@ -154,21 +153,6 @@ describe('давно не делал', () => {
 });
 
 describe('общая статистика', () => {
-  it('разделяет неделю с понедельника, месяц и год', () => {
-    const workouts = [
-      workout('2026-11-02', [1], [set(100, 5)], 60),
-      workout('2026-11-01', [1], [set(100, 5)], 30),
-      workout('2026-10-01', [1], [set(100, 5)]),
-      workout('2025-12-31', [1], [set(100, 5)]),
-    ];
-
-    expect(periodTotals(workouts, TODAY)).toEqual({
-      week: { workouts: 1, durationMin: 60, tonnage: 500 },
-      month: { workouts: 2, durationMin: 90, tonnage: 1000 },
-      year: { workouts: 3, durationMin: 90, tonnage: 1500 },
-    });
-  });
-
   it('топ упражнений идет по частоте', () => {
     const workouts = [workout('2026-11-01', [1, 2]), workout('2026-11-02', [2]), workout('2026-11-03', [3])];
 
