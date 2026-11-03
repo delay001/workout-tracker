@@ -1,4 +1,5 @@
-import { guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
+import { MUSCLE_GROUPS } from './catalog';
+import { renderExerciseForm } from './exerciseSettingsScreen';
 import { motivationMessage } from './motivation';
 import { syncAchievements } from './motivationScreens';
 import { getMonthlyGoal, getWeightStep } from './settings';
@@ -283,26 +284,13 @@ export async function renderWorkoutScreen(
   const statRow = (label: string, value: string): HTMLElement =>
     h('p', { className: 'set-row' }, label, h('strong', {}, value));
 
-  // Итоги тренировки: упражнения, подходы, тоннаж и сравнение с прошлой такой же
+  // Итоги тренировки: упражнения, подходы, тоннаж
   async function statRowsFor(shown: Workout): Promise<HTMLElement[]> {
     const stats = workoutStats(shown);
-    const previous = (await getFinishedWorkouts()).find(
-      (item) => item.type === shown.type && item.date < shown.date,
-    );
-    const change = previous ? stats.tonnage - workoutStats(previous).tonnage : 0;
     return [
       statRow(t('workoutStats.exercises'), String(stats.exercises)),
       statRow(t('workoutStats.sets'), String(stats.sets)),
       statRow(t('workoutStats.tonnage'), formatWeight(stats.tonnage)),
-      ...(previous
-        ? [
-            statRow(
-              t('workoutStats.change', { type: workoutTypeName(shown.type) }),
-              `${change > 0 ? '+' : ''}${formatWeight(change)}`,
-            ),
-            h('p', { className: 'hint' }, t('workoutStats.changeHint', { date: formatDate(previous.date) })),
-          ]
-        : []),
     ];
   }
 
@@ -432,9 +420,6 @@ export async function renderWorkoutScreen(
     }
 
     const nameInput = h('input', { type: 'text', autocomplete: 'off' });
-    const groupInput = groupSelect();
-    // Группа меняется только в настройках, здесь она лишь показывается
-    groupInput.disabled = true;
 
     const results = h('div', { hidden: true });
     nameInput.onfocus = () => {
@@ -465,17 +450,23 @@ export async function renderWorkoutScreen(
       ),
     );
 
+    // Нового упражнения нет в каталоге: открывается то же окно создания, что и в настройках
     const newExercise = h(
-      'form',
+      'button',
       {
+        type: 'button',
+        className: 'button',
         hidden: true,
-        onsubmit: async (event: Event) => {
-          event.preventDefault();
-          await choose(await findOrCreateExercise(nameInput.value, groupInput.value || undefined));
-        },
+        onclick: () =>
+          void renderExerciseForm(
+            root,
+            undefined,
+            async (name) => choose(await findOrCreateExercise(name)),
+            () => void showAddExercise(replacedId),
+            nameInput.value.trim(),
+          ),
       },
-      field(t('common.muscleGroup'), groupInput),
-      h('button', { type: 'submit', className: 'button' }, t('workout.createExercise')),
+      t('workout.createExercise'),
     );
 
     async function updateResults(): Promise<void> {
@@ -510,7 +501,6 @@ export async function renderWorkoutScreen(
       results.replaceChildren(...items);
 
       newExercise.hidden = name === '' || isExactMatch(found, name);
-      groupInput.value = guessMuscleGroup(name) ?? '';
     }
 
     nameInput.oninput = () => void updateResults();

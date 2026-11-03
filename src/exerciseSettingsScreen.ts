@@ -1,4 +1,5 @@
-import { db, findOrCreateExercise, type Exercise } from './db';
+import { db, findOrCreateExercise } from './db';
+import { guessMuscleGroup } from './catalog';
 import { markupFor, MUSCLES, type Movement, type Muscle } from './muscles';
 import { select } from './ui';
 import { field, h } from './dom';
@@ -13,23 +14,29 @@ import {
 } from './workouts';
 import { t } from './i18n';
 
-export async function renderExerciseSettings(root: HTMLElement, onBack: () => void): Promise<void> {
-  let savedByName = new Map<string, Exercise>();
+function backButton(onclick: () => void): HTMLButtonElement {
+  return h(
+    'button',
+    { type: 'button', className: 'button button-secondary bottom-action', onclick },
+    t('common.back'),
+  );
+}
 
-  function backButton(onclick: () => void): HTMLButtonElement {
-    return h(
-      'button',
-      { type: 'button', className: 'button button-secondary bottom-action', onclick },
-      t('common.back'),
-    );
-  }
-
-  function showEdit(option?: ExerciseOption): void {
-    const name = h('input', { type: 'text', autocomplete: 'off', value: option?.name ?? '' });
-    const group = groupSelect(option?.muscleGroup);
+// Окно создания или правки упражнения. Им же пользуется тренировка, когда нужного упражнения нет в каталоге.
+export async function renderExerciseForm(
+  root: HTMLElement,
+  option: ExerciseOption | undefined,
+  onSaved: (name: string) => void | Promise<void>,
+  onBack: () => void,
+  newName = '',
+): Promise<void> {
+  {
+    const startName = option?.name ?? newName;
+    const name = h('input', { type: 'text', autocomplete: 'off', value: startName });
+    const group = groupSelect(option ? option.muscleGroup : guessMuscleGroup(startName));
     const error = h('p', { className: 'error', role: 'alert' });
-    const saved = option && savedByName.get(option.name);
-    const markup = saved ?? { ...markupFor(option?.name ?? ''), id: 0 };
+    const saved = option && (await db.exercises.where('nameKey').equals(option.name.toLowerCase()).first());
+    const markup = saved ?? { ...markupFor(startName), id: 0 };
     const primary = select(
       [['', t('exercise.noPrimary')], ...MUSCLES.map((muscle): [string, string] => [muscle, t(`muscle.${muscle}`)])],
       markup.primaryMuscle ?? '',
@@ -83,7 +90,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
               event.preventDefault();
               try {
                 await save();
-                await showList();
+                await onSaved(name.value.trim());
               } catch (problem) {
                 error.textContent = problem instanceof Error ? problem.message : t('common.saveFailed');
               }
@@ -117,20 +124,24 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
                   onclick: async () => {
                     const exercise = await findOrCreateExercise(option.name, option.muscleGroup);
                     await setExerciseHidden(exercise.id, true);
-                    await showList();
+                    onBack();
                   },
                 },
                 t('exercise.hide'),
               ),
             ]
           : []),
-        backButton(() => void showList()),
+        backButton(onBack),
       ),
     );
   }
+}
+
+export async function renderExerciseSettings(root: HTMLElement, onBack: () => void): Promise<void> {
+  const showEdit = (option?: ExerciseOption): void =>
+    void renderExerciseForm(root, option, () => showList(), () => void showList());
 
   async function showList(): Promise<void> {
-    savedByName = new Map((await db.exercises.toArray()).map((exercise) => [exercise.name, exercise]));
     const search = h('input', { type: 'text', autocomplete: 'off' });
     const results = h('div');
 

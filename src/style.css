@@ -735,6 +735,20 @@ textarea {
   font-size: 1.125rem;
 }
 
+/* Строки с данными на подложках, чтобы не сливались в сплошной текст */
+p.set-row {
+  margin: 6px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.finish-card p.set-row {
+  margin: 0 0 8px;
+  padding: 0;
+  background: none;
+}
+
 .remove-button {
   width: 48px;
   height: 48px;
@@ -829,8 +843,11 @@ textarea {
 .volume-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 4px 8px;
-  margin: 10px 0;
+  gap: 6px 8px;
+  margin: 6px 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--surface);
 }
 
 .volume-bar {
@@ -838,7 +855,7 @@ textarea {
   height: 8px;
   overflow: hidden;
   border-radius: 4px;
-  background: var(--surface);
+  background: var(--bg);
 }
 
 .volume-fill {

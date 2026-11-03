@@ -120,11 +120,15 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
           ),
         ),
         h('p', { className: 'set-row' }, t('goal.left', { weight: formatWeight(Math.abs(status.leftKg)), days: status.leftDays })),
-        h('p', { className: 'set-row' }, t('goal.required', { value: signed(status.requiredPerWeek) })),
-        ...(status.actualPerWeek === undefined
-          ? []
-          : [h('p', { className: 'set-row' }, t('goal.actual', { value: signed(status.actualPerWeek) }))]),
-        h('p', { className: 'set-row' }, h('strong', {}, t(`goal.status${status.status}`))),
+        // Темп одной строкой: нужный и фактический
+        h(
+          'p',
+          { className: 'hint' },
+          [
+            t('goal.required', { value: signed(status.requiredPerWeek) }),
+            ...(status.actualPerWeek === undefined ? [] : [t('goal.actual', { value: signed(status.actualPerWeek) })]),
+          ].join(' · '),
+        ),
         ...(status.tooFast ? [h('p', { className: 'error' }, t('goal.tooFast'))] : []),
         h(
           'div',
