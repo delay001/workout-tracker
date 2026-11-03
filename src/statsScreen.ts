@@ -2,7 +2,7 @@ import { pageHeader } from './avatar';
 import { lineChart } from './chart';
 import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, todayLocal } from './dates';
 import { db } from './db';
-import { emptyState, h } from './dom';
+import { collapsible, emptyState, h } from './dom';
 import { renderCalcScreen } from './calcScreen';
 import { currentStates, renderAchievementsScreen, renderYearScreen } from './motivationScreens';
 import { overdueExercises, periodTotals, topExercises, workoutStats } from './progress';
@@ -18,25 +18,6 @@ const now = new Date();
 let shown = { year: now.getFullYear(), month: now.getMonth() };
 // Сколько месяцев показывает статистика: последний из них — shown
 let shownMonths: 1 | 3 | 6 | 12 = 1;
-
-// Первые строки видны сразу, остальные открываются кнопкой
-function collapsible(rows: HTMLElement[], limit = 6): HTMLElement[] {
-  if (rows.length <= limit) return rows;
-  const rest = h('div', { hidden: true }, ...rows.slice(limit));
-  const toggle = h(
-    'button',
-    {
-      type: 'button',
-      className: 'button button-secondary',
-      onclick: () => {
-        rest.hidden = !rest.hidden;
-        toggle.textContent = rest.hidden ? t('common.showAll', { count: rows.length }) : t('common.collapse');
-      },
-    },
-    t('common.showAll', { count: rows.length }),
-  );
-  return [...rows.slice(0, limit), rest, toggle];
-}
 
 // Кольцо прогресса к цели месяца. Справа подпись и, если передана, серия недель.
 export function goalRing(count: number, goal: number, streak?: number): HTMLElement {

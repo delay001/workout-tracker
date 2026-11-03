@@ -951,6 +951,7 @@ textarea {
 .set-row-edited {
   border-radius: 8px;
   background: var(--surface);
+  box-shadow: inset 4px 0 0 var(--accent);
 }
 
 .set-text {

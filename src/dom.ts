@@ -25,6 +25,26 @@ export function showToast(text: string): void {
   setTimeout(() => toast.remove(), 4000);
 }
 
+// Первые строки видны сразу, остальные открываются кнопкой
+// open: сразу развернуть, например чтобы было видно выбранную строку
+export function collapsible(rows: HTMLElement[], limit = 6, open = false): HTMLElement[] {
+  if (rows.length <= limit) return rows;
+  const rest = h('div', { hidden: !open }, ...rows.slice(limit));
+  const toggle = h(
+    'button',
+    {
+      type: 'button',
+      className: 'button button-secondary',
+      onclick: () => {
+        rest.hidden = !rest.hidden;
+        toggle.textContent = rest.hidden ? t('common.showAll', { count: rows.length }) : t('common.collapse');
+      },
+    },
+    open ? t('common.collapse') : t('common.showAll', { count: rows.length }),
+  );
+  return [...rows.slice(0, limit), rest, toggle];
+}
+
 // Пустой экран: значок, подсказка, что делать дальше, и кнопка, если действие очевидно
 export function emptyState(icon: string, text: string, action?: [string, () => void]): HTMLElement {
   return h(

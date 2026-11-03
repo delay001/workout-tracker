@@ -1,7 +1,7 @@
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Measurement } from './db';
-import { confirmDialog, emptyState, field, h } from './dom';
+import { collapsible, confirmDialog, emptyState, field, h } from './dom';
 import { t } from './i18n';
 import {
   compareMeasurements,
@@ -101,10 +101,12 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
     ];
   }
 
-  const rows = [...measurements].reverse().map((item) =>
+  const newestFirst = [...measurements].reverse();
+  // Запись, которая сейчас редактируется, подсвечена
+  const rows = newestFirst.map((item) =>
     h(
-      'li',
-      { className: 'set-row' },
+      'div',
+      { className: item.date === edited?.date ? 'set-row set-row-edited' : 'set-row', ariaCurrent: item.date === edited?.date ? 'true' : null },
       h(
         'button',
         {
@@ -205,6 +207,10 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
           ]
         : []),
     ),
-    h('ol', { className: 'set-list' }, ...rows),
+    h(
+      'div',
+      { className: 'set-list' },
+      ...collapsible(rows, 3, newestFirst.findIndex((item) => item.date === edited?.date) >= 3),
+    ),
   );
 }
