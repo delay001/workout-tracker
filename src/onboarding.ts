@@ -11,18 +11,6 @@ import {
 } from './settings';
 import { numberInput, select } from './ui';
 import { weightUnit } from './units';
-import { getWorkoutTypes, saveTemplate } from './workouts';
-
-// Готовые наборы упражнений, которые можно принять на шаге со сплитом
-const SPLIT_TEMPLATES: Record<string, Record<string, string[]>> = {
-  upperLower: {
-    upper: ['Жим лёжа', 'Жим гантелей под 45', 'Тяга верхнего блока', 'Тяга горизонтального блока', 'Молотки', 'Жим блока на трицепс'],
-    lower: ['Жим ногами в тренажёре', 'Румынская тяга', 'Разгибание ног сидя', 'Сгибание ног сидя', 'Подъём на носки сидя'],
-  },
-  fullBody: {
-    other: ['Приседания со штангой', 'Жим лёжа', 'Тяга горизонтального блока', 'Жим гантелей сидя', 'Молотки'],
-  },
-};
 
 // Знакомство нужно только совсем новому пользователю, текущие данные его не вызывают
 export async function needsOnboarding(): Promise<boolean> {
@@ -180,25 +168,13 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
       (await getSetting('split')) || 'upperLower',
       () => undefined,
     );
-    const fill = h('input', { type: 'checkbox' });
 
     layout(
       t('onboarding.step4'),
       4,
-      [
-        field(t('onboarding.split'), split),
-        h('label', { className: 'checkbox' }, fill, t('onboarding.fillTemplates')),
-      ],
+      [field(t('onboarding.split'), split)],
       async () => {
         await setSetting('split', split.value);
-        const types = await getWorkoutTypes();
-        if (fill.checked) {
-          for (const [type, names] of Object.entries(SPLIT_TEMPLATES[split.value] ?? {})) {
-            if (types.includes(type)) {
-              await saveTemplate(type, names);
-            }
-          }
-        }
         await finish();
       },
     );

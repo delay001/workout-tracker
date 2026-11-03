@@ -11,6 +11,7 @@ export async function renderHomeScreen(
   active: Workout | undefined,
   onOpenActive: () => void,
   onOpenStats: () => void,
+  onOpenSettings: () => void,
 ): Promise<void> {
   async function showStart(): Promise<void> {
     const dateInput = h('input', { type: 'date', value: todayLocal() });
@@ -69,7 +70,13 @@ export async function renderHomeScreen(
           'div',
           { className: 'home-header' },
           h('h1', {}, name ? t('home.helloName', { name }) : t('home.hello')),
-          ...(avatar ? [h('img', { className: 'avatar', src: avatar, alt: t('settings.avatar') })] : []),
+          h(
+            'button',
+            { type: 'button', className: 'avatar-button', ariaLabel: t('settings.open'), onclick: onOpenSettings },
+            avatar
+              ? h('img', { className: 'avatar', src: avatar, alt: '' })
+              : h('span', { className: 'avatar avatar-empty' }, name ? name[0].toUpperCase() : '👤'),
+          ),
         ),
         h(
           'div',
