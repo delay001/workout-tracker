@@ -52,16 +52,19 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
 
   // Калории: возраст берется из знакомства и сохраняется, если его поправить здесь
   const age = numberInput('integer', await getSetting('age'), 3);
+  // Вес подставляется последний, но его можно поменять: например, посчитать для целевого веса
+  const caloriesWeight = numberInput('decimal', bodyKg === undefined ? '' : String(toWeight(bodyKg)));
   const recent = (await getFinishedWorkouts()).filter((workout) => workout.date >= shiftDays(todayLocal(), -28)).length;
   let activity: Activity = activityFor(recent / 4);
   const calories = h('div');
   function showCalories(): void {
     const years = Number(age.value);
-    if (!(heightCm > 0) || !bodyKg || !(years >= 14 && years <= 100)) {
+    const kg = fromWeight(Number(caloriesWeight.value.replace(',', '.')));
+    if (!(heightCm > 0) || !(kg >= 20 && kg <= 400) || !(years >= 14 && years <= 100)) {
       calories.replaceChildren(h('p', { className: 'hint' }, t('calc.needCalories')));
       return;
     }
-    const keep = dailyCalories(sex, bodyKg, heightCm, years, activity);
+    const keep = dailyCalories(sex, kg, heightCm, years, activity);
     const row = (label: string, value: number): HTMLElement =>
       h('p', { className: 'set-row' }, label, h('strong', {}, t('calc.kcal', { value: value.toLocaleString(LOCALE) })));
     calories.replaceChildren(
@@ -71,6 +74,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
     );
   }
   age.addEventListener('input', showCalories);
+  caloriesWeight.addEventListener('input', showCalories);
   age.addEventListener('change', () => void setSetting('age', age.value));
   showCalories();
 
@@ -108,7 +112,12 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       ),
       h('p', { className: 'hint' }, t('calc.bodyFatNote')),
       h('h2', {}, t('calc.calories')),
-      field(t('calc.age'), age),
+      h(
+        'div',
+        { className: 'set-inputs' },
+        field(t('weight.input', { unit: weightUnit() }), caloriesWeight),
+        field(t('calc.age'), age),
+      ),
       h(
         'div',
         { className: 'field' },
