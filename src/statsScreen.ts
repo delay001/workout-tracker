@@ -103,7 +103,7 @@ export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () =>
   };
   root.replaceChildren(
     await pageHeader(t('tab.stats'), onOpenSettings),
-    radioChips<'month' | 'week'>(
+    segmented(radioChips<'month' | 'week'>(
       'stats-view',
       t('stats.view'),
       [
@@ -115,7 +115,7 @@ export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () =>
         shownView = value;
         void showView();
       },
-    ),
+    )),
     body,
   );
   await showView();
