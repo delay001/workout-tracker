@@ -105,7 +105,9 @@ export function stopwatchBar(workoutId: number): HTMLElement {
     reset.disabled = total(watch, Date.now()) === 0;
     tick();
     laps.hidden = watch.laps.length === 0;
-    laps.textContent = watch.laps.map((item, index) => `${index + 1} — ${formatTime(item, false)}`).join(' · ');
+    laps.replaceChildren(...watch.laps.map((item, index) => h('span', {}, `${index + 1} — ${formatTime(item, false)}`)));
+    // Новый круг внизу: прокручиваем к нему
+    laps.scrollTop = laps.scrollHeight;
   }
 
   function tick(): void {
@@ -119,6 +121,8 @@ export function stopwatchBar(workoutId: number): HTMLElement {
     laps,
   );
   update();
+  // Плашка уже на экране: показываем последние круги
+  requestAnimationFrame(() => (laps.scrollTop = laps.scrollHeight));
   // Тикает раз в секунду, пока плашка на экране
   const timer = setInterval(() => (bar.isConnected ? tick() : clearInterval(timer)), 1000);
   return bar;
