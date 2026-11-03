@@ -15,6 +15,8 @@ describe('маскот', () => {
   it('неизвестное значение из настроек дает Гантельку', () => {
     expect(parseMascot('')).toBe('dumbbell');
     expect(parseMascot('none')).toBe('none');
-    expect(parseMascot('cat')).toBe('cat');
+    expect(parseMascot('shaker')).toBe('shaker');
+    // Эмодзи-маскоты убраны: старый выбор превращается в Гантельку
+    expect(parseMascot('cat')).toBe('dumbbell');
   });
 });
