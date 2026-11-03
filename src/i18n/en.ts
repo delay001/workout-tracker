@@ -3,6 +3,7 @@ import type { ru } from './ru';
 export const en: Record<keyof typeof ru, string> = {
   'common.back': 'Back',
   'common.save': 'Save',
+  'common.yes': 'Yes',
   'common.add': 'Add',
   'common.date': 'Date',
   'common.name': 'Name',

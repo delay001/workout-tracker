@@ -1,5 +1,6 @@
 import { exportData, importData, parseBackup, type Backup } from './backup';
 import { todayLocal } from './dates';
+import { confirmDialog } from './dom';
 import { t } from './i18n';
 
 function downloadJson(fileName: string, content: string): void {
@@ -48,7 +49,7 @@ export function renderBackupScreen(root: HTMLElement, onImported: (message: stri
       const question =
         `${t('backup.inFile', countsOf(backup))}\n\n` +
         t('backup.replaceWarning');
-      if (!confirm(question)) {
+      if (!(await confirmDialog(question))) {
         return;
       }
 

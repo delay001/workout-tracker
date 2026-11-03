@@ -13,7 +13,7 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { field, h, showToast } from './dom';
+import { confirmDialog, field, h, showToast } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -243,7 +243,7 @@ export async function renderWorkoutScreen(
           className: 'button button-secondary',
           onclick: async () => {
             const question = t('workout.deleteExercise', { name: exercise.name });
-            if (item.sets.length === 0 || confirm(question)) {
+            if (item.sets.length === 0 || (await confirmDialog(question))) {
               await removeExercise(workout, item.exerciseId);
               await reload();
             }
@@ -318,7 +318,7 @@ export async function renderWorkoutScreen(
         // Пустая тренировка при завершении удаляется, поэтому завершённую спрашиваем
         onclick: async () => {
           const hasSets = workout.exercises.some((item) => item.sets.length > 0);
-          if (isEditing && !hasSets && !confirm(t('workout.emptyDeleted'))) {
+          if (isEditing && !hasSets && !(await confirmDialog(t('workout.emptyDeleted')))) {
             return;
           }
           await finishWorkout(workout, {});
@@ -580,7 +580,7 @@ export async function renderWorkoutScreen(
                   type: 'button',
                   className: 'button button-danger',
                   onclick: async () => {
-                    if (confirm(t('workout.deleteConfirm', { date: formatDate(workout.date) }))) {
+                    if (await confirmDialog(t('workout.deleteConfirm', { date: formatDate(workout.date) }))) {
                       await deleteWorkout(workout.id);
                       onClosed();
                     }

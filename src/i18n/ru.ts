@@ -1,6 +1,7 @@
 export const ru = {
   'common.back': 'Назад',
   'common.save': 'Сохранить',
+  'common.yes': 'Да',
   'common.add': 'Добавить',
   'common.date': 'Дата',
   'common.name': 'Название',
