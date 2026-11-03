@@ -90,8 +90,8 @@ export async function renderHomeScreen(
           h(
             'div',
             { className: 'stats' },
-            h('button', { type: 'button', className: 'stat', onclick: onOpenStats }, h('strong', {}, String(monthCount)), t('home.thisMonth')),
-            h('button', { type: 'button', className: 'stat', onclick: () => void renderTotalsScreen(root, () => void showMain()) }, h('strong', {}, String(workouts.length)), t('home.totalWorkouts')),
+            h('button', { type: 'button', className: 'stat', onclick: onOpenStats }, h('strong', {}, String(monthCount)), t('home.thisMonth', { count: monthCount })),
+            h('button', { type: 'button', className: 'stat', onclick: () => void renderTotalsScreen(root, () => void showMain()) }, h('strong', {}, String(workouts.length)), t('home.totalWorkouts', { count: workouts.length })),
           ),
         ),
       ),

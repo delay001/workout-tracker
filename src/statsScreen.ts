@@ -224,9 +224,9 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
       h(
         'div',
         { className: 'stats' },
-        tile(String(stats.count), t('stats.workouts')),
+        tile(String(stats.count), t('stats.workouts', { count: stats.count })),
         tile(toWeight(stats.tonnage).toLocaleString(LOCALE), t('stats.tonnage', { unit: weightUnit() })),
-        tile(String(stats.sets), t('stats.workingSets')),
+        tile(String(stats.sets), t('stats.workingSets', { count: stats.sets })),
         tile(formatDuration(stats.durationMin), t('stats.hours')),
         tile(rating === undefined ? '—' : String(rating), t('stats.averageRating')),
         h(
