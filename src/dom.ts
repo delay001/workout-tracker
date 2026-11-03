@@ -35,7 +35,7 @@ export function collapsible(rows: HTMLElement[], limit = 6, open = false): HTMLE
     'button',
     {
       type: 'button',
-      className: 'button button-secondary',
+      className: 'button button-secondary collapse-toggle',
       onclick: () => {
         rest.hidden = !rest.hidden;
         toggle.textContent = rest.hidden ? t('common.showAll', { count: rows.length }) : t('common.collapse');

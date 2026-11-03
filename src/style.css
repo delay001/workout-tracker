@@ -628,6 +628,11 @@ h2 {
   margin-bottom: 12px;
 }
 
+/* Кнопка «Показать все» не прилипает к последней строке списка */
+.collapse-toggle {
+  margin-top: 8px;
+}
+
 .required-mark {
   color: var(--danger);
   font-weight: 700;
