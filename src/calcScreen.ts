@@ -81,7 +81,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
   root.replaceChildren(
     h(
       'div',
-      { className: 'screen' },
+      { className: 'screen calc-screen' },
       h('h1', {}, t('calc.title')),
       h('h2', {}, t('calc.oneRepMax')),
       h('p', { className: 'hint' }, t('calc.oneRepMaxHint')),
@@ -102,7 +102,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       ...(heightCm > 0 && lastWeight
         ? [h('p', { className: 'hint' }, t('calc.bmiFrom', { weight: formatWeight(lastWeight.kg), date: formatDate(lastWeight.date) }))]
         : [h('p', { className: 'hint' }, t('calc.needHeightWeight'))]),
-      h('p', { className: 'hint' }, t('calc.bmiNote')),
+      h('p', { className: 'hint calc-note' }, t('calc.bmiNote')),
       h('h2', {}, t('calc.bodyFat')),
       h('p', { className: 'set-row' }, t('calc.bodyFatValue'), h('strong', {}, fat === undefined ? '—' : `${fat}%`)),
       h(
@@ -110,7 +110,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
         { className: 'hint' },
         fat === undefined || !measured ? t('calc.needMeasurements') : t('calc.bodyFatFrom', { date: formatDate(measured.date) }),
       ),
-      h('p', { className: 'hint' }, t('calc.bodyFatNote')),
+      h('p', { className: 'hint calc-note' }, t('calc.bodyFatNote')),
       h('h2', {}, t('calc.calories')),
       h(
         'div',
@@ -142,7 +142,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       ),
       calories,
       ...(lastWeight ? [h('p', { className: 'hint' }, t('calc.caloriesFrom', { weight: formatWeight(lastWeight.kg), date: formatDate(lastWeight.date) }))] : []),
-      h('p', { className: 'hint' }, t('calc.caloriesNote')),
+      h('p', { className: 'hint calc-note' }, t('calc.caloriesNote')),
       h(
         'button',
         { type: 'button', className: 'button button-secondary bottom-action', onclick: onBack },

@@ -1173,6 +1173,26 @@ textarea {
   text-align: left;
 }
 
+/* Калькуляторы: подписи мельче и плотнее, пояснения к формулам еще мельче */
+.calc-screen h2 {
+  margin: 20px 0 8px;
+}
+
+.calc-screen .set-row {
+  margin: 6px 0;
+}
+
+.calc-screen .hint {
+  margin: 0 0 6px;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.calc-screen .calc-note {
+  font-size: 0.8125rem;
+  opacity: 0.8;
+}
+
 /* Результат калькулятора сразу под полями ввода */
 .calc-result p {
   margin-top: 0;
