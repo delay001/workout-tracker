@@ -70,8 +70,6 @@ export interface Measurement {
   date: string;
   // Сантиметры по названию замера, заполненные не обязательно все
   values: Record<string, number>;
-  // Бицепс измерен в напряжении
-  tensed?: boolean;
 }
 
 export type WorkoutDraft = Omit<Workout, 'id' | 'exerciseIds'> & { id?: number };

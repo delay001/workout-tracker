@@ -116,7 +116,6 @@ export const ru = {
   'measure.calfLeft': 'Икра левая',
   'measure.calfRight': 'Икра правая',
   'measure.withUnit': '{name} ({unit})',
-  'measure.tensed': 'Бицепс в напряжении',
   'measure.select': 'Что показать на графике',
   'measure.entry': '{date}: заполнено {filled} из {total}',
   'measure.delete': 'Удалить замеры за {date}',

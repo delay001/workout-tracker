@@ -37,7 +37,6 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
     const value = edited?.values[key];
     return [key, numberInput('decimal', value === undefined ? '' : String(toLength(value)))] as const;
   });
-  const tensed = h('input', { type: 'checkbox', checked: edited?.tensed ?? false });
   const error = h('p', { className: 'error', role: 'alert' });
   const chartBox = h('div');
 
@@ -170,7 +169,7 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
           event.preventDefault();
           try {
             const texts = Object.fromEntries(inputs.map(([key, input]) => [key, input.value]));
-            await saveMeasurement(date.value || today, texts, tensed.checked);
+            await saveMeasurement(date.value || today, texts);
             if (edited && date.value !== edited.date) {
               await deleteMeasurement(edited.date);
             }
@@ -186,7 +185,6 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
         { className: 'set-inputs' },
         ...MEASUREMENT_FIELDS.map(([, label], index) => field(withUnit(label), inputs[index][1])),
       ),
-      h('label', { className: 'checkbox' }, tensed, t('measure.tensed')),
       error,
       h('button', { type: 'submit', className: 'button' }, edited ? t('common.save') : t('measure.record')),
       ...(edited

@@ -126,7 +126,6 @@ export const en: Record<keyof typeof ru, string> = {
   'measure.calfLeft': 'Left calf',
   'measure.calfRight': 'Right calf',
   'measure.withUnit': '{name} ({unit})',
-  'measure.tensed': 'Biceps flexed',
   'measure.select': 'What to show on the chart',
   'measure.entry': '{date}: {filled} of {total} filled',
   'measure.delete': 'Delete measurements for {date}',

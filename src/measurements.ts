@@ -24,11 +24,7 @@ export async function getMeasurements(): Promise<Measurement[]> {
 }
 
 // Пустые поля пропускаются. Одна запись на день: повторная заменяет прежнюю.
-export async function saveMeasurement(
-  date: string,
-  texts: Record<string, string>,
-  tensed = false,
-): Promise<void> {
+export async function saveMeasurement(date: string, texts: Record<string, string>): Promise<void> {
   const values: Record<string, number> = {};
   for (const [key, label] of MEASUREMENT_FIELDS) {
     const text = texts[key]?.trim() ?? '';
@@ -43,7 +39,7 @@ export async function saveMeasurement(
   if (Object.keys(values).length === 0) {
     throw new Error(t('measure.fillOne'));
   }
-  await db.measurements.put({ date, values, ...(tensed ? { tensed } : {}) });
+  await db.measurements.put({ date, values });
 }
 
 export async function deleteMeasurement(date: string): Promise<void> {
