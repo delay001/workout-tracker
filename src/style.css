@@ -252,7 +252,7 @@ h2 {
   left: 0;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   padding-bottom: env(safe-area-inset-bottom);
   border-top: 1px solid var(--surface);
   background: var(--bg);

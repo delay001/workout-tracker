@@ -156,6 +156,9 @@ export const ru = {
   'settings.avatarRemove': 'Убрать фото',
   'settings.avatarFailed': 'Не удалось прочитать картинку',
   'settings.profile': 'Профиль',
+  'settings.groupLook': 'Внешний вид',
+  'settings.groupTraining': 'Тренировки',
+  'settings.groupData': 'Данные',
   'settings.open': 'Открыть настройки',
   'settings.templates': 'Шаблоны',
 

@@ -236,10 +236,34 @@ export async function renderSettingsScreen(
         label,
       );
 
+    const link = (label: string, onclick: () => void): HTMLButtonElement =>
+      h('button', { type: 'button', className: 'button button-secondary', onclick }, label);
+
     root.replaceChildren(
       h('h1', {}, t('tab.settings')),
       h('p', { className: 'status', role: 'status' }, message),
+
+      h('h2', {}, t('settings.profile')),
+      h(
+        'div',
+        { className: 'avatar-row' },
+        ...(avatar ? [h('img', { className: 'avatar', src: avatar, alt: t('settings.avatar') })] : []),
+        link(t('settings.avatarChoose'), () => avatarFile.click()),
+        ...(avatar
+          ? [
+              link(t('settings.avatarRemove'), () => {
+                void setSetting('avatar', '').then(showMain);
+              }),
+            ]
+          : []),
+      ),
+      avatarFile,
+      avatarError,
       field(t('settings.yourName'), name),
+      field(t('settings.height'), height),
+      field(t('settings.sex'), sex),
+
+      h('h2', {}, t('settings.groupLook')),
       field(
         t('settings.language'),
         select(
@@ -251,8 +275,6 @@ export async function renderSettingsScreen(
           (value) => setLanguage(value as Language),
         ),
       ),
-      field(t('settings.goal'), goal),
-      field(t('settings.overdueDays'), overdueDays),
       h(
         'div',
         { className: 'field' },
@@ -266,86 +288,21 @@ export async function renderSettingsScreen(
         ),
       ),
       field(t('settings.accent'), accentSelect),
-      field(t('settings.weightStep'), weightStep),
       field(t('settings.units'), units),
-      h('h2', {}, t('settings.profile')),
-      field(t('settings.height'), height),
-      field(t('settings.sex'), sex),
-      h(
-        'div',
-        { className: 'avatar-row' },
-        ...(avatar ? [h('img', { className: 'avatar', src: avatar, alt: t('settings.avatar') })] : []),
-        h(
-          'button',
-          { type: 'button', className: 'button button-secondary', onclick: () => avatarFile.click() },
-          t('settings.avatarChoose'),
-        ),
-        ...(avatar
-          ? [
-              h(
-                'button',
-                {
-                  type: 'button',
-                  className: 'button button-secondary',
-                  onclick: async () => {
-                    await setSetting('avatar', '');
-                    await showMain();
-                  },
-                },
-                t('settings.avatarRemove'),
-              ),
-            ]
-          : []),
-      ),
-      avatarFile,
-      avatarError,
-      h(
-        'button',
-        {
-          type: 'button',
-          className: 'button button-secondary',
-          onclick: () => void renderExerciseSettings(root, () => void showMain()),
-        },
-        t('common.exercises'),
-      ),
-      h(
-        'button',
-        { type: 'button', className: 'button button-secondary', onclick: () => void showTypes() },
-        t('settings.workoutTypes'),
-      ),
-      h(
-        'button',
-        {
-          type: 'button',
-          className: 'button button-secondary',
-          onclick: () => void renderTemplateSettings(root, () => void showMain()),
-        },
-        t('settings.templates'),
-      ),
-      h(
-        'button',
-        { type: 'button', className: 'button button-secondary', onclick: () => void showNorms() },
-        t('settings.norms'),
-      ),
-      h(
-        'button',
-        {
-          type: 'button',
-          className: 'button button-secondary',
-          onclick: () => void renderOnboarding(root, () => void showMain()),
-        },
-        t('settings.onboarding'),
-      ),
-      h(
-        'button',
-        {
-          type: 'button',
-          className: 'button button-secondary',
-          onclick: () => void renderImportScreen(root, () => void showMain()),
-        },
-        t('import.title'),
-      ),
+
+      h('h2', {}, t('settings.groupTraining')),
+      field(t('settings.goal'), goal),
+      field(t('settings.weightStep'), weightStep),
+      field(t('settings.overdueDays'), overdueDays),
+      link(t('common.exercises'), () => void renderExerciseSettings(root, () => void showMain())),
+      link(t('settings.workoutTypes'), () => void showTypes()),
+      link(t('settings.templates'), () => void renderTemplateSettings(root, () => void showMain())),
+      link(t('settings.norms'), () => void showNorms()),
+
+      h('h2', {}, t('settings.groupData')),
+      link(t('import.title'), () => void renderImportScreen(root, () => void showMain())),
       backup,
+      link(t('settings.onboarding'), () => void renderOnboarding(root, () => void showMain())),
     );
     renderBackupScreen(backup, onImported);
   }

@@ -26,11 +26,7 @@ const TABS: [Tab, string, string][] = [
     '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   ],
   ['stats', t('tab.stats'), '<path d="M4 20h16M7 20v-7M12 20V5M17 20v-10"/>'],
-  [
-    'settings',
-    t('tab.settings'),
-    '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
-  ],
+  // Настройки открываются по нажатию на аватар на главном экране, поэтому в панели их нет
 ];
 
 const app = document.querySelector<HTMLDivElement>('#app');
