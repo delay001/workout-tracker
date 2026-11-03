@@ -1,5 +1,6 @@
 import { MUSCLE_GROUPS } from './catalog';
 import { renderExerciseForm } from './exerciseSettingsScreen';
+import { clearStopwatch, loadStopwatch, pause, saveStopwatch, start, stopwatchBar, toMinutes, total } from './stopwatch';
 import { motivationMessage } from './motivation';
 import { syncAchievements } from './motivationScreens';
 import { getMonthlyGoal, getWeightStep } from './settings';
@@ -398,6 +399,7 @@ export async function renderWorkoutScreen(
         'div',
         { className: 'screen' },
         h('h1', {}, `${workoutTypeName(workout.type)}, ${formatDate(workout.date)}`),
+        ...(isEditing ? [] : [stopwatchBar(workout.id)]),
         ...(isEditing && details ? [h('p', { className: 'hint' }, details)] : []),
         ...(isEditing && workout.note ? [h('p', { className: 'hint' }, workout.note)] : []),
         ...(isEditing ? statRows : []),
@@ -533,15 +535,25 @@ export async function renderWorkoutScreen(
     if (!isEditing && workout.exercises.every((item) => item.sets.length === 0)) {
       if (await confirmDialog(t('workout.emptyDeleted'))) {
         await finishWorkout(workout, {});
+        clearStopwatch(workout.id);
         onClosed();
       }
       return;
     }
     const hours = numberInput('integer', '', 2);
     const minutes = numberInput('integer', '', 2);
-    if (workout.durationMin !== undefined) {
-      hours.value = String(Math.floor(workout.durationMin / 60));
-      minutes.value = String(workout.durationMin % 60);
+    // Секундомер встает на паузу, его время переезжает в длительность. «Назад» запустит его снова.
+    let fromWatch: number | undefined;
+    if (!isEditing) {
+      const watch = loadStopwatch(workout.id);
+      const now = Date.now();
+      saveStopwatch(workout.id, { ...pause(watch, now), resumeOnBack: watch.startedAt !== undefined });
+      fromWatch = total(watch, now) > 0 ? toMinutes(total(watch, now)) : undefined;
+    }
+    const durationMin = fromWatch ?? workout.durationMin;
+    if (durationMin !== undefined) {
+      hours.value = String(Math.floor(durationMin / 60));
+      minutes.value = String(durationMin % 60);
     }
     const note = h('textarea', { rows: 3, value: workout.note ?? '' });
     const date = h('input', { type: 'date', value: workout.date });
@@ -594,6 +606,9 @@ export async function renderWorkoutScreen(
                 rating,
                 note: note.value.trim() || undefined,
               });
+              if (!isEditing) {
+                clearStopwatch(workout.id);
+              }
               if (saved && !isEditing) {
                 const month = workout.date.slice(0, 7);
                 const count = (await getFinishedWorkouts()).filter((item) => item.date.startsWith(month)).length;
@@ -625,7 +640,17 @@ export async function renderWorkoutScreen(
         h('button', { type: 'submit', className: 'button' }, isEditing ? t('common.save') : t('workout.finishShort')),
         h(
           'button',
-          { type: 'button', className: 'button button-secondary', onclick: () => void showWorkout() },
+          {
+            type: 'button',
+            className: 'button button-secondary',
+            onclick: () => {
+              const watch = loadStopwatch(workout.id);
+              if (watch.resumeOnBack) {
+                saveStopwatch(workout.id, start(watch, Date.now()));
+              }
+              void showWorkout();
+            },
+          },
           t('common.back'),
         ),
         ...(isEditing
