@@ -91,6 +91,8 @@ export const ru = {
   'common.prevYear': 'Предыдущий год',
   'common.nextYear': 'Следующий год',
   'common.thisMonth': 'Этот месяц',
+  'common.today': 'Сегодня',
+  'common.pickDate': 'Выбрать дату',
   'weekday.mon': 'Пн',
   'weekday.tue': 'Вт',
   'weekday.wed': 'Ср',

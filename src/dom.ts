@@ -1,3 +1,4 @@
+import { formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
 import { LOCALE, t } from './i18n';
 
 // Создает элемент. Текст вставляется как текст, поэтому название упражнения не сломает страницу.
@@ -137,6 +138,114 @@ export function pickMonth(shown: YearMonth, today: YearMonth): Promise<YearMonth
     document.body.append(dialog);
     dialog.showModal();
   });
+}
+
+// Свое окно выбора дня: месяц стрелками, дни сеткой, как в календаре истории
+export function pickDate(value: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const today = todayLocal();
+    const start = value || today;
+    let shown = { year: Number(start.slice(0, 4)), month: Number(start.slice(5, 7)) - 1 };
+    const close = (answer?: string): void => {
+      dialog.close();
+      dialog.remove();
+      resolve(answer);
+    };
+    const title = h('strong', { className: 'month-dialog-year' });
+    const grid = h('div', { className: 'date-dialog-grid' });
+    const weekdays = (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((day) =>
+      h('span', { className: 'weekday' }, t(`weekday.${day}`)),
+    );
+    const render = (): void => {
+      title.textContent = formatMonth(shown.year, shown.month);
+      grid.replaceChildren(
+        ...weekdays,
+        ...monthCells(shown.year, shown.month).map((date) => {
+          if (!date) return h('span');
+          const classes = ['month-dialog-month'];
+          if (date === value) classes.push('month-dialog-shown');
+          if (date === today) classes.push('month-dialog-today');
+          return h('button', { type: 'button', className: classes.join(' '), onclick: () => close(date) }, String(Number(date.slice(8))));
+        }),
+      );
+    };
+    const monthButton = (label: string, name: string, delta: number): HTMLButtonElement =>
+      h(
+        'button',
+        {
+          type: 'button',
+          className: 'step-button',
+          ariaLabel: name,
+          onclick: () => {
+            shown = shiftMonth(shown.year, shown.month, delta);
+            render();
+          },
+        },
+        label,
+      );
+
+    const dialog = h(
+      'dialog',
+      { className: 'confirm-dialog month-dialog' },
+      h(
+        'div',
+        { className: 'month-nav' },
+        monthButton('‹', t('common.prevMonth'), -1),
+        title,
+        monthButton('›', t('common.nextMonth'), 1),
+      ),
+      grid,
+      h(
+        'div',
+        { className: 'card-actions' },
+        h('button', { type: 'button', className: 'button button-secondary', onclick: () => close() }, t('set.cancel')),
+        h('button', { type: 'button', className: 'button', onclick: () => close(today) }, t('common.today')),
+      ),
+    );
+    dialog.oncancel = (event) => {
+      event.preventDefault();
+      close();
+    };
+    dialog.onclick = (event) => {
+      if (event.target === dialog) close();
+    };
+    render();
+    document.body.append(dialog);
+    dialog.showModal();
+  });
+}
+
+// Поле даты открывает свое окно вместо системного. Само поле остается, поэтому value читается как раньше.
+export function dateField(input: HTMLInputElement): HTMLElement {
+  input.tabIndex = -1;
+  input.classList.add('date-input');
+  const open = async (): Promise<void> => {
+    const picked = await pickDate(input.value);
+    if (picked) {
+      input.value = picked;
+      input.dispatchEvent(new Event('change'));
+    }
+  };
+  return h(
+    'div',
+    {
+      className: 'date-field',
+      role: 'button',
+      tabIndex: 0,
+      ariaLabel: t('common.pickDate'),
+      // Поле лежит внутри label, и label повторяет нажатие на самом поле: второй раз окно не открываем
+      onclick: (event: MouseEvent) => {
+        if (event.target !== input) void open();
+      },
+      onkeydown: (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          void open();
+        }
+      },
+    },
+    input,
+  );
 }
 
 // Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют

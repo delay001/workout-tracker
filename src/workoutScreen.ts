@@ -13,7 +13,7 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { confetti, confirmDialog, field, h, showToast } from './dom';
+import { confetti, confirmDialog, dateField, field, h, showToast } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -601,7 +601,7 @@ export async function renderWorkoutScreen(
             }
           },
         },
-        ...(isEditing ? [field(t('common.date'), date), field(t('workout.type'), type)] : []),
+        ...(isEditing ? [field(t('common.date'), dateField(date)), field(t('workout.type'), type)] : []),
         h(
           'div',
           { className: 'set-inputs' },

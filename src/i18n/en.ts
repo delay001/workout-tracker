@@ -101,6 +101,8 @@ export const en: Record<keyof typeof ru, string> = {
   'common.prevYear': 'Previous year',
   'common.nextYear': 'Next year',
   'common.thisMonth': 'This month',
+  'common.today': 'Today',
+  'common.pickDate': 'Pick a date',
   'weekday.mon': 'Mo',
   'weekday.tue': 'Tu',
   'weekday.wed': 'We',

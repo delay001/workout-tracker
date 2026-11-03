@@ -12,7 +12,7 @@ import {
 } from './bodyWeight';
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
-import { collapsible, emptyState, field, h } from './dom';
+import { collapsible, emptyState, dateField, field, h } from './dom';
 import { t } from './i18n';
 import { filterByPeriod, type Period } from './progress';
 import { numberInput, periodChips } from './ui';
@@ -81,7 +81,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
         'div',
         { className: 'set-inputs' },
         field(t('goal.target', { unit: weightUnit() }), target),
-        field(t('goal.deadline'), deadline),
+        field(t('goal.deadline'), dateField(deadline)),
       ),
       goalError,
       h('button', { type: 'submit', className: 'button' }, t('goal.set')),
@@ -211,7 +211,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
       h(
         'div',
         { className: 'set-inputs' },
-        field(t('common.date'), date),
+        field(t('common.date'), dateField(date)),
         field(t('weight.input', { unit: weightUnit() }), kg),
       ),
       error,

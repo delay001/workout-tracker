@@ -1,7 +1,7 @@
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Measurement } from './db';
-import { collapsible, confirmDialog, emptyState, field, h } from './dom';
+import { collapsible, confirmDialog, emptyState, dateField, field, h } from './dom';
 import { t } from './i18n';
 import {
   compareMeasurements,
@@ -189,7 +189,7 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
           }
         },
       },
-      field(t('common.date'), date),
+      field(t('common.date'), dateField(date)),
       h(
         'div',
         { className: 'set-inputs' },

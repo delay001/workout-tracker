@@ -1,7 +1,7 @@
 import { getBodyWeights, saveBodyWeight, saveWeightGoal } from './bodyWeight';
 import { todayLocal } from './dates';
 import { db } from './db';
-import { field, h } from './dom';
+import { dateField, field, h } from './dom';
 import { LANGUAGE, setLanguage, t, type Language } from './i18n';
 import {
   applyTheme,
@@ -128,7 +128,7 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         field(t('settings.height'), height),
         field(t('onboarding.age'), age),
         field(t('goal.target', { unit: weightUnit() }), target),
-        field(t('goal.deadline'), deadline),
+        field(t('goal.deadline'), dateField(deadline)),
         error,
       ],
       async () => {

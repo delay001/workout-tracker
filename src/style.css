@@ -992,6 +992,29 @@ textarea {
   font-weight: 600;
 }
 
+.date-dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.date-dialog-grid .month-dialog-month {
+  min-height: 40px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.date-field {
+  cursor: pointer;
+}
+
+/* Системный выбор даты не открывается: нажатие ловит обертка и показывает свое окно */
+.date-input {
+  pointer-events: none;
+}
+
 .finish-card {
   margin: 8px 0 16px;
   padding: 20px 16px 8px;

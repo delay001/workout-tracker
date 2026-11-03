@@ -1,6 +1,6 @@
 import { formatDate, todayLocal } from './dates';
 import type { Workout } from './db';
-import { field, h } from './dom';
+import { dateField, field, h } from './dom';
 import { pageHeader } from './avatar';
 import { getMonthlyGoal, getSetting } from './settings';
 import { goalRing, renderTotalsScreen } from './statsScreen';
@@ -41,7 +41,7 @@ export async function renderHomeScreen(
         h(
           'div',
           { className: 'centered' },
-          field(t('common.date'), dateInput),
+          field(t('common.date'), dateField(dateInput)),
           h('div', { className: 'type-buttons' }, ...typeButtons),
         ),
         h(
