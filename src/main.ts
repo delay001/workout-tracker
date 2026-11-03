@@ -4,6 +4,7 @@ import { h } from './dom';
 import { renderHistoryTab, resetHistoryMonth } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
 import { getSetting, loadTheme } from './settings';
+import { startHaptics } from './haptics';
 import { mountMascot, parseMascot } from './mascot';
 import { syncAchievements } from './motivationScreens';
 import { needsOnboarding, renderOnboarding } from './onboarding';
@@ -111,6 +112,7 @@ async function openActive(): Promise<void> {
 }
 
 void loadTheme()
+  .then(startHaptics)
   .then(markUpExercises)
   .then(() => syncAchievements(false))
   .then(needsOnboarding)

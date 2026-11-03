@@ -1,5 +1,6 @@
 import { MUSCLE_GROUPS } from './catalog';
 import { renderExerciseForm } from './exerciseSettingsScreen';
+import { vibrate } from './haptics';
 import { clearStopwatch, loadStopwatch, pause, saveStopwatch, start, stopwatchBar, toMinutes, total } from './stopwatch';
 import { motivationMessage } from './motivation';
 import { syncAchievements } from './motivationScreens';
@@ -118,11 +119,11 @@ export async function renderWorkoutScreen(
                     kinds: record.replace(t('record.prefix', { kinds: '' }), ''),
                   }),
                 );
-                navigator.vibrate?.(200);
+                vibrate(200);
                 confetti();
               } else {
                 // Короткий отклик: подход записан, можно не смотреть на экран
-                navigator.vibrate?.(30);
+                vibrate(30);
               }
             } else {
               await updateSet(workout, exercise.id, index, set);

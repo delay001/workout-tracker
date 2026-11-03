@@ -16,7 +16,7 @@ import {
   type Accent,
   type Theme,
 } from './settings';
-import { numberInput, select } from './ui';
+import { numberInput, radioChips, segmented, select } from './ui';
 import { getUnits, setUnits } from './units';
 import { resizeAvatar } from './avatar';
 import { MUSCLES } from './muscles';
@@ -26,6 +26,7 @@ import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeNa
 import { LANGUAGE, setLanguage, t, type Language } from './i18n';
 import { renderOnboarding } from './onboarding';
 import { MASCOTS, mascotIcon, parseMascot, type Mascot } from './mascot';
+import { HAPTIC_LEVELS, parseHaptics, setHaptics, vibrate, type HapticLevel } from './haptics';
 
 // В стандартном списке нельзя нарисовать кружок, поэтому цвет показывает эмодзи
 const ACCENT_DOTS: Record<Accent, string> = {
@@ -326,6 +327,25 @@ export async function renderSettingsScreen(
         ...MASCOTS.map(mascotChip),
       ),
       field(t('settings.units'), units),
+      h(
+        'div',
+        { className: 'field' },
+        h('span', {}, t('settings.haptics')),
+        segmented(
+          radioChips<HapticLevel>(
+            'haptics',
+            t('settings.haptics'),
+            HAPTIC_LEVELS.map((value): [HapticLevel, string] => [value, t(`haptics.${value}`)]),
+            parseHaptics(await getSetting('haptics')),
+            (value) => {
+              setHaptics(value);
+              void setSetting('haptics', value);
+              // Сразу дать почувствовать выбранную силу
+              vibrate(30);
+            },
+          ),
+        ),
+      ),
 
       h('h2', {}, t('settings.groupTraining')),
       field(t('settings.goal'), goal),
