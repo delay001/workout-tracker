@@ -100,8 +100,8 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       h(
         'div',
         { className: 'set-inputs' },
-        field(t('weight.input', { unit: weightUnit() }), weight),
-        field(t('set.reps'), reps),
+        field(t('weight.input', { unit: weightUnit() }), weight, true),
+        field(t('set.reps'), reps, true),
       ),
       result,
       h('h2', {}, t('calc.bmi')),
@@ -127,9 +127,9 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       h(
         'div',
         { className: 'set-inputs set-inputs-3' },
-        field(t('weight.input', { unit: weightUnit() }), caloriesWeight),
-        field(t('calc.height'), caloriesHeight),
-        field(t('calc.age'), age),
+        field(t('weight.input', { unit: weightUnit() }), caloriesWeight, true),
+        field(t('calc.height'), caloriesHeight, true),
+        field(t('calc.age'), age, true),
       ),
       h(
         'div',
