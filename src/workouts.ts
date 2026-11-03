@@ -69,6 +69,8 @@ export interface BestResult {
 export interface UsedExercise {
   exercise: Exercise;
   best?: BestResult;
+  // Сколько раз упражнение выполнялось
+  times: number;
 }
 
 export interface ExerciseOption {
@@ -345,7 +347,7 @@ export async function getUsedExercises(): Promise<UsedExercise[]> {
   const used = await Promise.all(
     exercises.flatMap((exercise) =>
       exercise
-        ? [getExerciseHistory(exercise.id).then((history) => ({ exercise, best: bestResult(history) }))]
+        ? [getExerciseHistory(exercise.id).then((history) => ({ exercise, best: bestResult(history), times: history.length }))]
         : [],
     ),
   );

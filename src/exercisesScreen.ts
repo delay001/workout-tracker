@@ -28,6 +28,7 @@ import {
   isCardio,
   type BestResult,
   type LastPerformance,
+  type UsedExercise,
 } from './workouts';
 
 type Metric = 'oneRepMax' | 'weight' | 'tonnage';
@@ -66,7 +67,16 @@ const kilograms = (value?: number): string | undefined =>
 
 export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
   async function showList(): Promise<void> {
-    const used = await getUsedExercises();
+    // Группы, которые тренируются чаще, идут первыми; внутри группы порядок прежний
+    const groupOf = (item: UsedExercise): string => item.exercise.muscleGroup ?? t('common.noGroup');
+    const all = await getUsedExercises();
+    const groupTimes = new Map<string, number>();
+    for (const item of all) {
+      groupTimes.set(groupOf(item), (groupTimes.get(groupOf(item)) ?? 0) + item.times);
+    }
+    const used = all.sort(
+      (a, b) => (groupTimes.get(groupOf(b)) ?? 0) - (groupTimes.get(groupOf(a)) ?? 0),
+    );
 
     const items: HTMLElement[] = [];
     let lastGroup: string | undefined;
