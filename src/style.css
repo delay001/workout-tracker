@@ -867,6 +867,21 @@ textarea {
   }
 }
 
+.intro p {
+  margin: 0 0 12px;
+}
+
+.intro ul {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.intro li {
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
 .empty {
   margin: 16px 0;
   padding: 24px 16px;

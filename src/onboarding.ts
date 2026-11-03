@@ -78,6 +78,18 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
       t('onboarding.step1'),
       1,
       [
+        h(
+          'section',
+          { className: 'intro' },
+          h('p', {}, t('onboarding.intro')),
+          h(
+            'ul',
+            {},
+            ...(['onboarding.feature1', 'onboarding.feature2', 'onboarding.feature3', 'onboarding.feature4'] as const).map(
+              (key) => h('li', {}, t(key)),
+            ),
+          ),
+        ),
         field(t('settings.language'), language),
         field(t('onboarding.name'), name),
         field(t('settings.theme'), theme),
