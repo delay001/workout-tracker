@@ -252,7 +252,6 @@ export const en: Record<keyof typeof ru, string> = {
   'period.year': 'Year',
 
   'summary.times': 'Times done',
-  'summary.first': 'First time',
   'summary.last': 'Last time',
   'summary.bestOneRepMax': 'Best estimated 1RM',
   'summary.currentOneRepMax': 'Estimated 1RM, last 4 weeks',

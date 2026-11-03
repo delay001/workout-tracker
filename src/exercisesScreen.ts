@@ -121,13 +121,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
 
     const summaryRows: [string, string | undefined][] = [
       [t('summary.times'), String(summary.times)],
-      // Если упражнение было один раз, первая и последняя дата совпадают и не нужны
-      ...(summary.times > 1
-        ? ([
-            [t('summary.first'), summary.firstDate && formatDate(summary.firstDate)],
-            [t('summary.last'), summary.lastDate && formatDate(summary.lastDate)],
-          ] as [string, string | undefined][])
-        : []),
+      [t('summary.last'), summary.lastDate && formatDate(summary.lastDate)],
       ...(cardio
         ? []
         : ([

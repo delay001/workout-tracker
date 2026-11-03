@@ -216,7 +216,6 @@ export const ru = {
   'period.year': 'Год',
 
   'summary.times': 'Выполнялось раз',
-  'summary.first': 'Первый раз',
   'summary.last': 'Последний раз',
   'summary.bestOneRepMax': 'Лучший расчётный 1ПМ',
   'summary.currentOneRepMax': 'Расчётный 1ПМ за 4 недели',

@@ -81,7 +81,6 @@ describe('показатели упражнения', () => {
   it('совпадают с ручным расчётом', () => {
     expect(exerciseSummary(history, TODAY)).toEqual({
       times: 2,
-      firstDate: '2026-10-01',
       lastDate: '2026-11-01',
       bestOneRepMax: 120,
       currentOneRepMax: 120,

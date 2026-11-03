@@ -70,7 +70,6 @@ export function tonnageSeries(history: LastPerformance[]): ChartDatum[] {
 
 export interface ExerciseSummary {
   times: number;
-  firstDate?: string;
   lastDate?: string;
   bestOneRepMax?: number;
   currentOneRepMax?: number;
@@ -88,7 +87,6 @@ export function exerciseSummary(history: LastPerformance[], today: string): Exer
 
   return {
     times: history.length,
-    firstDate: history.at(-1)?.date,
     lastDate: history[0]?.date,
     bestOneRepMax: best,
     currentOneRepMax: current,
