@@ -1,3 +1,4 @@
+import type { Sex } from './formulas';
 import { todayLocal } from './dates';
 import { db } from './db';
 import { h } from './dom';
@@ -76,7 +77,53 @@ const BACK: Shape[] = [
   ['calves', 'M41 180 C46 174 53 175 56 181 C58 194 56 204 52 212 C49 215 45 214 44 210 C39 200 38 189 41 180 Z', true],
 ];
 
+// Женская фигура: плечи уже, талия тоньше, бедра шире, руки тоньше, волосы до плеч
+const FEMALE_CENTER = [
+  'M47 19 C46 7 74 7 73 19 L74 36 C70 38 50 38 46 36 Z',
+  'M60 5 C67 5 71 10 71 17 C71 25 66 29 60 29 C54 29 49 25 49 17 C49 10 53 5 60 5 Z',
+  'M55 27 L65 27 L66 37 L54 37 Z',
+  'M60 35 C70 35 80 36 85 40 C89 43 90 48 89 53 L85 68 C81 78 77 86 76 92 C76 100 82 108 86 118 L86 124 L34 124 L34 118 C38 108 44 100 44 92 C43 86 39 78 35 68 L31 53 C30 48 31 43 35 40 C40 36 50 35 60 35 Z',
+];
+
+const FEMALE_SIDE = [
+  'M34 43 C27 45 23 52 22 62 L19 90 C19 96 22 98 26 97 C29 96 31 93 31 88 L35 62 Z',
+  'M20 98 C17 102 16 108 15 116 L13 130 C13 135 16 137 19 136 C22 135 23 132 23 128 L27 100 Z',
+  'M14 137 C11 140 11 147 14 149 C18 150 20 147 20 143 L19 137 Z',
+  'M35 120 L59 120 L59 130 C59 148 57 162 55 174 C52 178 45 178 42 174 C36 160 32 140 35 120 Z',
+  'M42 176 L55 176 C57 192 56 206 53 222 C51 225 46 225 45 222 C41 206 40 192 42 176 Z',
+  'M44 222 L54 222 C57 228 57 233 53 235 L42 235 C39 233 40 227 44 222 Z',
+];
+
+const FEMALE_FRONT: Shape[] = [
+  ['chest', 'M44 46 C50 43 56 43 59 45 L59 60 C53 64 46 63 42 59 C40 54 41 49 44 46 Z', true],
+  ['frontDelt', 'M36 44 C40 41 44 42 45 45 C42 50 39 54 36 58 C33 54 33 48 36 44 Z', true],
+  ['sideDelt', 'M31 47 C32 44 34 43 36 44 C34 50 33 55 32 60 C29 56 29 51 31 47 Z', true],
+  ['biceps', 'M25 62 C28 58 32 59 33 63 L30 86 C28 90 23 90 22 86 Z', true],
+  ['forearms', 'M18 103 C21 99 25 100 26 104 L21 128 C19 132 14 131 14 127 Z', true],
+  ['abs', 'M52 66 C56 64 64 64 68 66 L68 100 C65 106 55 106 52 100 Z', false],
+  ['quads', 'M38 128 C45 122 54 123 58 128 C59 146 57 160 54 170 C50 175 45 174 42 170 C36 156 35 140 38 128 Z', true],
+  ['calves', 'M43 181 C46 177 51 177 53 181 C54 194 53 203 50 213 C48 216 45 215 44 211 C41 200 41 190 43 181 Z', true],
+];
+
+const FEMALE_BACK: Shape[] = [
+  ['traps', 'M52 33 L68 33 C72 36 78 38 84 40 C75 44 67 50 60 58 C53 50 45 44 36 40 C42 38 48 36 52 33 Z', false],
+  ['rearDelt', 'M34 45 C38 41 43 41 45 44 C42 50 39 55 35 59 C31 55 31 50 34 45 Z', true],
+  ['lats', 'M41 52 C48 55 54 60 58 66 L58 88 C53 90 49 88 47 84 C43 76 38 67 36 60 C37 55 39 52 41 52 Z', true],
+  ['triceps', 'M24 62 C28 58 32 59 33 63 L31 87 C29 91 23 91 22 87 Z', true],
+  ['forearms', 'M18 103 C21 99 25 100 26 104 L21 128 C19 132 14 131 14 127 Z', true],
+  ['glutes', 'M36 104 C45 99 54 100 59 106 L59 126 C51 132 42 131 37 125 C33 118 33 110 36 104 Z', true],
+  ['hamstrings', 'M38 132 C45 129 54 129 58 133 C58 150 56 162 54 170 C50 175 45 174 42 170 C36 158 35 144 38 132 Z', true],
+  ['calves', 'M42 178 C46 173 52 174 54 179 C56 193 55 202 51 210 C48 213 45 212 43 208 C39 197 39 187 42 178 Z', true],
+];
+
+// Части силуэта по полу из настроек
+const BODIES: Record<Sex, { center: string[]; side: string[]; front: Shape[]; back: Shape[] }> = {
+  male: { center: BODY_CENTER, side: BODY_SIDE, front: FRONT, back: BACK },
+  female: { center: FEMALE_CENTER, side: FEMALE_SIDE, front: FEMALE_FRONT, back: FEMALE_BACK },
+};
+
 function bodyFigure(
+  body: { center: string[]; side: string[] },
   shapes: Shape[],
   label: string,
   statusOf: (muscle: Muscle) => string,
@@ -89,9 +136,9 @@ function bodyFigure(
   figure.insertAdjacentHTML(
     'beforeend',
     `<svg viewBox="0 0 120 240" role="img" aria-label="${label}">
-      ${BODY_CENTER.map(base).join('')}
-      ${BODY_SIDE.map(base).join('')}
-      <g transform="${MIRROR}">${BODY_SIDE.map(base).join('')}</g>
+      ${body.center.map(base).join('')}
+      ${body.side.map(base).join('')}
+      <g transform="${MIRROR}">${body.side.map(base).join('')}</g>
       ${shapes.map(muscle).join('')}
       <g transform="${MIRROR}">${shapes.map((shape, index) => (shape[2] ? muscle(shape, index) : '')).join('')}</g>
     </svg>`,
@@ -107,6 +154,7 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const exercises = await db.exercises.toArray();
   const norms = await getNorms();
+  const body = BODIES[(await getSetting('sex')) === 'female' ? 'female' : 'male'];
   const today = todayLocal();
   const thisWeek = weekStart(today);
   const lastWeek = shiftDays(thisWeek, -7);
@@ -183,8 +231,8 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
     h(
       'div',
       { className: 'body-map' },
-      bodyFigure(FRONT, t('volume.front'), statusOf, pick),
-      bodyFigure(BACK, t('volume.back'), statusOf, pick),
+      bodyFigure(body, body.front, t('volume.front'), statusOf, pick),
+      bodyFigure(body, body.back, t('volume.back'), statusOf, pick),
     ),
     h(
       'p',
