@@ -14,8 +14,6 @@ export async function renderHomeScreen(
   onOpenActive: () => void,
   onOpenStats: () => void,
   onOpenSettings: () => void,
-  // Сразу открыть выбор даты и типа, например из пустого месяца в истории
-  startNew = false,
 ): Promise<void> {
   async function showStart(): Promise<void> {
     const dateInput = h('input', { type: 'date', value: todayLocal() });
@@ -101,5 +99,5 @@ export async function renderHomeScreen(
     );
   }
 
-  await (startNew && !active ? showStart() : showMain());
+  await showMain();
 }

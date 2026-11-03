@@ -214,7 +214,7 @@ export const en: Record<keyof typeof ru, string> = {
   'stats.hours': 'hours in the gym',
   'stats.byType': 'By type',
   'stats.noWorkouts': 'No workouts in this period. Go back with the arrows or pick a longer period',
-  'history.emptyMonth': 'No workouts this month. Time to start',
+  'history.emptyMonth': 'No workouts this month. Time to start!',
   'stats.tonnageHalfYear': 'Volume over six months',
   'stats.tonnage3m': 'Volume over 3 months',
   'stats.tonnageYear': 'Volume over the year',

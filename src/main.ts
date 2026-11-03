@@ -42,7 +42,7 @@ function appear(element: HTMLElement): void {
   );
 }
 
-async function showTab(tab: Tab, message = '', startNew = false): Promise<void> {
+async function showTab(tab: Tab, message = ''): Promise<void> {
   if (!app) {
     return;
   }
@@ -68,7 +68,7 @@ async function showTab(tab: Tab, message = '', startNew = false): Promise<void> 
   app.replaceChildren(content, h('nav', { className: 'tabs' }, ...buttons));
 
   if (tab === 'workout') {
-    await renderHomeScreen(content, await getActiveWorkout(), () => void openActive(), () => void showTab('stats'), () => void showTab('settings'), startNew);
+    await renderHomeScreen(content, await getActiveWorkout(), () => void openActive(), () => void showTab('stats'), () => void showTab('settings'));
   } else if (tab === 'history') {
     await renderHistoryTab(
       content,
@@ -76,7 +76,6 @@ async function showTab(tab: Tab, message = '', startNew = false): Promise<void> 
         void openWorkout(opened, () => void showTab('history'));
       },
       () => void showTab('settings'),
-      () => void showTab('workout', '', true),
     );
   } else if (tab === 'stats') {
     await renderStatsScreen(content, () => void showTab('settings'));

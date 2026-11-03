@@ -40,7 +40,6 @@ export async function renderHistoryTab(
   root: HTMLElement,
   onOpen: (workout: Workout) => void,
   onOpenSettings: () => void,
-  onStart: () => void,
 ): Promise<void> {
   const body = h('div');
 
@@ -62,7 +61,7 @@ export async function renderHistoryTab(
 
   async function showView(): Promise<void> {
     if (shownView === 'workouts') {
-      await renderWorkoutsView(body, onOpen, onStart);
+      await renderWorkoutsView(body, onOpen);
     } else if (shownView === 'exercises') {
       await renderExercisesScreen(body);
     } else if (shownView === 'weight') {
@@ -90,7 +89,6 @@ export async function renderHistoryTab(
 async function renderWorkoutsView(
   root: HTMLElement,
   onOpen: (workout: Workout) => void,
-  onStart: () => void,
 ): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const today = todayLocal();
@@ -195,7 +193,7 @@ async function renderWorkoutsView(
       ),
       monthCount > 0
         ? h('p', { className: 'hint' }, t('history.monthCount', { count: monthCount }))
-        : emptyState('📅', t('history.emptyMonth'), [t('home.newEntry'), onStart]),
+        : emptyState('🔥', t('history.emptyMonth')),
       ...listed.map((workout) =>
         h(
           'button',

@@ -198,7 +198,7 @@ export const ru = {
   'stats.hours': 'часов в зале',
   'stats.byType': 'По типам',
   'stats.noWorkouts': 'За этот период тренировок нет. Перелистни стрелками назад или выбери период подлиннее',
-  'history.emptyMonth': 'В этом месяце тренировок нет. Самое время начать',
+  'history.emptyMonth': 'В этом месяце тренировок нет. Самое время начать!',
   'stats.tonnageHalfYear': 'Тоннаж за полгода',
   'stats.tonnage3m': 'Тоннаж за 3 месяца',
   'stats.tonnageYear': 'Тоннаж за год',
