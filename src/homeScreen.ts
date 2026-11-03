@@ -3,7 +3,9 @@ import type { Workout } from './db';
 import { dateField, field, h } from './dom';
 import { pageHeader } from './avatar';
 import { getMonthlyGoal, getSetting } from './settings';
-import { goalRing, renderTotalsScreen } from './statsScreen';
+import { goalRing, progressRing, renderTotalsScreen } from './statsScreen';
+import { getBodyWeights, getWeightGoal, goalStatus, movingAverage } from './bodyWeight';
+import { formatWeight } from './units';
 import { weekStreak } from './achievements';
 import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
 import { t } from './i18n';
@@ -57,6 +59,41 @@ export async function renderHomeScreen(
     );
   }
 
+  // Цель месяца, а рядом цель по весу, если она поставлена
+  async function goals(): Promise<HTMLElement> {
+    const workouts = await getFinishedWorkouts();
+    const today = todayLocal();
+    const monthCount = workouts.filter((workout) => workout.date.startsWith(today.slice(0, 7))).length;
+    const month = goalRing(monthCount, await getMonthlyGoal(), weekStreak(workouts, today));
+    const weightGoal = await getWeightGoal();
+    if (!weightGoal) {
+      return month;
+    }
+    const trend = movingAverage(await getBodyWeights());
+    const status = goalStatus(weightGoal, trend, today);
+    const current = trend.at(-1)?.value ?? weightGoal.startKg;
+    const reached = status.percent >= 100;
+    const weight = h(
+      'div',
+      { className: 'goal' },
+      progressRing(status.percent, `${status.percent}%`, t('home.weightGoal')),
+      h(
+        'div',
+        {},
+        h('p', { className: 'goal-title' }, t('home.weightGoal')),
+        h('p', { className: 'hint' }, `${formatWeight(current)} → ${formatWeight(weightGoal.targetKg)}`),
+        h(
+          'p',
+          { className: 'hint' },
+          reached
+            ? t('stats.goalDone')
+            : t('home.weightGoalLeft', { weight: formatWeight(Math.abs(status.leftKg)), days: status.leftDays }),
+        ),
+      ),
+    );
+    return h('div', { className: 'goals' }, month, weight);
+  }
+
   async function showMain(): Promise<void> {
     const name = await getSetting('name');
     const workouts = await getFinishedWorkouts();
@@ -93,7 +130,7 @@ export async function renderHomeScreen(
             h('button', { type: 'button', className: 'stat', onclick: onOpenStats }, h('strong', {}, String(monthCount)), t('home.thisMonth', { count: monthCount })),
             h('button', { type: 'button', className: 'stat', onclick: () => void renderTotalsScreen(root, () => void showMain()) }, h('strong', {}, String(workouts.length)), t('home.totalWorkouts', { count: workouts.length })),
           ),
-          goalRing(monthCount, await getMonthlyGoal(), weekStreak(workouts, todayLocal())),
+          await goals(),
         ),
       ),
     );

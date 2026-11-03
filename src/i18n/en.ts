@@ -221,6 +221,8 @@ export const en: Record<keyof typeof ru, string> = {
   'stats.goalRingValue': '{count} of {goal}',
   'stats.goalLeft': '{count} more {count:workout|workouts}',
   'stats.goalDone': 'Goal reached 🏆',
+  'home.weightGoal': 'Weight goal',
+  'home.weightGoalLeft': '{weight} to go, {days} {days:day|days}',
   'stats.streak': '🔥 {count} {count:week|weeks} in a row with 2 workouts',
   'stats.workouts': '{count:workout|workouts}',
   'stats.tonnage': '{unit} volume',

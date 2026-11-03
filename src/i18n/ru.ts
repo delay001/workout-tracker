@@ -205,6 +205,8 @@ export const ru = {
   'stats.goalRingValue': '{count} из {goal}',
   'stats.goalLeft': 'Еще {count} {count:тренировка|тренировки|тренировок}',
   'stats.goalDone': 'Цель выполнена 🏆',
+  'home.weightGoal': 'Цель по весу',
+  'home.weightGoalLeft': 'Осталось {weight}, {days} {days:день|дня|дней}',
   'stats.streak': '🔥 {count} {count:неделя|недели|недель} подряд по 2 тренировки',
   'stats.workouts': '{count:тренировка|тренировки|тренировок}',
   'stats.tonnage': '{unit} тоннаж',

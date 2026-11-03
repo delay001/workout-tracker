@@ -235,6 +235,19 @@ h2 {
   margin: 12px 0;
 }
 
+/* Две цели рядом: кольцо сверху, подписи под ним */
+.goals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.goals .goal {
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
 .goal p {
   margin: 0 0 4px;
 }

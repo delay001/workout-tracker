@@ -20,25 +20,31 @@ let shown = { year: now.getFullYear(), month: now.getMonth() };
 let shownMonths: 1 | 3 | 6 | 12 = 1;
 
 // Кольцо прогресса к цели месяца. Справа подпись и, если передана, серия недель.
-export function goalRing(count: number, goal: number, streak?: number): HTMLElement {
+// Кольцо прогресса: доля от 0 до 100 и подпись в центре
+export function progressRing(percent: number, center: string, label: string): HTMLElement {
   const radius = 40;
   const length = 2 * Math.PI * radius;
   const ring = h('div', {
     className: 'goal-ring',
     role: 'progressbar',
-    ariaValueNow: String(count),
-    ariaValueMax: String(goal),
-    ariaLabel: t('stats.goalLabel'),
+    ariaValueNow: String(percent),
+    ariaValueMax: '100',
+    ariaLabel: label,
   });
   ring.insertAdjacentHTML(
     'beforeend',
     `<svg viewBox="0 0 100 100" aria-hidden="true">
       <circle class="goal-ring-track" cx="50" cy="50" r="${radius}"/>
       <circle class="goal-ring-fill" cx="50" cy="50" r="${radius}"
-        stroke-dasharray="${length}" style="--ring-offset: ${length * (1 - goalPercent(count, goal) / 100)}; --ring-length: ${length}"/>
+        stroke-dasharray="${length}" style="--ring-offset: ${length * (1 - percent / 100)}; --ring-length: ${length}"/>
     </svg>`,
   );
-  ring.append(h('strong', {}, t('stats.goalRingValue', { count, goal })));
+  ring.append(h('strong', {}, center));
+  return ring;
+}
+
+export function goalRing(count: number, goal: number, streak?: number): HTMLElement {
+  const ring = progressRing(goalPercent(count, goal), t('stats.goalRingValue', { count, goal }), t('stats.goalLabel'));
 
   const left = Math.max(0, goal - count);
   return h(
