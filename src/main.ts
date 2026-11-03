@@ -76,6 +76,7 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
         void openWorkout(opened, () => void showTab('history'));
       },
       () => void showTab('settings'),
+      () => void showTab('workout'),
     );
   } else if (tab === 'stats') {
     await renderStatsScreen(content, () => void showTab('settings'));

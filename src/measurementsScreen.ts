@@ -1,7 +1,7 @@
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Measurement } from './db';
-import { confirmDialog, field, h } from './dom';
+import { confirmDialog, emptyState, field, h } from './dom';
 import { t } from './i18n';
 import {
   compareMeasurements,
@@ -45,7 +45,9 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
     chartBox.replaceChildren(
       points.length > 0
         ? lineChart(points, lengthUnit(), t('measure.chart', { name: shownLabel }))
-        : h('p', { className: 'hint' }, t('measure.empty', { name: shownLabel })),
+        : series.length === 0
+          ? emptyState('📏', t('measure.empty', { name: shownLabel }))
+          : h('p', { className: 'hint' }, t('summary.noPeriodData')),
     );
   }
 

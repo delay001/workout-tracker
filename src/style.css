@@ -867,6 +867,27 @@ textarea {
   }
 }
 
+.empty {
+  margin: 16px 0;
+  padding: 24px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+}
+
+.empty p {
+  margin: 8px 0 16px;
+  color: var(--muted);
+}
+
+.empty p:last-child {
+  margin-bottom: 0;
+}
+
 .toast-stack {
   position: fixed;
   top: 16px;

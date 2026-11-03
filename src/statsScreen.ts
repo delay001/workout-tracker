@@ -2,7 +2,7 @@ import { pageHeader } from './avatar';
 import { lineChart } from './chart';
 import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, todayLocal } from './dates';
 import { db } from './db';
-import { h } from './dom';
+import { emptyState, h } from './dom';
 import { renderCalcScreen } from './calcScreen';
 import { currentStates, renderAchievementsScreen, renderYearScreen } from './motivationScreens';
 import { overdueExercises, periodTotals, topExercises, workoutStats } from './progress';
@@ -260,15 +260,17 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
           t('stats.calc'),
         ),
       ),
-      h('h2', {}, t('stats.byType')),
-      ...(stats.byType.length > 0
-        ? sortTypes(stats.byType).map(([type, count]) =>
-            h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),
-          )
-        : [h('p', { className: 'hint' }, t('stats.noWorkouts'))]),
-      h('h2', {}, t(tonnageTitle[months])),
+      ...(stats.count === 0
+        ? [emptyState('📊', t('stats.noWorkouts'))]
+        : [
+            h('h2', {}, t('stats.byType')),
+            ...sortTypes(stats.byType).map(([type, count]) =>
+              h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),
+            ),
+            h('h2', {}, t(tonnageTitle[months])),
+          ]),
       ...(monthPoints.length === 0
-        ? [h('p', { className: 'hint' }, t('stats.noWorkouts'))]
+        ? []
         : months === 1
           ? [lineChart(monthPoints, weightUnit(), t('stats.tonnageMonth'))]
           : [

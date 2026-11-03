@@ -12,7 +12,7 @@ import {
 } from './bodyWeight';
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
-import { field, h } from './dom';
+import { emptyState, field, h } from './dom';
 import { t } from './i18n';
 import { filterByPeriod, type Period } from './progress';
 import { numberInput, periodChips } from './ui';
@@ -50,7 +50,9 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
             trend: shownTrend,
             goal: goal ? toWeight(goal.targetKg) : undefined,
           })
-        : h('p', { className: 'hint' }, t('weight.empty')),
+        : weights.length === 0
+          ? emptyState('⚖️', t('weight.empty'))
+          : h('p', { className: 'hint' }, t('summary.noPeriodData')),
     );
   }
 

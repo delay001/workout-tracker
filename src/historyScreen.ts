@@ -2,7 +2,7 @@ import { pageHeader } from './avatar';
 import { renderBodyWeightView } from './bodyWeightScreen';
 import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
 import type { Workout } from './db';
-import { h } from './dom';
+import { emptyState, h } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
 import { renderMeasurementsView } from './measurementsScreen';
 import { select } from './ui';
@@ -40,6 +40,7 @@ export async function renderHistoryTab(
   root: HTMLElement,
   onOpen: (workout: Workout) => void,
   onOpenSettings: () => void,
+  onStart: () => void,
 ): Promise<void> {
   const body = h('div');
 
@@ -61,7 +62,7 @@ export async function renderHistoryTab(
 
   async function showView(): Promise<void> {
     if (shownView === 'workouts') {
-      await renderWorkoutsView(body, onOpen);
+      await renderWorkoutsView(body, onOpen, onStart);
     } else if (shownView === 'exercises') {
       await renderExercisesScreen(body);
     } else if (shownView === 'weight') {
@@ -89,6 +90,7 @@ export async function renderHistoryTab(
 async function renderWorkoutsView(
   root: HTMLElement,
   onOpen: (workout: Workout) => void,
+  onStart: () => void,
 ): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const today = todayLocal();
@@ -191,7 +193,9 @@ async function renderWorkoutsView(
         ...WEEKDAYS.map((day) => h('span', { className: 'weekday' }, day)),
         ...cells.map(dayCell),
       ),
-      h('p', { className: 'hint' }, t('history.monthCount', { count: monthCount })),
+      monthCount > 0
+        ? h('p', { className: 'hint' }, t('history.monthCount', { count: monthCount }))
+        : emptyState('📅', t('history.emptyMonth'), [t('home.newEntry'), onStart]),
       ...listed.map((workout) =>
         h(
           'button',

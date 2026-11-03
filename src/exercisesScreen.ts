@@ -3,7 +3,7 @@ import { CARDIO_GROUP } from './catalog';
 import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
-import { h } from './dom';
+import { emptyState, h } from './dom';
 import { t } from './i18n';
 import {
   exerciseSummary,
@@ -116,7 +116,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     }
 
     if (used.length === 0) {
-      root.replaceChildren(h('p', { className: 'hint' }, t('exercise.noneYet')));
+      root.replaceChildren(emptyState('🏋️', t('exercise.noneYet')));
       return;
     }
     showItems();

@@ -25,6 +25,17 @@ export function showToast(text: string): void {
   setTimeout(() => toast.remove(), 4000);
 }
 
+// Пустой экран: значок, подсказка, что делать дальше, и кнопка, если действие очевидно
+export function emptyState(icon: string, text: string, action?: [string, () => void]): HTMLElement {
+  return h(
+    'div',
+    { className: 'empty' },
+    h('span', { className: 'empty-icon', ariaHidden: 'true' }, icon),
+    h('p', {}, text),
+    ...(action ? [h('button', { type: 'button', className: 'button', onclick: action[1] }, action[0])] : []),
+  );
+}
+
 // Короткий разлет цветных кусочков поверх экрана, например при рекорде
 export function confetti(): void {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
