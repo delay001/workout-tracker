@@ -241,10 +241,6 @@ h2 {
   min-height: calc(100dvh - 120px);
 }
 
-.tab-content .bottom-action {
-  bottom: 84px;
-}
-
 .tabs {
   position: fixed;
   right: 0;
@@ -672,19 +668,16 @@ textarea {
 
 .year-cards {
   display: flex;
+  flex-direction: column;
   gap: 12px;
   margin: 12px 0;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
 }
 
 .year-card {
-  flex: 0 0 85%;
   padding: 24px 16px 12px;
   border-radius: 24px;
   background: var(--grad-2);
   color: var(--on-accent);
-  scroll-snap-align: center;
 }
 
 .year-card p {
@@ -931,8 +924,6 @@ textarea {
 }
 
 .bottom-action {
-  position: sticky;
-  bottom: 12px;
   flex-shrink: 0;
   margin-top: auto;
   margin-bottom: 0;

@@ -1,3 +1,4 @@
+import { pageHeader } from './avatar';
 import { renderBodyWeightView } from './bodyWeightScreen';
 import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
 import type { Workout } from './db';
@@ -38,6 +39,7 @@ let shownView: 'workouts' | 'exercises' | 'weight' | 'measurements' = 'workouts'
 export async function renderHistoryTab(
   root: HTMLElement,
   onOpen: (workout: Workout) => void,
+  onOpenSettings: () => void,
 ): Promise<void> {
   const body = h('div');
 
@@ -70,7 +72,7 @@ export async function renderHistoryTab(
   }
 
   root.replaceChildren(
-    h('h1', {}, t('tab.history')),
+    await pageHeader(t('tab.history'), onOpenSettings),
     h(
       'div',
       { className: 'chips', role: 'radiogroup', ariaLabel: t('history.whatToShow') },

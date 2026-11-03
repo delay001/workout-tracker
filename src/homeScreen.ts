@@ -1,6 +1,7 @@
 import { formatDate, todayLocal } from './dates';
 import type { Workout } from './db';
 import { field, h } from './dom';
+import { pageHeader } from './avatar';
 import { getMonthlyGoal, getSetting } from './settings';
 import { goalBar, renderTotalsScreen } from './statsScreen';
 import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
@@ -57,7 +58,6 @@ export async function renderHomeScreen(
 
   async function showMain(): Promise<void> {
     const name = await getSetting('name');
-    const avatar = await getSetting('avatar');
     const workouts = await getFinishedWorkouts();
     const month = todayLocal().slice(0, 7);
     const monthCount = workouts.filter((workout) => workout.date.startsWith(month)).length;
@@ -66,18 +66,7 @@ export async function renderHomeScreen(
       h(
         'div',
         { className: 'screen' },
-        h(
-          'div',
-          { className: 'home-header' },
-          h('h1', {}, name ? t('home.helloName', { name }) : t('home.hello')),
-          h(
-            'button',
-            { type: 'button', className: 'avatar-button', ariaLabel: t('settings.open'), onclick: onOpenSettings },
-            avatar
-              ? h('img', { className: 'avatar', src: avatar, alt: '' })
-              : h('span', { className: 'avatar avatar-empty' }, name ? name[0].toUpperCase() : '👤'),
-          ),
-        ),
+        await pageHeader(name ? t('home.helloName', { name }) : t('home.hello'), onOpenSettings),
         h(
           'div',
           { className: 'centered' },

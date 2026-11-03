@@ -1,3 +1,4 @@
+import { pageHeader } from './avatar';
 import { lineChart } from './chart';
 import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, todayLocal } from './dates';
 import { db } from './db';
@@ -96,17 +97,17 @@ export async function renderTotalsScreen(root: HTMLElement, onBack: () => void):
 
 let shownView: 'month' | 'week' = 'month';
 
-export async function renderStatsScreen(root: HTMLElement): Promise<void> {
+export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () => void): Promise<void> {
   const body = h('div');
   const showView = async (): Promise<void> => {
     if (shownView === 'month') {
-      await renderMonthView(body, root);
+      await renderMonthView(body, root, onOpenSettings);
     } else {
       await renderVolumeView(body);
     }
   };
   root.replaceChildren(
-    h('h1', {}, t('tab.stats')),
+    await pageHeader(t('tab.stats'), onOpenSettings),
     radioChips<'month' | 'week'>(
       'stats-view',
       t('stats.view'),
@@ -126,8 +127,8 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
 }
 
 // Расчёты, ачивки и итоги открываются на всю вкладку, а не под шапкой статистики
-async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<void> {
-  const back = (): void => void renderStatsScreen(page);
+async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSettings: () => void): Promise<void> {
+  const back = (): void => void renderStatsScreen(page, onOpenSettings);
   const workouts = await getFinishedWorkouts();
   const goal = await getMonthlyGoal();
   const today = todayLocal();

@@ -70,11 +70,15 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
   if (tab === 'workout') {
     await renderHomeScreen(content, await getActiveWorkout(), () => void openActive(), () => void showTab('stats'), () => void showTab('settings'));
   } else if (tab === 'history') {
-    await renderHistoryTab(content, (opened) => {
-      void openWorkout(opened, () => void showTab('history'));
-    });
+    await renderHistoryTab(
+      content,
+      (opened) => {
+        void openWorkout(opened, () => void showTab('history'));
+      },
+      () => void showTab('settings'),
+    );
   } else if (tab === 'stats') {
-    await renderStatsScreen(content);
+    await renderStatsScreen(content, () => void showTab('settings'));
   } else {
     await renderSettingsScreen(content, message, (result) => void showTab('settings', result));
   }
