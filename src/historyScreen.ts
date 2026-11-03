@@ -144,24 +144,28 @@ async function renderWorkoutsView(
         'div',
         { className: 'month-nav' },
         monthButton('‹', t('common.prevMonth'), -1),
-        select(
-          Array.from({ length: 12 }, (_, month): [string, string] => [
-            String(month),
-            formatMonth(2000, month).replace(' 2000', ''),
-          ]),
-          String(shown.month),
-          (value) => {
-            shown = { ...shown, month: Number(value) };
-            show();
-          },
-        ),
-        select(
-          years.map((year): [string, string] => [String(year), String(year)]),
-          String(shown.year),
-          (value) => {
-            shown = { ...shown, year: Number(value) };
-            show();
-          },
+        h(
+          'div',
+          { className: 'month-select' },
+          select(
+            Array.from({ length: 12 }, (_, month): [string, string] => [
+              String(month),
+              formatMonth(2000, month).replace(' 2000', ''),
+            ]),
+            String(shown.month),
+            (value) => {
+              shown = { ...shown, month: Number(value) };
+              show();
+            },
+          ),
+          select(
+            years.map((year): [string, string] => [String(year), String(year)]),
+            String(shown.year),
+            (value) => {
+              shown = { ...shown, year: Number(value) };
+              show();
+            },
+          ),
         ),
         monthButton('›', t('common.nextMonth'), 1),
       ),

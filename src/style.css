@@ -294,6 +294,11 @@ h2 {
   margin: 8px 0;
 }
 
+.month-select {
+  display: flex;
+  gap: 8px;
+}
+
 .month-nav select {
   width: auto;
   min-height: 48px;
