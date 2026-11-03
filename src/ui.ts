@@ -24,6 +24,16 @@ export function numberInput(kind: 'integer' | 'decimal', value = '', maxLength =
   return input;
 }
 
+// Вес тела: не больше трех цифр до точки и одной после, например 97.5
+export function bodyWeightInput(value = ''): HTMLInputElement {
+  const input = numberInput('decimal', value, 5);
+  input.addEventListener('input', () => {
+    const [, whole = '', fraction = ''] = /^(\d{0,3})\d*(\.\d?)?/.exec(input.value) ?? [];
+    input.value = whole + fraction;
+  });
+  return input;
+}
+
 export function stepper(input: HTMLInputElement, step: number, min: number, max?: number): HTMLElement {
   const stepButton = (label: string, name: string, delta: number): HTMLButtonElement =>
     h(

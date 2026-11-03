@@ -1,4 +1,6 @@
 import {
+  BODY_KG_MAX,
+  BODY_KG_MIN,
   deleteBodyWeight,
   finishWeightGoal,
   getBodyWeights,
@@ -14,7 +16,7 @@ import { formatDate, todayLocal } from './dates';
 import { collapsible, emptyState, dateField, field, h } from './dom';
 import { LOCALE, t } from './i18n';
 import { filterByPeriod, type Period } from './progress';
-import { numberInput, periodChips } from './ui';
+import { bodyWeightInput, periodChips } from './ui';
 import { formatWeight, fromWeight, toWeight, weightUnit } from './units';
 
 let shownPeriod: Period = 'all';
@@ -31,7 +33,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
   const current = weights.at(-1)?.kg;
 
   const date = h('input', { type: 'date', value: today });
-  const kg = numberInput('decimal');
+  const kg = bodyWeightInput();
   const error = h('p', { className: 'error', role: 'alert' });
   const chartBox = h('div');
   const trendLine = h('p', { className: 'hint' });
@@ -63,9 +65,9 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
   }
 
   function goalSection(): HTMLElement[] {
-    const target = numberInput('decimal', goal ? String(toWeight(goal.targetKg)) : '');
+    const target = bodyWeightInput(goal ? String(toWeight(goal.targetKg)) : '');
     // Стартовый вес, от которого считается прогресс. По умолчанию — последнее взвешивание.
-    const start = numberInput('decimal', current === undefined ? '' : String(toWeight(current)));
+    const start = bodyWeightInput(current === undefined ? '' : String(toWeight(current)));
     const deadline = h('input', { type: 'date', value: goal?.deadline ?? '' });
     const goalError = h('p', { className: 'error', role: 'alert' });
     const form = h(
@@ -76,7 +78,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
           event.preventDefault();
           try {
             const startKg = fromWeight(Number(start.value.replace(',', '.')));
-            if (start.value.trim() === '' || !(startKg >= 20 && startKg <= 400)) {
+            if (start.value.trim() === '' || !(startKg >= BODY_KG_MIN && startKg <= BODY_KG_MAX)) {
               throw new Error(t('goal.needStart'));
             }
             await saveWeightGoal(target.value, deadline.value, Math.round(startKg * 10) / 10, today);

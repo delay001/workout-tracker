@@ -1,4 +1,4 @@
-import { getBodyWeights } from './bodyWeight';
+import { BODY_KG_MAX, BODY_KG_MIN, getBodyWeights } from './bodyWeight';
 import { formatDate, todayLocal } from './dates';
 import { db } from './db';
 import { field, h } from './dom';
@@ -7,7 +7,7 @@ import { activityFor, bodyMassIndex, dailyCalories, estimateOneRepMax, navyBodyF
 import { LOCALE, t } from './i18n';
 import { getMeasurements } from './measurements';
 import { getSetting, setSetting } from './settings';
-import { numberInput } from './ui';
+import { bodyWeightInput, numberInput } from './ui';
 import { formatWeight, fromWeight, toWeight, weightUnit } from './units';
 import { bestSet, getExerciseHistory, getFinishedWorkouts } from './workouts';
 import { shiftDays } from './volume';
@@ -54,7 +54,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
   // Калории: возраст берется из знакомства и сохраняется, если его поправить здесь
   const age = numberInput('integer', await getSetting('age'), 3);
   // Вес подставляется последний, но его можно поменять: например, посчитать для целевого веса
-  const caloriesWeight = numberInput('decimal', bodyKg === undefined ? '' : String(toWeight(bodyKg)));
+  const caloriesWeight = bodyWeightInput(bodyKg === undefined ? '' : String(toWeight(bodyKg)));
   const caloriesHeight = numberInput('integer', heightCm > 0 ? String(heightCm) : '', 3);
   const recent = (await getFinishedWorkouts()).filter((workout) => workout.date >= shiftDays(todayLocal(), -28)).length;
   let activity: Activity = activityFor(recent / 4);
@@ -64,7 +64,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
     const kg = fromWeight(Number(caloriesWeight.value.replace(',', '.')));
     const cm = Number(caloriesHeight.value);
     // Говорим, чего именно не хватает, а не общий список
-    const problem = !(kg >= 20 && kg <= 400)
+    const problem = !(kg >= BODY_KG_MIN && kg <= BODY_KG_MAX)
       ? t('calc.badWeight')
       : !(cm >= 100 && cm <= 250)
         ? t('calc.badHeight')

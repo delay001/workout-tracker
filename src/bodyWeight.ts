@@ -5,6 +5,10 @@ import { daysBetween } from './progress';
 import { getSetting, setSetting } from './settings';
 import { fromWeight } from './units';
 
+// Разумные границы веса тела
+export const BODY_KG_MIN = 40;
+export const BODY_KG_MAX = 350;
+
 export async function getBodyWeights(): Promise<BodyWeight[]> {
   return db.bodyWeights.orderBy('date').toArray();
 }
@@ -12,7 +16,7 @@ export async function getBodyWeights(): Promise<BodyWeight[]> {
 // Одна запись на день: повторная за ту же дату заменяет прежнюю
 export async function saveBodyWeight(date: string, kgText: string): Promise<void> {
   const kg = Math.round(fromWeight(Number(kgText.replace(',', '.'))) * 10) / 10;
-  if (kgText.trim() === '' || !Number.isFinite(kg) || kg < 20 || kg > 400) {
+  if (kgText.trim() === '' || !Number.isFinite(kg) || kg < BODY_KG_MIN || kg > BODY_KG_MAX) {
     throw new Error(t('weight.invalid'));
   }
   await db.bodyWeights.put({ date, kg });
@@ -98,7 +102,7 @@ export async function getGoalHistory(): Promise<WeightGoal[]> {
 // Новая цель заменяет активную, а прежняя уходит в историю
 export async function saveWeightGoal(targetText: string, deadline: string, currentKg: number, today: string): Promise<void> {
   const targetKg = Math.round(fromWeight(Number(targetText.replace(',', '.'))) * 10) / 10;
-  if (targetText.trim() === '' || !Number.isFinite(targetKg) || targetKg < 20 || targetKg > 400) {
+  if (targetText.trim() === '' || !Number.isFinite(targetKg) || targetKg < BODY_KG_MIN || targetKg > BODY_KG_MAX) {
     throw new Error(t('weight.invalid'));
   }
   if (!deadline || deadline <= today) {

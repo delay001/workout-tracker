@@ -1,4 +1,4 @@
-import { getBodyWeights, saveBodyWeight, saveWeightGoal } from './bodyWeight';
+import { BODY_KG_MAX, BODY_KG_MIN, getBodyWeights, saveBodyWeight, saveWeightGoal } from './bodyWeight';
 import { todayLocal } from './dates';
 import { db } from './db';
 import { dateField, field, h } from './dom';
@@ -9,7 +9,7 @@ import {
   parseTheme,
   setSetting,
 } from './settings';
-import { numberInput, select } from './ui';
+import { bodyWeightInput, numberInput, select } from './ui';
 import { fromWeight, weightUnit } from './units';
 
 // Знакомство нужно только совсем новому пользователю, текущие данные его не вызывают
@@ -129,18 +129,18 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
       (await getSetting('goalType')) || 'mass',
       () => undefined,
     );
-    const weight = numberInput('decimal', '', 5);
-    const target = numberInput('decimal', '', 5);
+    const weight = bodyWeightInput();
+    const target = bodyWeightInput();
     const deadline = h('input', { type: 'date' });
     const height = numberInput('integer', await getSetting('heightCm'), 3);
     const age = numberInput('integer', await getSetting('age'), 3);
     const error = h('p', { className: 'error', role: 'alert' });
     const kg = (input: HTMLInputElement): number => fromWeight(Number(input.value));
     const check = checker(error, [
-      [weight, (input) => kg(input) >= 20 && kg(input) <= 400, t('onboarding.badWeight')],
+      [weight, (input) => kg(input) >= BODY_KG_MIN && kg(input) <= BODY_KG_MAX, t('onboarding.badWeight')],
       [height, (input) => Number(input.value) >= 100 && Number(input.value) <= 250, t('onboarding.badHeight')],
       [age, (input) => Number(input.value) >= 14 && Number(input.value) <= 100, t('onboarding.badAge')],
-      [target, (input) => kg(input) >= 20 && kg(input) <= 400, t('onboarding.badTarget')],
+      [target, (input) => kg(input) >= BODY_KG_MIN && kg(input) <= BODY_KG_MAX, t('onboarding.badTarget')],
     ]);
 
     layout(
