@@ -18,7 +18,7 @@ import {
 import type { Sex } from './formulas';
 import { STANDARDS, strengthLevel } from './levels';
 import { getSetting } from './settings';
-import { periodChips, radioChips } from './ui';
+import { periodChips, radioChips, segmented } from './ui';
 import { formatWeight, toWeight, weightUnit } from './units';
 import {
   bestResult,
@@ -212,7 +212,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
               ...(cardio
                 ? []
                 : [
-                    radioChips<Metric>(
+                    segmented(radioChips<Metric>(
                       'exercise-metric',
                       t('summary.metric'),
                       [
@@ -225,7 +225,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
                         shownMetric = value;
                         showChart();
                       },
-                    ),
+                    )),
                   ]),
               periodChips('exercise-period', shownPeriod, (value) => {
                 shownPeriod = value;

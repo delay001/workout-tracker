@@ -87,12 +87,18 @@ export function radioChips<T extends string>(
 
 export const PERIODS: Period[] = ['all', '1m', '3m', '6m', '1y'];
 
+// Равные кнопки в одну строку на общей подложке
+export function segmented(chips: HTMLElement): HTMLElement {
+  chips.classList.add('segmented');
+  return chips;
+}
+
 export function periodChips(group: string, value: Period, onChange: (value: Period) => void): HTMLElement {
-  return radioChips(
+  return segmented(radioChips(
     group,
     t('summary.period'),
     PERIODS.map((period): [Period, string] => [period, t(`period.${period}`)]),
     value,
     onChange,
-  );
+  ));
 }

@@ -9,7 +9,7 @@ import { overdueExercises, periodTotals, topExercises, workoutStats } from './pr
 import { formatWeight, toWeight, weightUnit } from './units';
 import { getMonthlyGoal, getOverdueDays } from './settings';
 import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage } from './stats';
-import { radioChips } from './ui';
+import { radioChips, segmented } from './ui';
 import { renderVolumeView } from './volumeScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { LOCALE, t } from './i18n';
@@ -182,7 +182,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
     const tile = (value: string, label: string): HTMLElement =>
       h('div', { className: 'stat' }, h('strong', {}, value), label);
 
-    const periods = radioChips<string>(
+    const periods = segmented(radioChips<string>(
       'stats-period',
       t('stats.period'),
       [
@@ -196,8 +196,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
         shownMonths = Number(value) as typeof shownMonths;
         show();
       },
-    );
-    periods.classList.add('segmented');
+    ));
 
     const tonnageTitle = {
       1: 'stats.tonnageMonth',

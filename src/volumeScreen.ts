@@ -4,7 +4,7 @@ import { h } from './dom';
 import { t } from './i18n';
 import { MUSCLES, type Muscle } from './muscles';
 import { getSetting } from './settings';
-import { radioChips } from './ui';
+import { radioChips, segmented } from './ui';
 import {
   averageVolume,
   DEFAULT_NORMS,
@@ -156,7 +156,7 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
   });
 
   root.replaceChildren(
-    radioChips<Span>(
+    segmented(radioChips<Span>(
       'volume-span',
       t('volume.span'),
       [
@@ -170,7 +170,7 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
         shownSpan = value;
         void renderVolumeView(root);
       },
-    ),
+    )),
     h(
       'div',
       { className: 'body-map' },
