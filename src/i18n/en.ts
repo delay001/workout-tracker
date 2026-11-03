@@ -88,6 +88,8 @@ export const en: Record<keyof typeof ru, string> = {
   'exercise.secondary': 'Secondary (up to three)',
   'exercise.movement': 'Movement type',
   'exercise.noPrimary': 'Not set',
+  'exercise.noMovement': 'Not set',
+  'exercise.needMarkup': 'Set the muscle group, main muscle and movement type',
   'movement.push': 'Push',
   'movement.pull': 'Pull',
   'movement.other': 'Other',

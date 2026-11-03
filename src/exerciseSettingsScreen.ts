@@ -43,8 +43,12 @@ export async function renderExerciseForm(
       () => undefined,
     );
     const movement = select(
-      (['push', 'pull', 'other'] as const).map((value): [string, string] => [value, t(`movement.${value}`)]),
-      markup.movement ?? 'other',
+      [
+        ['', t('exercise.noMovement')],
+        ...(['push', 'pull', 'other'] as const).map((value): [string, string] => [value, t(`movement.${value}`)]),
+      ],
+      // У нового упражнения тип движения не выбран: его нужно указать самому
+      markup.movement ?? '',
       () => undefined,
     );
     const secondary = MUSCLES.map((muscle) => {
@@ -67,6 +71,10 @@ export async function renderExerciseForm(
     }
 
     async function save(): Promise<void> {
+      // Группа, основная мышца и тип движения обязательны: без них не считается карта мышц и баланс
+      if (!group.value || !primary.value || !movement.value) {
+        throw new Error(t('exercise.needMarkup'));
+      }
       const muscleGroup = group.value || undefined;
       if (option) {
         await updateExercise(await findOrCreateExercise(option.name, option.muscleGroup), name.value, muscleGroup);
@@ -97,10 +105,10 @@ export async function renderExerciseForm(
             },
           },
           field(t('common.name'), name, true),
-          field(t('common.muscleGroup'), group),
+          field(t('common.muscleGroup'), group, true),
           h('h2', {}, t('exercise.markup')),
-          field(t('exercise.primary'), primary),
-          field(t('exercise.movement'), movement),
+          field(t('exercise.primary'), primary, true),
+          field(t('exercise.movement'), movement, true),
           h(
             'div',
             { className: 'field' },

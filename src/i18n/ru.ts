@@ -431,6 +431,8 @@ export const ru = {
   'exercise.secondary': 'Вспомогательные (до трех)',
   'exercise.movement': 'Тип движения',
   'exercise.noPrimary': 'Не указана',
+  'exercise.noMovement': 'Не указан',
+  'exercise.needMarkup': 'Укажи группу мышц, основную мышцу и тип движения',
   'movement.push': 'Толкающее',
   'movement.pull': 'Тянущее',
   'movement.other': 'Другое',
