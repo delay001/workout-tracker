@@ -24,8 +24,9 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
   function showEstimate(): void {
     const kg = fromWeight(Number(weight.value));
     const count = Number(reps.value);
-    if (!(kg > 0) || kg > 700 || !(count >= 1 && count <= 12)) {
-      result.replaceChildren(h('p', { className: 'hint' }, t('calc.enterSet')));
+    const problem = !(kg > 0 && kg <= 700) ? t('calc.badSetWeight') : !(count >= 1 && count <= 12) ? t('calc.badReps') : undefined;
+    if (problem) {
+      result.replaceChildren(h('p', { className: 'error' }, problem));
       return;
     }
     const estimate = estimateOneRepMax(kg, count);
@@ -54,17 +55,19 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
   const age = numberInput('integer', await getSetting('age'), 3);
   // Вес подставляется последний, но его можно поменять: например, посчитать для целевого веса
   const caloriesWeight = numberInput('decimal', bodyKg === undefined ? '' : String(toWeight(bodyKg)));
+  const caloriesHeight = numberInput('integer', heightCm > 0 ? String(heightCm) : '', 3);
   const recent = (await getFinishedWorkouts()).filter((workout) => workout.date >= shiftDays(todayLocal(), -28)).length;
   let activity: Activity = activityFor(recent / 4);
   const calories = h('div');
   function showCalories(): void {
     const years = Number(age.value);
     const kg = fromWeight(Number(caloriesWeight.value.replace(',', '.')));
+    const cm = Number(caloriesHeight.value);
     // Говорим, чего именно не хватает, а не общий список
-    const problem = !(heightCm > 0)
-      ? t('calc.needHeight')
-      : !(kg >= 20 && kg <= 400)
-        ? t('calc.badWeight')
+    const problem = !(kg >= 20 && kg <= 400)
+      ? t('calc.badWeight')
+      : !(cm >= 100 && cm <= 250)
+        ? t('calc.badHeight')
         : !(years >= 14 && years <= 100)
           ? t('calc.badAge')
           : undefined;
@@ -72,7 +75,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       calories.replaceChildren(h('p', { className: 'error' }, problem));
       return;
     }
-    const keep = dailyCalories(sex, kg, heightCm, years, activity);
+    const keep = dailyCalories(sex, kg, cm, years, activity);
     const row = (label: string, value: number): HTMLElement =>
       h('p', { className: 'set-row' }, label, h('strong', {}, t('calc.kcal', { value: value.toLocaleString(LOCALE) })));
     calories.replaceChildren(
@@ -83,6 +86,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
   }
   age.addEventListener('input', showCalories);
   caloriesWeight.addEventListener('input', showCalories);
+  caloriesHeight.addEventListener('input', showCalories);
   age.addEventListener('change', () => void setSetting('age', age.value));
   showCalories();
 
@@ -122,8 +126,9 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
       h('h2', {}, t('calc.calories')),
       h(
         'div',
-        { className: 'set-inputs' },
+        { className: 'set-inputs set-inputs-3' },
         field(t('weight.input', { unit: weightUnit() }), caloriesWeight),
+        field(t('calc.height'), caloriesHeight),
         field(t('calc.age'), age),
       ),
       h(

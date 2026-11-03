@@ -1226,6 +1226,10 @@ p.set-row {
   gap: 8px;
 }
 
+.set-inputs-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .stepper {
   display: flex;
   align-items: stretch;
