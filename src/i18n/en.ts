@@ -258,6 +258,7 @@ export const en: Record<keyof typeof ru, string> = {
   'summary.fromPeak': 'Strength from peak',
   'summary.maxTonnage': 'Max volume per workout',
   'summary.percent': '{value}%',
+  'chart.setsCount': 'working sets: {count}',
   'summary.noPeriodData': 'No entries for this period',
   'summary.metric': 'What to show on the chart',
   'summary.period': 'Chart period',

@@ -119,12 +119,17 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
         : formatSet(set);
     };
 
+    const setsCountText = (date: string): string => {
+      const sets = history.filter((entry) => entry.date === date).flatMap((entry) => entry.sets);
+      return t('chart.setsCount', { count: sets.filter((set) => !set.warmup).length });
+    };
+
     function showChart(): void {
       const points = filterByPeriod(currentSeries(), shownPeriod, todayLocal());
       chartBox.replaceChildren(
         points.length > 0
           ? lineChart(points, unit(), t('exercise.progress', { name: exercise.name }), undefined, {
-              detail: (point) => bestSetText(point.date),
+              detail: (point) => (shownMetric === 'tonnage' && !cardio ? setsCountText(point.date) : bestSetText(point.date)),
             })
           : h('p', { className: 'hint' }, t('summary.noPeriodData')),
       );

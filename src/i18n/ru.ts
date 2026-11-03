@@ -222,6 +222,7 @@ export const ru = {
   'summary.fromPeak': 'Сила от пика',
   'summary.maxTonnage': 'Макс. тоннаж за тренировку',
   'summary.percent': '{value}%',
+  'chart.setsCount': 'рабочих подходов: {count}',
   'summary.noPeriodData': 'За этот период записей нет',
   'summary.metric': 'Что показать на графике',
   'summary.period': 'Период графика',
