@@ -11,8 +11,17 @@ import { t } from './i18n';
 const WEEKDAYS = [t('weekday.mon'), t('weekday.tue'), t('weekday.wed'), t('weekday.thu'), t('weekday.fri'), t('weekday.sat'), t('weekday.sun')];
 
 // Месяц запоминается, чтобы после правки тренировки вернуться туда же
-const now = new Date();
-let shown = { year: now.getFullYear(), month: now.getMonth() };
+function currentMonth(): { year: number; month: number } {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
+let shown = currentMonth();
+
+// Нажатие на вкладку открывает текущий месяц, а возврат из тренировки оставляет выбранный
+export function resetHistoryMonth(): void {
+  shown = currentMonth();
+}
 
 function summary(workout: Workout): string {
   return [

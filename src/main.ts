@@ -1,7 +1,7 @@
 import './style.css';
 import { markUpExercises, requestPersistentStorage, type Workout } from './db';
 import { h } from './dom';
-import { renderHistoryTab } from './historyScreen';
+import { renderHistoryTab, resetHistoryMonth } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
 import { loadTheme } from './settings';
 import { syncAchievements } from './motivationScreens';
@@ -57,7 +57,12 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
       {
         type: 'button',
         className: id === tab ? 'tab tab-active' : 'tab',
-        onclick: () => void showTab(id),
+        onclick: () => {
+          if (id === 'history') {
+            resetHistoryMonth();
+          }
+          void showTab(id);
+        },
       },
       label,
     );
