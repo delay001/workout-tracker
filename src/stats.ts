@@ -21,9 +21,13 @@ function monthPrefix(year: number, month: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}`;
 }
 
-export function monthStats(workouts: Workout[], year: number, month: number): MonthStats {
-  const prefix = monthPrefix(year, month);
-  const inMonth = workouts.filter((workout) => workout.date.startsWith(prefix));
+// Итоги за несколько месяцев подряд, последний из них — выбранный
+export function monthStats(workouts: Workout[], year: number, month: number, months = 1): MonthStats {
+  const prefixes = Array.from({ length: months }, (_, index) => {
+    const shown = shiftMonth(year, month, -index);
+    return monthPrefix(shown.year, shown.month);
+  });
+  const inMonth = workouts.filter((workout) => prefixes.includes(workout.date.slice(0, 7)));
   const sets = inMonth.flatMap((workout) => workout.exercises).flatMap((item) => item.sets);
 
   const byType = new Map<string, number>();

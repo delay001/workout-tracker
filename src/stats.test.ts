@@ -43,6 +43,10 @@ describe('статистика месяца', () => {
     });
   });
 
+  it('за несколько месяцев считает их вместе', () => {
+    expect(monthStats(workouts, 2026, 10, 2)).toMatchObject({ count: 4, tonnage: 2500 });
+  });
+
   it('пустой месяц даёт нули', () => {
     expect(monthStats(workouts, 2026, 0)).toMatchObject({ count: 0, tonnage: 0, byType: [] });
   });

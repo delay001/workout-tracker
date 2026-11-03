@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatMonth, monthCells, shiftMonth } from './dates';
+import { formatDuration, formatMonth, formatMonthRange, monthCells, shiftMonth } from './dates';
 
 describe('календарь', () => {
   it('начинает неделю с понедельника', () => {
@@ -25,6 +25,12 @@ describe('календарь', () => {
 
   it('пишет название месяца с большой буквы', () => {
     expect(formatMonth(2026, 10)).toBe('Ноябрь 2026');
+  });
+
+  it('пишет период из нескольких месяцев', () => {
+    expect(formatMonthRange(2026, 10, 1)).toBe('Ноябрь 2026');
+    expect(formatMonthRange(2026, 10, 3)).toBe('Сентябрь – ноябрь 2026');
+    expect(formatMonthRange(2026, 10, 12)).toBe('Декабрь 2025 – ноябрь 2026');
   });
 });
 

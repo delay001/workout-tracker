@@ -18,6 +18,15 @@ export function formatMonth(year: number, month: number): string {
   return `${name[0].toUpperCase()}${name.slice(1)} ${year}`;
 }
 
+// «Сентябрь – ноябрь 2026» или «Декабрь 2025 – ноябрь 2026»
+export function formatMonthRange(year: number, month: number, months: number): string {
+  if (months === 1) return formatMonth(year, month);
+  const start = shiftMonth(year, month, 1 - months);
+  const end = formatMonth(year, month).toLocaleLowerCase(LOCALE);
+  const from = formatMonth(start.year, start.month);
+  return `${start.year === year ? from.slice(0, -5) : from} – ${end}`;
+}
+
 export function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
   const date = new Date(year, month + delta, 1);
   return { year: date.getFullYear(), month: date.getMonth() };

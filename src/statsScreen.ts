@@ -1,5 +1,5 @@
 import { lineChart } from './chart';
-import { formatDate, formatDuration, formatMonth, shiftMonth, todayLocal } from './dates';
+import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, todayLocal } from './dates';
 import { db } from './db';
 import { h } from './dom';
 import { renderCalcScreen } from './calcScreen';
@@ -15,6 +15,27 @@ import { LOCALE, t } from './i18n';
 
 const now = new Date();
 let shown = { year: now.getFullYear(), month: now.getMonth() };
+// Сколько месяцев показывает статистика: последний из них — shown
+let shownMonths: 1 | 3 | 6 | 12 = 1;
+
+// Первые строки видны сразу, остальные открываются кнопкой
+function collapsible(rows: HTMLElement[], limit = 6): HTMLElement[] {
+  if (rows.length <= limit) return rows;
+  const rest = h('div', { hidden: true }, ...rows.slice(limit));
+  const toggle = h(
+    'button',
+    {
+      type: 'button',
+      className: 'button button-secondary',
+      onclick: () => {
+        rest.hidden = !rest.hidden;
+        toggle.textContent = rest.hidden ? t('common.showAll', { count: rows.length }) : t('common.collapse');
+      },
+    },
+    t('common.showAll', { count: rows.length }),
+  );
+  return [...rows.slice(0, limit), rest, toggle];
+}
 
 export function goalBar(count: number, goal: number): HTMLElement {
   const fill = h('div', { className: 'progress-fill' });
@@ -111,7 +132,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<vo
   const goal = await getMonthlyGoal();
   const today = todayLocal();
   const totals = periodTotals(workouts, today);
-  const top = topExercises(workouts, 5);
+  const top = topExercises(workouts, Infinity);
   const overdue = overdueExercises(workouts, await getOverdueDays(), today);
   const exercises = await db.exercises.toArray();
   const exerciseName = (id: number): string =>
@@ -128,11 +149,16 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<vo
     .map((item) => row(exerciseName(item.exerciseId), t('stats.overdueRow', { days: item.days })));
 
   function show(): void {
-    const stats = monthStats(workouts, shown.year, shown.month);
-    const prefix = `${shown.year}-${String(shown.month + 1).padStart(2, '0')}`;
-    const monthWorkouts = workouts.filter((workout) => workout.date.startsWith(prefix));
-    const rating = averageRating(monthWorkouts);
-    const monthPoints = [...monthWorkouts].reverse().map((workout) => ({
+    const months = shownMonths;
+    const stats = monthStats(workouts, shown.year, shown.month, months);
+    const start = shiftMonth(shown.year, shown.month, 1 - months);
+    const from = `${start.year}-${String(start.month + 1).padStart(2, '0')}`;
+    const to = `${shown.year}-${String(shown.month + 1).padStart(2, '0')}`;
+    const periodWorkouts = workouts.filter(
+      (workout) => workout.date.slice(0, 7) >= from && workout.date.slice(0, 7) <= to,
+    );
+    const rating = averageRating(periodWorkouts);
+    const monthPoints = [...periodWorkouts].reverse().map((workout) => ({
       date: workout.date,
       value: toWeight(workoutStats(workout).tonnage),
     }));
@@ -145,7 +171,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<vo
           className: 'step-button',
           ariaLabel: name,
           onclick: () => {
-            shown = shiftMonth(shown.year, shown.month, delta);
+            shown = shiftMonth(shown.year, shown.month, delta * months);
             show();
           },
         },
@@ -155,15 +181,44 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<vo
     const tile = (value: string, label: string): HTMLElement =>
       h('div', { className: 'stat' }, h('strong', {}, value), label);
 
+    const periods = radioChips<string>(
+      'stats-period',
+      t('stats.period'),
+      [
+        ['1', t('period.month')],
+        ['3', t('period.3m')],
+        ['6', t('period.6m')],
+        ['12', t('period.1y')],
+      ],
+      String(months),
+      (value) => {
+        shownMonths = Number(value) as typeof shownMonths;
+        show();
+      },
+    );
+    periods.classList.add('segmented');
+
+    const tonnageTitle = {
+      1: 'stats.tonnageMonth',
+      3: 'stats.tonnage3m',
+      6: 'stats.tonnageHalfYear',
+      12: 'stats.tonnageYear',
+    } as const;
+    const formatChartMonth = (date: string): string => {
+      const [year, month] = date.split('-').map(Number);
+      return formatMonth(year, month - 1);
+    };
+
     root.replaceChildren(
+      periods,
       h(
         'div',
         { className: 'month-nav' },
         monthButton('‹', t('common.prevMonth'), -1),
-        h('h2', {}, formatMonth(shown.year, shown.month)),
+        h('h2', {}, formatMonthRange(shown.year, shown.month, months)),
         monthButton('›', t('common.nextMonth'), 1),
       ),
-      goalBar(stats.count, goal),
+      ...(months === 1 ? [goalBar(stats.count, goal)] : []),
       h(
         'div',
         { className: 'stats' },
@@ -194,15 +249,22 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<vo
             h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),
           )
         : [h('p', { className: 'hint' }, t('stats.noWorkouts'))]),
-      h('h2', {}, t('stats.tonnageMonth')),
-      ...(monthPoints.length > 0
-        ? [lineChart(monthPoints, weightUnit(), t('stats.tonnageMonth'))]
-        : [h('p', { className: 'hint' }, t('stats.noWorkouts'))]),
-      h('h2', {}, t('stats.tonnageHalfYear')),
-      lineChart(monthlyTonnage(workouts, shown.year, shown.month, 6).map((point) => ({ ...point, value: toWeight(point.value) })), weightUnit(), t('stats.tonnageByMonth'), (date) => {
-        const [year, month] = date.split('-').map(Number);
-        return formatMonth(year, month - 1);
-      }),
+      h('h2', {}, t(tonnageTitle[months])),
+      ...(monthPoints.length === 0
+        ? [h('p', { className: 'hint' }, t('stats.noWorkouts'))]
+        : months === 1
+          ? [lineChart(monthPoints, weightUnit(), t('stats.tonnageMonth'))]
+          : [
+              lineChart(
+                monthlyTonnage(workouts, shown.year, shown.month, months).map((point) => ({
+                  ...point,
+                  value: toWeight(point.value),
+                })),
+                weightUnit(),
+                t('stats.tonnageByMonth'),
+                formatChartMonth,
+              ),
+            ]),
       h('h2', {}, t('stats.totals')),
       ...(['week', 'month', 'year'] as const).map((period) =>
         h(
@@ -221,9 +283,9 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<vo
         ),
       ),
       h('h2', {}, t('stats.top')),
-      ...topRows,
+      ...collapsible(topRows),
       h('h2', {}, t('stats.overdue')),
-      ...(overdueRows.length > 0 ? overdueRows : [h('p', { className: 'hint' }, t('stats.noOverdue'))]),
+      ...(overdueRows.length > 0 ? collapsible(overdueRows) : [h('p', { className: 'hint' }, t('stats.noOverdue'))]),
     );
   }
 

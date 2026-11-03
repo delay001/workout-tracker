@@ -857,6 +857,22 @@ textarea {
   font-weight: 600;
 }
 
+/* Переключатель периода: равные кнопки в одну строку */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 26px;
+  background: var(--surface);
+}
+
+.segmented .chip {
+  justify-content: center;
+  padding: 8px 4px;
+  background: none;
+}
+
 .rating {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
