@@ -571,10 +571,18 @@ export async function renderWorkoutScreen(
           onsubmit: async (event: Event) => {
             event.preventDefault();
             try {
+              const durationMin = parseDuration(hours.value, minutes.value);
+              // Длительность и оценка обязательны; пустая тренировка все равно удаляется, ей они не нужны
+              if (!isEmpty && durationMin === undefined) {
+                throw new Error(t('workout.needDuration'));
+              }
+              if (!isEmpty && rating === undefined) {
+                throw new Error(t('workout.needRating'));
+              }
               const saved = await finishWorkout(workout, {
                 date: (isEditing && date.value) || workout.date,
                 type: isEditing ? type.value : workout.type,
-                durationMin: parseDuration(hours.value, minutes.value),
+                durationMin,
                 rating,
                 note: note.value.trim() || undefined,
               });

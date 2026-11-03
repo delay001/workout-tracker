@@ -17,16 +17,19 @@ export async function needsOnboarding(): Promise<boolean> {
   return !(await getSetting('onboarded')) && (await db.workouts.count()) === 0;
 }
 
-// Проверка полей прямо при вводе: красная подсказка про первое неверное поле. Пустое поле можно оставить.
-type Rule = [HTMLInputElement, (input: HTMLInputElement) => boolean, string];
+// Проверка полей прямо при вводе: красная подсказка про первое неверное поле.
+// Необязательное поле можно оставить пустым, обязательное — нет (это проверяется при нажатии «Дальше»).
+type Rule = [HTMLInputElement, (input: HTMLInputElement) => boolean, string, boolean?];
 
-function checker(error: HTMLElement, rules: Rule[]): () => boolean {
-  const check = (): boolean => {
-    const broken = rules.find(([input, valid]) => input.value.trim() !== '' && !valid(input));
-    error.textContent = broken ? broken[2] : '';
+function checker(error: HTMLElement, rules: Rule[], requiredMessage = ''): (submitting?: boolean) => boolean {
+  const check = (submitting = false): boolean => {
+    const broken = rules.find(([input, valid, , required]) =>
+      input.value.trim() === '' ? submitting && required : !valid(input),
+    );
+    error.textContent = broken ? (broken[0].value.trim() === '' ? requiredMessage : broken[2]) : '';
     return !broken;
   };
-  for (const [input] of rules) input.addEventListener('input', check);
+  for (const [input] of rules) input.addEventListener('input', () => check());
   return check;
 }
 
@@ -88,6 +91,8 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
     name.oninput = () => {
       name.value = name.value.replace(/[^\p{L}\s'-]/gu, '');
     };
+    const nameError = h('p', { className: 'error', role: 'alert' });
+    const check = checker(nameError, [[name, () => true, '', true]], t('onboarding.needName'));
     // Имя сохраняется сразу, чтобы не потерять его, если дальше нажать «Пропустить»
     name.onchange = () => void setSetting('name', name.value.trim());
 
@@ -110,8 +115,10 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         field(t('settings.language'), language),
         field(t('onboarding.name'), name),
         field(t('settings.theme'), theme),
+        nameError,
       ],
       async () => {
+        if (!check(true)) return;
         await setSetting('name', name.value.trim());
         await goalStep();
       },
@@ -137,11 +144,11 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
     const error = h('p', { className: 'error', role: 'alert' });
     const kg = (input: HTMLInputElement): number => fromWeight(Number(input.value));
     const check = checker(error, [
-      [weight, (input) => kg(input) >= BODY_KG_MIN && kg(input) <= BODY_KG_MAX, t('onboarding.badWeight')],
-      [height, (input) => Number(input.value) >= 100 && Number(input.value) <= 250, t('onboarding.badHeight')],
-      [age, (input) => Number(input.value) >= 14 && Number(input.value) <= 100, t('onboarding.badAge')],
+      [weight, (input) => kg(input) >= BODY_KG_MIN && kg(input) <= BODY_KG_MAX, t('onboarding.badWeight'), true],
+      [height, (input) => Number(input.value) >= 100 && Number(input.value) <= 250, t('onboarding.badHeight'), true],
+      [age, (input) => Number(input.value) >= 14 && Number(input.value) <= 100, t('onboarding.badAge'), true],
       [target, (input) => kg(input) >= BODY_KG_MIN && kg(input) <= BODY_KG_MAX, t('onboarding.badTarget')],
-    ]);
+    ], t('onboarding.needBody'));
 
     layout(
       t('onboarding.step2'),
@@ -156,7 +163,7 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         error,
       ],
       async () => {
-        if (!check()) return;
+        if (!check(true)) return;
         try {
           await setSetting('goalType', type.value);
           await setSetting('heightCm', height.value);
@@ -204,7 +211,7 @@ export async function renderOnboarding(root: HTMLElement, onDone: () => void): P
         error,
       ],
       async () => {
-        if (!check()) return;
+        if (!check(true)) return;
         await setSetting('experience', experience.value);
         await setSetting('perWeek', perWeek.value);
         await setSetting('usualDuration', duration.value);
