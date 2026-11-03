@@ -356,6 +356,11 @@ export async function renderWorkoutScreen(
         // Пустая тренировка при завершении удаляется, поэтому завершенную спрашиваем
         onclick: async () => {
           const hasSets = workout.exercises.some((item) => item.sets.length > 0);
+          // Секундомер уже запущен: тренировка идет, хоть подходов еще нет — оставляем ее активной
+          if (!isEditing && total(loadStopwatch(workout.id), Date.now()) > 0) {
+            onClosed();
+            return;
+          }
           if (isEditing && !hasSets && !(await confirmDialog(t('workout.emptyDeleted')))) {
             return;
           }
