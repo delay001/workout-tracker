@@ -58,6 +58,8 @@ export interface Bar {
   // Подпись под столбцом и полное описание для строки над графиком
   label: string;
   readout: string;
+  // Подпись над столбцом, если число нужно показать иначе, например часы
+  text?: string;
 }
 
 // Столбцы с числом над каждым. Столбец можно нажать: описание показывается над графиком.
@@ -82,7 +84,7 @@ export function barChart(bars: Bar[], label: string): HTMLElement {
           const x = 12 + step * index + (step - width) / 2;
           const height = (bar.value / max) * (BOX.bottom - BOX.top - 14);
           return `<rect class="chart-bar" x="${x}" y="${BOX.bottom - height}" width="${width}" height="${height}" rx="4"/>
-            <text x="${x + width / 2}" y="${BOX.bottom - height - 4}" text-anchor="middle">${bar.value}</text>
+            <text x="${x + width / 2}" y="${BOX.bottom - height - 4}" text-anchor="middle">${bar.text ?? bar.value}</text>
             ${index % labelEvery === 0 ? `<text x="${x + width / 2}" y="${HEIGHT - 6}" text-anchor="middle">${bar.label}</text>` : ''}
             <rect class="chart-hit" x="${12 + step * index}" y="${BOX.top}" width="${step}" height="${HEIGHT - BOX.top}"/>`;
         })

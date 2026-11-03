@@ -1134,6 +1134,20 @@ p.set-row {
   font-variant-numeric: tabular-nums;
 }
 
+/* Заголовок карусели графиков: стрелки по краям, название по центру */
+.chart-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 20px 0 8px;
+}
+
+.chart-switch h2 {
+  margin: 0;
+  text-align: center;
+}
+
 .finish-card {
   margin: 8px 0 16px;
   padding: 20px 16px 8px;

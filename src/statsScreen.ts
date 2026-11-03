@@ -8,7 +8,10 @@ import { currentStates, renderAchievementsScreen, renderYearScreen } from './mot
 import { overdueExercises, topExercises, workoutStats } from './progress';
 import { formatWeight, toWeight, weightUnit } from './units';
 import { getOverdueDays } from './settings';
-import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage, workoutCounts } from './stats';
+import { averageRating, goalPercent, monthlyTonnage, monthStats, periodBuckets, sortTypes, tonnage } from './stats';
+import { getBodyWeights } from './bodyWeight';
+import type { Bar } from './chart';
+import type { Workout } from './db';
 import { radioChips, segmented } from './ui';
 import { renderVolumeView } from './volumeScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
@@ -18,6 +21,8 @@ const now = new Date();
 let shown = { year: now.getFullYear(), month: now.getMonth() };
 // Сколько месяцев показывает статистика: последний из них — shown
 let shownMonths: 1 | 3 | 6 | 12 = 1;
+// Какой график карусели открыт: запоминается между переключениями периода
+let shownChart = 0;
 
 // Кольцо прогресса к цели месяца. Справа подпись и, если передана, серия недель.
 // Кольцо прогресса: доля от 0 до 100 и подпись в центре
@@ -128,9 +133,28 @@ export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () =>
 }
 
 // Расчеты, ачивки и итоги открываются на всю вкладку, а не под шапкой статистики
+type ChartSlide = [string, (title: string) => HTMLElement];
+
+// Один график за раз: стрелки рядом с названием листают графики по кругу
+function chartCarousel(slides: ChartSlide[]): HTMLElement[] {
+  const title = h('h2', {});
+  const box = h('div');
+  const show = (delta: number): void => {
+    shownChart = (((shownChart + delta) % slides.length) + slides.length) % slides.length;
+    const [name, render] = slides[shownChart];
+    title.textContent = name;
+    box.replaceChildren(render(name));
+  };
+  const arrow = (label: string, name: string, delta: number): HTMLButtonElement =>
+    h('button', { type: 'button', className: 'step-button', ariaLabel: name, onclick: () => show(delta) }, label);
+  show(0);
+  return [h('div', { className: 'chart-switch' }, arrow('‹', t('stats.prevChart'), -1), title, arrow('›', t('stats.nextChart'), 1)), box];
+}
+
 async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSettings: () => void): Promise<void> {
   const back = (): void => void renderStatsScreen(page, onOpenSettings);
   const workouts = await getFinishedWorkouts();
+  const weights = await getBodyWeights();
   const achievements = await currentStates();
   const earnedAchievements = achievements.filter((state) => state.count > 0).length;
   const today = todayLocal();
@@ -206,19 +230,30 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
     const monthEnd = `${to}-${String(new Date(shown.year, shown.month + 1, 0).getDate()).padStart(2, '0')}`;
     // Будущие недели не показываются: последний столбец — текущая неделя
     const periodEnd = monthEnd < today ? monthEnd : today;
-    const countBars = workoutCounts(periodWorkouts, `${from}-01`, periodEnd, byWeek ? 'week' : 'month').map(
-      (bucket) => {
+    const buckets = periodBuckets(periodWorkouts, `${from}-01`, periodEnd, byWeek ? 'week' : 'month');
+    // Столбцы по неделям или месяцам: значение, подпись над столбцом и строка над графиком
+    const bars = (
+      value: (inBucket: Workout[]) => number,
+      text: (value: number) => string,
+      readout: (value: number, when: string) => string,
+    ): Bar[] =>
+      buckets.map((bucket) => {
         const [year, month, day] = bucket.start.split('-').map(Number);
         const when = byWeek
           ? `${formatDate(bucket.start).slice(0, 5)} – ${formatDate(bucket.end).slice(0, 5)}`
           : formatMonth(year, month - 1);
+        const number = value(bucket.workouts);
         return {
-          value: bucket.count,
+          value: number,
+          text: text(number),
           label: byWeek ? `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}` : formatMonth(year, month - 1).slice(0, 3),
-          readout: t('stats.countReadout', { count: bucket.count, when }),
+          readout: readout(number, when),
         };
-      },
-    );
+      });
+    const minutes = (inBucket: Workout[]): number => inBucket.reduce((sum, workout) => sum + (workout.durationMin ?? 0), 0);
+    const periodWeights = weights
+      .filter((item) => item.date >= `${from}-01` && item.date <= periodEnd)
+      .map((item) => ({ date: item.date, value: toWeight(item.kg) }));
 
     const formatChartMonth = (date: string): string => {
       const [year, month] = date.split('-').map(Number);
@@ -262,25 +297,71 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
       ...(stats.count === 0
         ? [emptyState('📊', t('stats.noWorkouts'))]
         : [
-            h('h2', {}, t(byWeek ? 'stats.countByWeek' : 'stats.countByMonth')),
-            barChart(countBars, t(byWeek ? 'stats.countByWeek' : 'stats.countByMonth')),
-            h('h2', {}, t(tonnageTitle[months])),
-          ]),
-      ...(monthPoints.length === 0
-        ? []
-        : months === 1
-          ? [lineChart(monthPoints, weightUnit(), t('stats.tonnageMonth'))]
-          : [
-              lineChart(
-                monthlyTonnage(workouts, shown.year, shown.month, months).map((point) => ({
-                  ...point,
-                  value: toWeight(point.value),
-                })),
-                weightUnit(),
-                t('stats.tonnageByMonth'),
-                formatChartMonth,
-              ),
+            ...chartCarousel([
+              [
+                t(byWeek ? 'stats.countByWeek' : 'stats.countByMonth'),
+                (title) =>
+                  barChart(
+                    bars((inBucket) => inBucket.length, String, (count, when) => t('stats.countReadout', { count, when })),
+                    title,
+                  ),
+              ],
+              [
+                t(tonnageTitle[months]),
+                (title) =>
+                  months === 1
+                    ? lineChart(monthPoints, weightUnit(), title)
+                    : lineChart(
+                        monthlyTonnage(workouts, shown.year, shown.month, months).map((point) => ({
+                          ...point,
+                          value: toWeight(point.value),
+                        })),
+                        weightUnit(),
+                        title,
+                        formatChartMonth,
+                      ),
+              ],
+              [
+                t(byWeek ? 'stats.hoursByWeek' : 'stats.hoursByMonth'),
+                (title) =>
+                  barChart(
+                    bars(
+                      minutes,
+                      (value) => formatDuration(value),
+                      (value, when) => t('stats.hoursReadout', { hours: formatDuration(value), when }),
+                    ),
+                    title,
+                  ),
+              ],
+              [
+                t(byWeek ? 'stats.setsByWeek' : 'stats.setsByMonth'),
+                (title) =>
+                  barChart(
+                    bars(
+                      (inBucket) => inBucket.reduce((sum, workout) => sum + workoutStats(workout).sets, 0),
+                      String,
+                      (count, when) => t('stats.setsReadout', { count, when }),
+                    ),
+                    title,
+                  ),
+              ],
+              [
+                t(byWeek ? 'stats.ratingByWeek' : 'stats.ratingByMonth'),
+                (title) =>
+                  barChart(
+                    bars(
+                      (inBucket) => averageRating(inBucket) ?? 0,
+                      (value) => (value === 0 ? '—' : String(value).replace('.', ',')),
+                      (value, when) => t('stats.ratingReadout', { value: value === 0 ? '—' : value, when }),
+                    ),
+                    title,
+                  ),
+              ],
+              ...(periodWeights.length > 1
+                ? [[t('stats.weightChart'), (title: string) => lineChart(periodWeights, weightUnit(), title)] as ChartSlide]
+                : []),
             ]),
+          ]),
       ...(stats.count === 0
         ? []
         : [

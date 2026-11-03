@@ -65,7 +65,21 @@ export interface CountBucket {
 // Сколько тренировок было в каждую неделю (с понедельника) или в каждый месяц периода [from, to].
 // Крайние недели обрезаются по границам периода.
 export function workoutCounts(workouts: Workout[], from: string, to: string, by: 'week' | 'month'): CountBucket[] {
-  const buckets: CountBucket[] = [];
+  return periodBuckets(workouts, from, to, by).map(({ start, end, workouts: inBucket }) => ({
+    start,
+    end,
+    count: inBucket.length,
+  }));
+}
+
+// Тренировки, разложенные по неделям (с понедельника) или месяцам периода [from, to]
+export function periodBuckets(
+  workouts: Workout[],
+  from: string,
+  to: string,
+  by: 'week' | 'month',
+): { start: string; end: string; workouts: Workout[] }[] {
+  const buckets: { start: string; end: string; workouts: Workout[] }[] = [];
   let start = by === 'week' ? weekStart(from) : `${from.slice(0, 7)}-01`;
   while (start <= to) {
     const nextMonth = shiftMonth(Number(start.slice(0, 4)), Number(start.slice(5, 7)) - 1, 1);
@@ -75,7 +89,7 @@ export function workoutCounts(workouts: Workout[], from: string, to: string, by:
     buckets.push({
       start: first,
       end,
-      count: workouts.filter((workout) => workout.date >= first && workout.date <= end).length,
+      workouts: workouts.filter((workout) => workout.date >= first && workout.date <= end),
     });
     start = next;
   }
