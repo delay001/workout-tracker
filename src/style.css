@@ -821,6 +821,52 @@ textarea {
   font-size: 1.125rem;
 }
 
+.finish-card {
+  margin: 8px 0 16px;
+  padding: 20px 16px 8px;
+  border-radius: 24px;
+  background: var(--grad-2);
+  color: var(--on-accent);
+  animation: pop 0.4s ease-out;
+}
+
+.finish-card p {
+  margin: 0 0 12px;
+}
+
+.finish-head {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.finish-message {
+  font-weight: 600;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti span {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall 1.8s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+  to {
+    transform: translate(var(--drift), 105vh) rotate(var(--spin));
+    opacity: 0.6;
+  }
+}
+
 .toast-stack {
   position: fixed;
   top: 16px;

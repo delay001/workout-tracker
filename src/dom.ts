@@ -25,6 +25,26 @@ export function showToast(text: string): void {
   setTimeout(() => toast.remove(), 4000);
 }
 
+// Короткий разлет цветных кусочков поверх экрана, например при рекорде
+export function confetti(): void {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+  const colors = ['#e8528f', '#f0883e', '#3fbf7f', '#5b9df5', '#a970f0', '#f2c94c'];
+  const layer = h('div', { className: 'confetti', ariaHidden: 'true' });
+  for (let index = 0; index < 40; index++) {
+    const piece = h('span');
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = colors[index % colors.length];
+    piece.style.animationDelay = `${Math.random() * 0.3}s`;
+    piece.style.setProperty('--drift', `${(Math.random() - 0.5) * 160}px`);
+    piece.style.setProperty('--spin', `${(Math.random() - 0.5) * 1080}deg`);
+    layer.append(piece);
+  }
+  document.body.append(layer);
+  setTimeout(() => layer.remove(), 2200);
+}
+
 // Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют
 export function confirmDialog(text: string): Promise<boolean> {
   return new Promise((resolve) => {

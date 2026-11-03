@@ -13,7 +13,7 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { confirmDialog, field, h, showToast } from './dom';
+import { confetti, confirmDialog, field, h, showToast } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -117,6 +117,10 @@ export async function renderWorkoutScreen(
                   }),
                 );
                 navigator.vibrate?.(200);
+                confetti();
+              } else {
+                // Короткий отклик: подход записан, можно не смотреть на экран
+                navigator.vibrate?.(30);
               }
             } else {
               await updateSet(workout, exercise.id, index, set);
@@ -276,6 +280,65 @@ export async function renderWorkoutScreen(
     );
   }
 
+  const statRow = (label: string, value: string): HTMLElement =>
+    h('p', { className: 'set-row' }, label, h('strong', {}, value));
+
+  // Итоги тренировки: упражнения, подходы, тоннаж и сравнение с прошлой такой же
+  async function statRowsFor(shown: Workout): Promise<HTMLElement[]> {
+    const stats = workoutStats(shown);
+    const previous = (await getFinishedWorkouts()).find(
+      (item) => item.type === shown.type && item.date < shown.date,
+    );
+    const change = previous ? stats.tonnage - workoutStats(previous).tonnage : 0;
+    return [
+      statRow(t('workoutStats.exercises'), String(stats.exercises)),
+      statRow(t('workoutStats.sets'), String(stats.sets)),
+      statRow(t('workoutStats.tonnage'), formatWeight(stats.tonnage)),
+      ...(previous
+        ? [
+            statRow(
+              t('workoutStats.change', { type: workoutTypeName(shown.type) }),
+              `${change > 0 ? '+' : ''}${formatWeight(change)}`,
+            ),
+            h('p', { className: 'hint' }, t('workoutStats.changeHint', { date: formatDate(previous.date) })),
+          ]
+        : []),
+    ];
+  }
+
+  // Карточка после завершения: что сделано и сколько рекордов побито
+  async function showSummary(message: string): Promise<void> {
+    const finished = (await db.workouts.get(workout.id)) ?? workout;
+    const priorSets = await Promise.all(
+      finished.exercises.map((item) => getPriorSets(item.exerciseId, finished)),
+    );
+    const records = finished.exercises.reduce(
+      (sum, item, index) => sum + recordLabels(item.sets, priorSets[index]).filter(Boolean).length,
+      0,
+    );
+    root.replaceChildren(
+      h(
+        'div',
+        { className: 'screen' },
+        h('h1', {}, t('finish.title')),
+        h(
+          'section',
+          { className: 'finish-card' },
+          h('p', { className: 'finish-head' }, `${workoutTypeName(finished.type)}, ${formatDate(finished.date)}`),
+          h('p', { className: 'finish-message' }, message),
+          ...(finished.durationMin ? [statRow(t('finish.duration'), formatDuration(finished.durationMin))] : []),
+          ...(finished.rating ? [statRow(t('finish.rating'), String(finished.rating))] : []),
+          ...(records > 0 ? [statRow(t('finish.records'), String(records))] : []),
+        ),
+        ...(await statRowsFor(finished)),
+        h('button', { type: 'button', className: 'button bottom-action', onclick: onClosed }, t('finish.done')),
+      ),
+    );
+    if (records > 0) {
+      confetti();
+    }
+  }
+
   async function showWorkout(): Promise<void> {
     const exercises = await db.exercises.bulkGet(workout.exercises.map((item) => item.exerciseId));
     const last = currentId === undefined ? undefined : await getLastPerformance(currentId, workout);
@@ -288,27 +351,7 @@ export async function renderWorkoutScreen(
       return exercise ? [exerciseCard(item, exercise, records, last)] : [];
     });
 
-    const stats = workoutStats(workout);
-    const previous = (await getFinishedWorkouts()).find(
-      (item) => item.type === workout.type && item.date < workout.date,
-    );
-    const change = previous ? stats.tonnage - workoutStats(previous).tonnage : undefined;
-    const statRow = (label: string, value: string): HTMLElement =>
-      h('p', { className: 'set-row' }, label, h('strong', {}, value));
-    const statRows = [
-      statRow(t('workoutStats.exercises'), String(stats.exercises)),
-      statRow(t('workoutStats.sets'), String(stats.sets)),
-      statRow(t('workoutStats.tonnage'), formatWeight(stats.tonnage)),
-      ...(change === undefined || !previous
-        ? []
-        : [
-            statRow(
-              t('workoutStats.change', { type: workoutTypeName(workout.type) }),
-              `${change > 0 ? '+' : ''}${formatWeight(change)}`,
-            ),
-            h('p', { className: 'hint' }, t('workoutStats.changeHint', { date: formatDate(previous.date) })),
-          ]),
-    ];
+    const statRows = await statRowsFor(workout);
 
     const addButton = h(
       'button',
@@ -548,8 +591,9 @@ export async function renderWorkoutScreen(
               if (saved && !isEditing) {
                 const month = workout.date.slice(0, 7);
                 const count = (await getFinishedWorkouts()).filter((item) => item.date.startsWith(month)).length;
-                showToast(motivationMessage(count, await getMonthlyGoal()));
                 await syncAchievements(true);
+                await showSummary(motivationMessage(count, await getMonthlyGoal()));
+                return;
               }
               onClosed();
             } catch (problem) {
