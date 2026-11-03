@@ -370,6 +370,8 @@ export const en: Record<keyof typeof ru, string> = {
     'BMI can be inaccurate: it uses only height and weight and cannot tell muscle from fat. It is often too high for trained people.',
   'calc.needHeightWeight': 'Height in settings and a body weight entry are needed',
   'calc.bodyFat': 'Body fat',
+  'calc.bodyFatFrom': 'Based on measurements from {date}',
+  'calc.bmiFrom': 'Based on weight {weight} from {date}',
   'calc.bodyFatValue': 'US Navy formula',
   'calc.bodyFatNote':
     'This is a rough estimate that can be off by several percent: the formula uses only circumferences, cannot see where fat is stored, and depends on how the measurements were taken.',

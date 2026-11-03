@@ -1,4 +1,5 @@
 import { getBodyWeights } from './bodyWeight';
+import { formatDate } from './dates';
 import { db } from './db';
 import { field, h } from './dom';
 import { bodyMassIndex, estimateOneRepMax, navyBodyFat, type Sex } from './formulas';
@@ -39,11 +40,15 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
 
   const heightCm = Number(await getSetting('heightCm'));
   const sex: Sex = (await getSetting('sex')) === 'female' ? 'female' : 'male';
-  const bodyKg = (await getBodyWeights()).at(-1)?.kg;
-  const values = (await getMeasurements()).at(-1)?.values ?? {};
+  const lastWeight = (await getBodyWeights()).at(-1);
+  const bodyKg = lastWeight?.kg;
+  // Берется самый свежий замер, где есть все нужное для формулы: запись с одной талией пропускается
+  const measured = (await getMeasurements())
+    .filter(({ values }) => values.waist && values.neck && (sex === 'male' || values.hips))
+    .at(-1);
   const fat =
-    heightCm > 0 && values.waist && values.neck
-      ? navyBodyFat(sex, heightCm, values.waist, values.neck, values.hips)
+    heightCm > 0 && measured
+      ? navyBodyFat(sex, heightCm, measured.values.waist, measured.values.neck, measured.values.hips)
       : undefined;
 
   root.replaceChildren(
@@ -67,11 +72,17 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
         t('calc.bmiValue'),
         h('strong', {}, heightCm > 0 && bodyKg ? String(bodyMassIndex(bodyKg, heightCm)) : '—'),
       ),
-      ...(heightCm > 0 && bodyKg ? [] : [h('p', { className: 'hint' }, t('calc.needHeightWeight'))]),
+      ...(heightCm > 0 && lastWeight
+        ? [h('p', { className: 'hint' }, t('calc.bmiFrom', { weight: formatWeight(lastWeight.kg), date: formatDate(lastWeight.date) }))]
+        : [h('p', { className: 'hint' }, t('calc.needHeightWeight'))]),
       h('p', { className: 'hint' }, t('calc.bmiNote')),
       h('h2', {}, t('calc.bodyFat')),
       h('p', { className: 'set-row' }, t('calc.bodyFatValue'), h('strong', {}, fat === undefined ? '—' : `${fat}%`)),
-      ...(fat === undefined ? [h('p', { className: 'hint' }, t('calc.needMeasurements'))] : []),
+      h(
+        'p',
+        { className: 'hint' },
+        fat === undefined || !measured ? t('calc.needMeasurements') : t('calc.bodyFatFrom', { date: formatDate(measured.date) }),
+      ),
       h('p', { className: 'hint' }, t('calc.bodyFatNote')),
       h(
         'button',
