@@ -7,7 +7,7 @@ import { renderCalcScreen } from './calcScreen';
 import { currentStates, renderAchievementsScreen, renderYearScreen } from './motivationScreens';
 import { overdueExercises, topExercises, workoutStats } from './progress';
 import { formatWeight, toWeight, weightUnit } from './units';
-import { getMonthlyGoal, getOverdueDays } from './settings';
+import { getOverdueDays } from './settings';
 import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage, workoutCounts } from './stats';
 import { radioChips, segmented } from './ui';
 import { renderVolumeView } from './volumeScreen';
@@ -131,7 +131,6 @@ export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () =>
 async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSettings: () => void): Promise<void> {
   const back = (): void => void renderStatsScreen(page, onOpenSettings);
   const workouts = await getFinishedWorkouts();
-  const goal = await getMonthlyGoal();
   const achievements = await currentStates();
   const earnedAchievements = achievements.filter((state) => state.count > 0).length;
   const today = todayLocal();
@@ -239,7 +238,6 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
         h('h2', {}, formatMonthRange(shown.year, shown.month, months)),
         monthButton('›', t('common.nextMonth'), 1),
       ),
-      ...(months === 1 ? [goalRing(stats.count, goal)] : []),
       h(
         'div',
         { className: 'stats' },
