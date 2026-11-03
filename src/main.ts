@@ -3,7 +3,8 @@ import { markUpExercises, requestPersistentStorage, type Workout } from './db';
 import { h } from './dom';
 import { renderHistoryTab, resetHistoryMonth } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
-import { loadTheme } from './settings';
+import { getSetting, loadTheme } from './settings';
+import { mountMascot, parseMascot } from './mascot';
 import { syncAchievements } from './motivationScreens';
 import { needsOnboarding, renderOnboarding } from './onboarding';
 import { renderSettingsScreen } from './settingsScreen';
@@ -65,7 +66,12 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
     button.insertAdjacentHTML('afterbegin', `<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>`);
     return button;
   });
-  app.replaceChildren(content, h('nav', { className: 'tabs' }, ...buttons));
+  const bar = h('nav', { className: 'tabs' }, ...buttons);
+  app.replaceChildren(content, bar);
+  // Маскот живет только на первой вкладке
+  if (tab === 'workout') {
+    mountMascot(bar, parseMascot(await getSetting('mascot')));
+  }
 
   if (tab === 'workout') {
     await renderHomeScreen(content, await getActiveWorkout(), () => void openActive(), () => void showTab('stats'), () => void showTab('settings'));

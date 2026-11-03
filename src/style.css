@@ -301,6 +301,99 @@ h2 {
   min-height: calc(100dvh - 120px);
 }
 
+.mascot {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 24px;
+  line-height: 32px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mascot-face,
+.mascot-body {
+  display: block;
+}
+
+.mascot-flip .mascot-face {
+  transform: scaleX(-1);
+}
+
+.mascot-plate {
+  fill: var(--accent);
+}
+
+.mascot-handle {
+  fill: var(--muted);
+}
+
+.mascot-eye {
+  fill: #fff;
+}
+
+.mascot-pupil {
+  fill: #17151f;
+}
+
+.mascot-leg {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: top center;
+}
+
+.mascot-running .mascot-leg-a {
+  animation: mascot-leg 0.25s ease-in-out infinite alternate;
+}
+
+.mascot-running .mascot-leg-b {
+  animation: mascot-leg 0.25s ease-in-out infinite alternate-reverse;
+}
+
+.mascot-running.mascot-emoji .mascot-body {
+  animation: mascot-bob 0.25s ease-in-out infinite alternate;
+}
+
+.mascot-jump {
+  animation: mascot-jump 0.6s ease-out;
+}
+
+@keyframes mascot-leg {
+  from {
+    transform: rotate(-25deg);
+  }
+  to {
+    transform: rotate(25deg);
+  }
+}
+
+@keyframes mascot-bob {
+  to {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes mascot-jump {
+  40% {
+    transform: translateY(-28px);
+  }
+  70% {
+    transform: translateY(0);
+  }
+  85% {
+    transform: translateY(-6px);
+  }
+}
+
 .tabs {
   position: fixed;
   right: 0;

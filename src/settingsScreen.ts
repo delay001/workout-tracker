@@ -25,6 +25,7 @@ import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeName } from './workouts';
 import { LANGUAGE, setLanguage, t, type Language } from './i18n';
 import { renderOnboarding } from './onboarding';
+import { MASCOTS, parseMascot } from './mascot';
 
 // В стандартном списке нельзя нарисовать кружок, поэтому цвет показывает эмодзи
 const ACCENT_DOTS: Record<Accent, string> = {
@@ -288,6 +289,14 @@ export async function renderSettingsScreen(
         ),
       ),
       field(t('settings.accent'), accentSelect),
+      field(
+        t('settings.mascot'),
+        select(
+          (['none', ...MASCOTS] as const).map((value): [string, string] => [value, t(`mascot.${value}`)]),
+          parseMascot(await getSetting('mascot')),
+          (value) => void setSetting('mascot', value),
+        ),
+      ),
       field(t('settings.units'), units),
 
       h('h2', {}, t('settings.groupTraining')),
