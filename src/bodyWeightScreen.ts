@@ -125,7 +125,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
         // Темп одной строкой: нужный и фактический
         h(
           'p',
-          { className: 'hint' },
+          { className: 'hint small-hint' },
           [
             t('goal.required', { value: signed(status.requiredPerWeek) }),
             ...(status.actualPerWeek === undefined ? [] : [t('goal.actual', { value: signed(status.actualPerWeek) })]),
@@ -163,7 +163,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
     }
     section.push(form);
     if (pastGoals.length > 0) {
-      section.push(h('p', { className: 'hint' }, t('goal.past', { count: pastGoals.length })));
+      section.push(h('p', { className: 'hint small-hint' }, t('goal.past', { count: pastGoals.length })));
     }
     return section;
   }
