@@ -381,7 +381,7 @@ export const en: Record<keyof typeof ru, string> = {
   'calc.oneRepMax': 'One-rep max',
   'calc.oneRepMaxHint': 'Enter the weight and reps of a set, up to 12 reps. Your best bench press set is filled in.',
   'calc.enterSet': 'Enter a weight and 1 to 12 reps',
-  'calc.average': 'Average of three',
+  'calc.average': 'Estimated max',
   'calc.bmi': 'Body mass index',
   'calc.bmiValue': 'BMI',
   'calc.bmiNote':

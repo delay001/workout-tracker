@@ -364,7 +364,7 @@ export const ru = {
   'calc.oneRepMax': 'Максимум на 1 повторение',
   'calc.oneRepMaxHint': 'Введи вес и повторения подхода, до 12 повторений. Подставлен лучший подход в жиме лежа.',
   'calc.enterSet': 'Введи вес и число повторений от 1 до 12',
-  'calc.average': 'Среднее по трем',
+  'calc.average': 'Расчетный максимум',
   'calc.bmi': 'Индекс массы тела',
   'calc.bmiValue': 'ИМТ',
   'calc.bmiNote':

@@ -19,7 +19,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
 
   const weight = numberInput('decimal', best ? String(toWeight(best.weight)) : '');
   const reps = numberInput('integer', best ? String(best.reps) : '', 2);
-  const result = h('div');
+  const result = h('div', { className: 'calc-result' });
 
   function showEstimate(): void {
     const kg = fromWeight(Number(weight.value));
