@@ -178,11 +178,6 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
         ? []
         : ([
             [t('summary.bestOneRepMax'), kilograms(summary.bestOneRepMax)],
-            [t('summary.currentOneRepMax'), kilograms(summary.currentOneRepMax)],
-            [
-              t('summary.fromPeak'),
-              summary.fromPeak === undefined ? undefined : t('summary.percent', { value: summary.fromPeak }),
-            ],
             [t('summary.maxTonnage'), kilograms(summary.maxTonnage)],
           ] as [string, string | undefined][])),
     ];
