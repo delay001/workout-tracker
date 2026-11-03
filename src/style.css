@@ -1047,7 +1047,7 @@ p.set-row {
 
 /* Секундомер на экране тренировки: одна строка, круги мелко под ней */
 .stopwatch {
-  margin: 0 0 12px;
+  margin: 12px 0 0;
   padding: 8px 8px 8px 16px;
   border-radius: 16px;
   background: var(--surface);
