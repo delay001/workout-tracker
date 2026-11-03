@@ -67,6 +67,11 @@ const DRAWN: Record<Exclude<Mascot, 'none'>, string> = {
 </svg>`,
 };
 
+// Картинка маскота для выбора в настройках
+export function mascotIcon(kind: Exclude<Mascot, 'none'>): string {
+  return DRAWN[kind];
+}
+
 // Маскот бегает по верхней границе панели вкладок. Нажатие: разворот или прыжок, наугад.
 export function mountMascot(bar: HTMLElement, kind: Mascot): void {
   if (kind === 'none') return;

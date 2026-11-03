@@ -25,7 +25,7 @@ import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeName } from './workouts';
 import { LANGUAGE, setLanguage, t, type Language } from './i18n';
 import { renderOnboarding } from './onboarding';
-import { MASCOTS, parseMascot } from './mascot';
+import { MASCOTS, mascotIcon, parseMascot, type Mascot } from './mascot';
 
 // В стандартном списке нельзя нарисовать кружок, поэтому цвет показывает эмодзи
 const ACCENT_DOTS: Record<Accent, string> = {
@@ -237,6 +237,24 @@ export async function renderSettingsScreen(
         label,
       );
 
+    // Вместо списка — кнопки с картинкой, чтобы было видно, кого выбираешь
+    const mascot = parseMascot(await getSetting('mascot'));
+    const mascotChip = (value: Mascot): HTMLElement => {
+      const chip = h(
+        'label',
+        { className: 'chip mascot-chip' },
+        h('input', {
+          type: 'radio',
+          name: 'mascot',
+          checked: mascot === value,
+          onchange: () => void setSetting('mascot', value),
+        }),
+      );
+      if (value !== 'none') chip.insertAdjacentHTML('beforeend', mascotIcon(value));
+      chip.append(t(`mascot.${value}`));
+      return chip;
+    };
+
     const link = (label: string, onclick: () => void): HTMLButtonElement =>
       h('button', { type: 'button', className: 'button button-secondary', onclick }, label);
 
@@ -289,12 +307,14 @@ export async function renderSettingsScreen(
         ),
       ),
       field(t('settings.accent'), accentSelect),
-      field(
-        t('settings.mascot'),
-        select(
-          (['none', ...MASCOTS] as const).map((value): [string, string] => [value, t(`mascot.${value}`)]),
-          parseMascot(await getSetting('mascot')),
-          (value) => void setSetting('mascot', value),
+      h(
+        'div',
+        { className: 'field' },
+        h('span', {}, t('settings.mascot')),
+        h(
+          'div',
+          { className: 'chips', role: 'radiogroup', ariaLabel: t('settings.mascot') },
+          ...(['none', ...MASCOTS] as const).map(mascotChip),
         ),
       ),
       field(t('settings.units'), units),
