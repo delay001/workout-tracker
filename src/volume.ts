@@ -93,33 +93,6 @@ export function volumeStatus(sets: number, [min, max]: [number, number]): Volume
   return sets > max ? 'high' : 'ok';
 }
 
-export interface Recommendation {
-  muscle: Muscle;
-  sets: number;
-  min: number;
-  exercise?: Exercise;
-}
-
-// Мышцы ниже нормы и самое частое упражнение на них из истории
-export function recommendations(
-  volume: Volume,
-  norms: Record<Muscle, [number, number]>,
-  workouts: Workout[],
-  exercises: Exercise[],
-): Recommendation[] {
-  return MUSCLES.filter((muscle) => volume[muscle] < norms[muscle][0]).map((muscle) => {
-    const candidates = exercises
-      .filter((exercise) => exercise.primaryMuscle === muscle && !exercise.hidden)
-      .map((exercise) => ({
-        exercise,
-        count: workouts.filter((workout) => workout.exerciseIds.includes(exercise.id)).length,
-      }))
-      .filter((item) => item.count > 0)
-      .sort((a, b) => b.count - a.count);
-    return { muscle, sets: volume[muscle], min: norms[muscle][0], exercise: candidates[0]?.exercise };
-  });
-}
-
 export interface Balance {
   upper: number;
   lower: number;

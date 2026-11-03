@@ -3,10 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { Exercise, Workout, WorkoutSet } from './db';
 import {
   averageVolume,
-  DEFAULT_NORMS,
   muscleVolume,
   pushPull,
-  recommendations,
   upperLowerBalance,
   volumeStatus,
   weekStart,
@@ -87,18 +85,6 @@ describe('нормы', () => {
     [21, 'high'],
   ])('%d подходов — %s', (sets, status) => {
     expect(volumeStatus(sets, [10, 20])).toBe(status);
-  });
-
-  it('рекомендует самое частое упражнение на отстающую мышцу', () => {
-    const other: Exercise = { id: 4, name: 'Бабочка', nameKey: 'бабочка', primaryMuscle: 'chest' };
-    const workouts = [workout('2026-10-01', 'upper', [[1, 3]]), workout('2026-10-02', 'upper', [[1, 3], [4, 3]])];
-    const volume = muscleVolume([], [], '2026-11-02', '2026-11-08');
-
-    const chest = recommendations(volume, DEFAULT_NORMS, workouts, [bench, other]).find(
-      (item) => item.muscle === 'chest',
-    );
-
-    expect(chest).toMatchObject({ sets: 0, min: 10, exercise: { name: 'Жим' } });
   });
 });
 

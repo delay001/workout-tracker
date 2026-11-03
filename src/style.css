@@ -629,8 +629,36 @@ textarea {
   background: #d9483b;
 }
 
-.advice p {
-  margin: 0 0 8px;
+.volume-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 8px;
+  margin: 10px 0;
+}
+
+.volume-bar {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.volume-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.volume-low {
+  background: #e0a93b;
+}
+
+.volume-ok {
+  background: #2fa36b;
+}
+
+.volume-high {
+  background: #d9483b;
 }
 
 .achievement {

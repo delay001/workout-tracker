@@ -1,6 +1,6 @@
 import { todayLocal } from './dates';
 import { db } from './db';
-import { h, showToast } from './dom';
+import { h } from './dom';
 import { t } from './i18n';
 import { MUSCLES, type Muscle } from './muscles';
 import { getSetting } from './settings';
@@ -10,16 +10,15 @@ import {
   DEFAULT_NORMS,
   muscleVolume,
   pushPull,
-  recommendations,
   shiftDays,
   upperLowerBalance,
   volumeStatus,
   weekStart,
   type Volume,
 } from './volume';
-import { addExerciseToWorkout, getActiveWorkout, getFinishedWorkouts } from './workouts';
+import { getFinishedWorkouts } from './workouts';
 
-type Span = 'current' | 'previous' | 'average';
+type Span = 'current' | 'previous' | 'average' | 'all';
 
 let shownSpan: Span = 'current';
 
@@ -104,12 +103,18 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
   const lastWeek = shiftDays(thisWeek, -7);
   const maxRatio = Number(await getSetting('balanceRatio')) || 3;
 
-  const volumes: Record<Span, Volume> = {
-    current: muscleVolume(workouts, exercises, ...week(thisWeek)),
-    previous: muscleVolume(workouts, exercises, ...week(lastWeek)),
-    average: averageVolume(workouts, exercises, lastWeek, 4),
+  // «Всё время» — среднее по всем прошедшим неделям, начиная с недели первой тренировки
+  const firstWeek = weekStart(workouts[workouts.length - 1]?.date ?? today);
+  const allWeeks = Math.max(1, Math.round((Date.parse(lastWeek) - Date.parse(firstWeek)) / (7 * 86_400_000)) + 1);
+  const spans: Record<Span, { from: string; volume: () => Volume }> = {
+    current: { from: thisWeek, volume: () => muscleVolume(workouts, exercises, ...week(thisWeek)) },
+    previous: { from: lastWeek, volume: () => muscleVolume(workouts, exercises, ...week(lastWeek)) },
+    average: { from: shiftDays(lastWeek, -21), volume: () => averageVolume(workouts, exercises, lastWeek, 4) },
+    all: { from: firstWeek, volume: () => averageVolume(workouts, exercises, lastWeek, allWeeks) },
   };
-  const volume = volumes[shownSpan];
+  const span = spans[shownSpan];
+  const to = shownSpan === 'current' ? today : shiftDays(lastWeek, 6);
+  const volume = span.volume();
   const balance = upperLowerBalance(workouts, today, 28, maxRatio);
   const moves = pushPull(workouts, exercises, ...week(thisWeek));
   const detail = h('p', { className: 'hint' }, t('volume.tapMuscle'));
@@ -124,7 +129,7 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
       )
       .filter((exercise) =>
         workouts.some(
-          (workout) => workout.date >= thisWeek && workout.exerciseIds.includes(exercise.id),
+          (workout) => workout.date >= span.from && workout.date <= to && workout.exerciseIds.includes(exercise.id),
         ),
       )
       .map((exercise) => exercise.name);
@@ -137,59 +142,18 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
     });
   }
 
-  const rows = MUSCLES.map((muscle) =>
-    h(
-      'p',
-      { className: 'set-row' },
-      t(`muscle.${muscle}`),
-      h(
-        'span',
-        {},
-        t('volume.row', {
-          sets: round(volumes.current[muscle]),
-          previous: round(volumes.previous[muscle]),
-          status: t(`volume.${volumeStatus(volumes.current[muscle], norms[muscle])}`),
-        }),
-      ),
-    ),
-  );
-
-  const advice = recommendations(volumes.current, norms, workouts, exercises)
-    .filter((item) => item.exercise)
-    .slice(0, 4)
-    .map((item) =>
-      h(
-        'div',
-        { className: 'advice' },
-        h(
-          'p',
-          {},
-          t('volume.advice', {
-            muscle: t(`muscle.${item.muscle}`),
-            sets: round(item.sets),
-            min: item.min,
-            exercise: item.exercise?.name ?? '',
-          }),
-        ),
-        h(
-          'button',
-          {
-            type: 'button',
-            className: 'button button-secondary',
-            onclick: async () => {
-              const active = await getActiveWorkout();
-              if (active && item.exercise) {
-                await addExerciseToWorkout(active, item.exercise.id);
-                showToast(t('volume.added', { exercise: item.exercise.name }));
-              } else {
-                showToast(t('volume.noActive'));
-              }
-            },
-          },
-          t('volume.accept'),
-        ),
-      ),
+  // Полоска до верхней границы нормы, цвет как на карте тела
+  const rows = MUSCLES.map((muscle) => {
+    const fill = h('div', { className: `volume-fill volume-${statusOf(muscle)}` });
+    fill.style.width = `${Math.min(100, (volume[muscle] / norms[muscle][1]) * 100)}%`;
+    return h(
+      'div',
+      { className: 'volume-row' },
+      h('span', {}, t(`muscle.${muscle}`)),
+      h('strong', {}, t('volume.row', { sets: round(volume[muscle]), min: norms[muscle][0], max: norms[muscle][1] })),
+      h('div', { className: 'volume-bar' }, fill),
     );
+  });
 
   root.replaceChildren(
     radioChips<Span>(
@@ -199,6 +163,7 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
         ['current', t('volume.current')],
         ['previous', t('volume.previous')],
         ['average', t('volume.average')],
+        ['all', t('volume.all')],
       ],
       shownSpan,
       (value) => {
@@ -224,8 +189,8 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
     h('p', { className: 'set-row' }, t('volume.upperLower'), h('strong', {}, `${balance.upper} : ${balance.lower}`)),
     ...(balance.warning ? [h('p', { className: 'error' }, t(`volume.warn.${balance.warning}`))] : []),
     h('p', { className: 'set-row' }, t('volume.pushPull'), h('strong', {}, `${moves.push} : ${moves.pull}`)),
-    ...(advice.length > 0 ? [h('h2', {}, t('volume.adviceTitle')), ...advice] : []),
     h('h2', {}, t('volume.title')),
+    h('p', { className: 'hint' }, t(shownSpan === 'average' || shownSpan === 'all' ? 'volume.perWeekAverage' : 'volume.perWeek')),
     ...rows,
   );
 }
