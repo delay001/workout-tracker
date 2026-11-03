@@ -75,7 +75,7 @@ export async function renderHistoryTab(
     await pageHeader(t('tab.history'), onOpenSettings),
     h(
       'div',
-      { className: 'chips', role: 'radiogroup', ariaLabel: t('history.whatToShow') },
+      { className: 'chips segmented segmented-small', role: 'radiogroup', ariaLabel: t('history.whatToShow') },
       viewChip(t('common.workouts'), 'workouts'),
       viewChip(t('common.exercises'), 'exercises'),
       viewChip(t('history.bodyWeight'), 'weight'),

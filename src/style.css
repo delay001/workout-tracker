@@ -1043,6 +1043,12 @@ textarea {
   text-align: center;
 }
 
+/* Четыре длинных подписи: шрифт чуть меньше, чтобы слова не переносились */
+.segmented-small .chip {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
 .rating {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
