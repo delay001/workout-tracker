@@ -239,18 +239,20 @@ export async function renderSettingsScreen(
 
     // Вместо списка — кнопки с картинкой, чтобы было видно, кого выбираешь
     const mascot = parseMascot(await getSetting('mascot'));
-    const mascotChip = (value: Mascot): HTMLElement => {
+    const mascotShown = (await getSetting('mascotOff')) !== 'yes';
+    const mascotChip = (value: Exclude<Mascot, 'none'>): HTMLElement => {
       const chip = h(
         'label',
         { className: 'chip mascot-chip' },
         h('input', {
           type: 'radio',
           name: 'mascot',
-          checked: mascot === value,
+          // Старое значение «Нет» из прошлой версии показывается как Гантелька
+          checked: mascot === value || (mascot === 'none' && value === 'dumbbell'),
           onchange: () => void setSetting('mascot', value),
         }),
       );
-      if (value !== 'none') chip.insertAdjacentHTML('beforeend', mascotIcon(value));
+      chip.insertAdjacentHTML('beforeend', mascotIcon(value));
       chip.append(t(`mascot.${value}`));
       return chip;
     };
@@ -300,7 +302,7 @@ export async function renderSettingsScreen(
         h('span', {}, t('settings.theme')),
         h(
           'div',
-          { className: 'chips', role: 'radiogroup', ariaLabel: t('settings.theme') },
+          { className: 'chips segmented', role: 'radiogroup', ariaLabel: t('settings.theme') },
           themeChip(t('settings.themeDark'), 'dark'),
           themeChip(t('settings.themeLight'), 'light'),
           themeChip(t('settings.themeSystem'), 'system'),
@@ -308,14 +310,20 @@ export async function renderSettingsScreen(
       ),
       field(t('settings.accent'), accentSelect),
       h(
+        'label',
+        { className: 'checkbox' },
+        h('input', {
+          type: 'checkbox',
+          checked: mascotShown,
+          onchange: (event: Event) =>
+            void setSetting('mascotOff', (event.target as HTMLInputElement).checked ? '' : 'yes'),
+        }),
+        t('settings.mascotShow'),
+      ),
+      h(
         'div',
-        { className: 'field' },
-        h('span', {}, t('settings.mascot')),
-        h(
-          'div',
-          { className: 'chips', role: 'radiogroup', ariaLabel: t('settings.mascot') },
-          ...(['none', ...MASCOTS] as const).map(mascotChip),
-        ),
+        { className: 'chips segmented segmented-small', role: 'radiogroup', ariaLabel: t('settings.mascot') },
+        ...MASCOTS.map(mascotChip),
       ),
       field(t('settings.units'), units),
 

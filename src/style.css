@@ -311,7 +311,12 @@ h2 {
 .mascot-chip svg {
   width: 28px;
   height: 28px;
-  margin-right: 6px;
+}
+
+/* В полосе картинка над подписью, иначе четыре маскота не помещаются */
+.segmented .mascot-chip {
+  flex-direction: column;
+  gap: 2px;
 }
 
 .mascot {

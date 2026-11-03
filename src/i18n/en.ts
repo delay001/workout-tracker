@@ -158,6 +158,7 @@ export const en: Record<keyof typeof ru, string> = {
   'settings.weightStep': 'Weight step for + and − buttons',
   'settings.units': 'Units',
   'settings.mascot': 'Home screen mascot',
+  'settings.mascotShow': 'Show the mascot on the home screen',
   'mascot.label': 'Mascot: tap to make it turn around or jump',
   'mascot.none': 'None',
   'mascot.dumbbell': 'Dumbbell',

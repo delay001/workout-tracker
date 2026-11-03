@@ -139,13 +139,6 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
 
   showChart();
   root.replaceChildren(
-    field(
-      t('measure.select'),
-      select(MEASUREMENT_FIELDS, shownKey, (value) => {
-        shownKey = value;
-        void refresh();
-      }),
-    ),
     ...(series.length > 1
       ? [
           periodChips('measure-period', shownPeriod, (value) => {
@@ -154,6 +147,13 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
           }),
         ]
       : []),
+    field(
+      t('measure.select'),
+      select(MEASUREMENT_FIELDS, shownKey, (value) => {
+        shownKey = value;
+        void refresh();
+      }),
+    ),
     chartBox,
     ...(change === undefined
       ? []

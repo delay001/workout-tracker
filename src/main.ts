@@ -70,7 +70,9 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
   app.replaceChildren(content, bar);
   // Маскот живет только на первой вкладке
   if (tab === 'workout') {
-    mountMascot(bar, parseMascot(await getSetting('mascot')));
+    if ((await getSetting('mascotOff')) !== 'yes') {
+      mountMascot(bar, parseMascot(await getSetting('mascot')));
+    }
   }
 
   if (tab === 'workout') {
