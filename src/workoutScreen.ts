@@ -369,7 +369,7 @@ export async function renderWorkoutScreen(
       ? [
           h(
             'button',
-            { type: 'button', className: 'button button-secondary', onclick: showFinish },
+            { type: 'button', className: 'button button-secondary', onclick: () => void showFinish() },
             t('workout.summary'),
           ),
           backButton,
@@ -378,7 +378,7 @@ export async function renderWorkoutScreen(
         ? [
             h(
               'button',
-              { type: 'button', className: 'button button-secondary', onclick: showFinish },
+              { type: 'button', className: 'button button-secondary', onclick: () => void showFinish() },
               t('workout.finish'),
             ),
             // Тренировка остается активной, вернуться можно с вкладки «Тренировка»
@@ -528,7 +528,15 @@ export async function renderWorkoutScreen(
     await updateResults();
   }
 
-  function showFinish(): void {
+  async function showFinish(): Promise<void> {
+    // Ни одного записанного подхода: тренировка не сохраняется, форма завершения не нужна
+    if (!isEditing && workout.exercises.every((item) => item.sets.length === 0)) {
+      if (await confirmDialog(t('workout.emptyDeleted'))) {
+        await finishWorkout(workout, {});
+        onClosed();
+      }
+      return;
+    }
     const hours = numberInput('integer', '', 2);
     const minutes = numberInput('integer', '', 2);
     if (workout.durationMin !== undefined) {
