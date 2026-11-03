@@ -17,6 +17,8 @@ export interface ChartExtras {
   trend?: ChartDatum[];
   // Горизонтальная линия цели
   goal?: number;
+  // Подробность к точке, например подход, из которого получено значение
+  detail?: (point: ChartDatum) => string;
 }
 
 export interface ChartBox {
@@ -70,10 +72,14 @@ export function lineChart(
   const yOf = (value: number): number => BOX.bottom - ((value - min) / span) * (BOX.bottom - BOX.top);
   const number = (value: number): string => value.toLocaleString(LOCALE);
   const readout = h('p', { className: 'chart-readout' });
-  const show = (item: ChartDatum): void => {
-    readout.textContent = `${number(item.value)} ${unit}, ${formatWhen(item.date)}`;
+  const show = (index: number): void => {
+    const item = data[index];
+    const detail = extras.detail?.(item);
+    readout.textContent = `${number(item.value)} ${unit}, ${formatWhen(item.date)}${detail ? ` — ${detail}` : ''}`;
+    figure.querySelectorAll('.chart-dot').forEach((dot, dotIndex) => {
+      dot.classList.toggle('chart-dot-active', dotIndex === index);
+    });
   };
-  show(data[data.length - 1]);
 
   const figure = h('figure', { className: 'chart' }, readout);
   figure.insertAdjacentHTML(
@@ -93,8 +99,9 @@ export function lineChart(
     </svg>`,
   );
 
+  show(data.length - 1);
   figure.querySelectorAll('.chart-hit').forEach((target, index) => {
-    const reveal = (): void => show(data[index]);
+    const reveal = (): void => show(index);
     target.addEventListener('click', reveal);
     target.addEventListener('pointerenter', reveal);
   });

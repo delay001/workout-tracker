@@ -21,6 +21,7 @@ import { periodChips, radioChips } from './ui';
 import { formatWeight, toWeight, weightUnit } from './units';
 import {
   bestResult,
+  bestSet,
   formatSet,
   getExerciseHistory,
   getUsedExercises,
@@ -107,11 +108,24 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
       cardio ? minutesSeries(history) : METRICS[shownMetric](history);
     const unit = (): string => (cardio ? t('unit.minutes') : weightUnit());
 
+    // Лучший подход дня, чтобы у точки графика был виден реальный вес
+    const bestSetText = (date: string): string => {
+      const set = bestSet(history.filter((entry) => entry.date === date).flatMap((entry) => entry.sets));
+      if (!set) {
+        return '';
+      }
+      return set.minutes === undefined
+        ? t('unit.setValue', { weight: formatWeight(set.weight), reps: set.reps })
+        : formatSet(set);
+    };
+
     function showChart(): void {
       const points = filterByPeriod(currentSeries(), shownPeriod, todayLocal());
       chartBox.replaceChildren(
         points.length > 0
-          ? lineChart(points, unit(), t('exercise.progress', { name: exercise.name }))
+          ? lineChart(points, unit(), t('exercise.progress', { name: exercise.name }), undefined, {
+              detail: (point) => bestSetText(point.date),
+            })
           : h('p', { className: 'hint' }, t('summary.noPeriodData')),
       );
     }

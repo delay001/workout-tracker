@@ -711,6 +711,11 @@ textarea {
   stroke-width: 2;
 }
 
+.chart-dot-active {
+  r: 7px;
+  stroke: var(--text);
+}
+
 .chart-hit {
   fill: transparent;
 }
