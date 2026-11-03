@@ -16,8 +16,8 @@
     {
       "name": "verify",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview", "--", "--port", "4208", "--strictPort"],
-      "port": 4208
+      "runtimeArgs": ["run", "preview", "--", "--port", "4209", "--strictPort"],
+      "port": 4209
     }
   ]
 }

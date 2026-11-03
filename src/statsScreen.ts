@@ -79,7 +79,7 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
   const body = h('div');
   const showView = async (): Promise<void> => {
     if (shownView === 'month') {
-      await renderMonthView(body);
+      await renderMonthView(body, root);
     } else {
       await renderVolumeView(body);
     }
@@ -104,7 +104,9 @@ export async function renderStatsScreen(root: HTMLElement): Promise<void> {
   await showView();
 }
 
-async function renderMonthView(root: HTMLElement): Promise<void> {
+// Расчёты, ачивки и итоги открываются на всю вкладку, а не под шапкой статистики
+async function renderMonthView(root: HTMLElement, page: HTMLElement): Promise<void> {
+  const back = (): void => void renderStatsScreen(page);
   const workouts = await getFinishedWorkouts();
   const goal = await getMonthlyGoal();
   const today = todayLocal();
@@ -172,17 +174,17 @@ async function renderMonthView(root: HTMLElement): Promise<void> {
         tile(rating === undefined ? '—' : String(rating), t('stats.averageRating')),
         h(
           'button',
-          { type: 'button', className: 'stat', onclick: () => void renderAchievementsScreen(root, show) },
+          { type: 'button', className: 'stat', onclick: () => void renderAchievementsScreen(page, back) },
           t('achievement.title'),
         ),
         h(
           'button',
-          { type: 'button', className: 'stat', onclick: () => void renderYearScreen(root, show) },
+          { type: 'button', className: 'stat', onclick: () => void renderYearScreen(page, back) },
           t('year.title'),
         ),
         h(
           'button',
-          { type: 'button', className: 'stat', onclick: () => void renderCalcScreen(root, () => show()) },
+          { type: 'button', className: 'stat', onclick: () => void renderCalcScreen(page, back) },
           t('stats.calc'),
         ),
       ),

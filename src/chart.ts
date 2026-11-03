@@ -84,7 +84,7 @@ export function lineChart(
   const figure = h('figure', { className: 'chart' }, readout);
   figure.insertAdjacentHTML(
     'beforeend',
-    `<svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="${label}">
+    `<svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img">
       <line class="chart-grid" x1="${BOX.left}" x2="${BOX.right}" y1="${BOX.top}" y2="${BOX.top}"/>
       <line class="chart-grid" x1="${BOX.left}" x2="${BOX.right}" y1="${BOX.bottom}" y2="${BOX.bottom}"/>
       <text x="${BOX.left - 6}" y="${BOX.top + 4}" text-anchor="end">${number(Math.max(...values))}</text>
@@ -99,6 +99,8 @@ export function lineChart(
     </svg>`,
   );
 
+  // Подпись ставится отдельно: в ней название упражнения, и как разметка оно могло бы сломать график
+  figure.querySelector('svg')?.setAttribute('aria-label', label);
   show(data.length - 1);
   figure.querySelectorAll('.chart-hit').forEach((target, index) => {
     const reveal = (): void => show(index);

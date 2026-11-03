@@ -92,7 +92,12 @@ async function renderWorkoutsView(
   const today = todayLocal();
   const firstYear = Number((workouts.at(-1)?.date ?? today).slice(0, 4));
   const lastYear = Number(today.slice(0, 4));
-  const years = Array.from({ length: lastYear - firstYear + 1 }, (_, index) => firstYear + index);
+  // Стрелками можно уйти за пределы лет с тренировками, тогда этот год тоже нужен в списке
+  const yearOptions = (): number[] => {
+    const from = Math.min(firstYear, shown.year);
+    const to = Math.max(lastYear, shown.year);
+    return Array.from({ length: to - from + 1 }, (_, index) => from + index);
+  };
 
   function show(selectedDate?: string): void {
     const cells = monthCells(shown.year, shown.month);
@@ -168,7 +173,7 @@ async function renderWorkoutsView(
             },
           ),
           select(
-            years.map((year): [string, string] => [String(year), String(year)]),
+            yearOptions().map((year): [string, string] => [String(year), String(year)]),
             String(shown.year),
             (value) => {
               shown = { ...shown, year: Number(value) };

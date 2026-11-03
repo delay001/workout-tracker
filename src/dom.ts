@@ -14,8 +14,14 @@ export function h<K extends keyof HTMLElementTagNameMap>(
 
 // Заметная плашка поверх экрана, которая исчезает сама
 export function showToast(text: string): void {
+  // Несколько плашек подряд встают друг под другом, а не одна поверх другой
+  let stack = document.querySelector<HTMLElement>('.toast-stack');
+  if (!stack) {
+    stack = h('div', { className: 'toast-stack' });
+    document.body.append(stack);
+  }
   const toast = h('div', { className: 'toast', role: 'status' }, text);
-  document.body.append(toast);
+  stack.append(toast);
   setTimeout(() => toast.remove(), 4000);
 }
 
