@@ -8,19 +8,19 @@ import {
   movingAverage,
   saveBodyWeight,
   saveWeightGoal,
-  trendChange,
 } from './bodyWeight';
 import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
 import { collapsible, emptyState, dateField, field, h } from './dom';
-import { t } from './i18n';
+import { LOCALE, t } from './i18n';
 import { filterByPeriod, type Period } from './progress';
 import { numberInput, periodChips } from './ui';
-import { formatWeight, toWeight, weightUnit } from './units';
+import { formatWeight, fromWeight, toWeight, weightUnit } from './units';
 
 let shownPeriod: Period = 'all';
 
 const signed = (kg: number): string => `${kg > 0 ? '+' : ''}${formatWeight(kg)}`;
+const signedValue = (value: number): string => `${value > 0 ? '+' : ''}${value.toLocaleString(LOCALE)} ${weightUnit()}`;
 
 export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
   const weights = await getBodyWeights();
@@ -34,6 +34,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
   const kg = numberInput('decimal');
   const error = h('p', { className: 'error', role: 'alert' });
   const chartBox = h('div');
+  const trendLine = h('p', { className: 'hint' });
   const refresh = (): Promise<void> => renderBodyWeightView(root);
 
   function showChart(): void {
@@ -44,6 +45,11 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
       shownPeriod,
       today,
     );
+    const first = shownTrend[0];
+    const last = shownTrend.at(-1);
+    const change = first && last && first !== last ? Math.round((last.value - first.value) * 10) / 10 : undefined;
+    trendLine.textContent =
+      change === undefined ? '' : t('trend.period', { period: t(`trend.${shownPeriod}`), value: signedValue(change) });
     chartBox.replaceChildren(
       points.length > 0
         ? lineChart(points, weightUnit(), t('weight.chart'), undefined, {
@@ -58,6 +64,8 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
 
   function goalSection(): HTMLElement[] {
     const target = numberInput('decimal', goal ? String(toWeight(goal.targetKg)) : '');
+    // Стартовый вес, от которого считается прогресс. По умолчанию — последнее взвешивание.
+    const start = numberInput('decimal', current === undefined ? '' : String(toWeight(current)));
     const deadline = h('input', { type: 'date', value: goal?.deadline ?? '' });
     const goalError = h('p', { className: 'error', role: 'alert' });
     const form = h(
@@ -67,10 +75,11 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
         onsubmit: async (event: Event) => {
           event.preventDefault();
           try {
-            if (current === undefined) {
-              throw new Error(t('goal.needWeight'));
+            const startKg = fromWeight(Number(start.value.replace(',', '.')));
+            if (start.value.trim() === '' || !(startKg >= 20 && startKg <= 400)) {
+              throw new Error(t('goal.needStart'));
             }
-            await saveWeightGoal(target.value, deadline.value, current, today);
+            await saveWeightGoal(target.value, deadline.value, Math.round(startKg * 10) / 10, today);
             await refresh();
           } catch (problem) {
             goalError.textContent = problem instanceof Error ? problem.message : t('common.saveFailed');
@@ -80,9 +89,10 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
       h(
         'div',
         { className: 'set-inputs' },
+        field(t('goal.start', { unit: weightUnit() }), start),
         field(t('goal.target', { unit: weightUnit() }), target),
-        field(t('goal.deadline'), dateField(deadline)),
       ),
+      field(t('goal.deadline'), dateField(deadline)),
       goalError,
       h('button', { type: 'submit', className: 'button' }, t('goal.set')),
     );
@@ -173,8 +183,6 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
     ),
   );
 
-  const weekChange = trendChange(trend, 7);
-  const monthChange = trendChange(trend, 30);
 
   showChart();
   root.replaceChildren(
@@ -187,12 +195,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
         ]
       : []),
     chartBox,
-    ...(weekChange === undefined
-      ? []
-      : [h('p', { className: 'hint' }, t('trend.week', { value: signed(weekChange) }))]),
-    ...(monthChange === undefined
-      ? []
-      : [h('p', { className: 'hint' }, t('trend.month', { value: signed(monthChange) }))]),
+    trendLine,
     ...goalSection(),
     h('h2', {}, t('weight.record')),
     h(

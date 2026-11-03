@@ -268,10 +268,6 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
         : [
             h('h2', {}, t(byWeek ? 'stats.countByWeek' : 'stats.countByMonth')),
             barChart(countBars, t(byWeek ? 'stats.countByWeek' : 'stats.countByMonth')),
-            h('h2', {}, t('stats.byType')),
-            ...sortTypes(stats.byType).map(([type, count]) =>
-              h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),
-            ),
             h('h2', {}, t(tonnageTitle[months])),
           ]),
       ...(monthPoints.length === 0
@@ -289,6 +285,14 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
                 formatChartMonth,
               ),
             ]),
+      ...(stats.count === 0
+        ? []
+        : [
+            h('h2', {}, t('stats.byType')),
+            ...sortTypes(stats.byType).map(([type, count]) =>
+              h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),
+            ),
+          ]),
       h('h2', {}, t('stats.top')),
       ...collapsible(topRows),
       h('h2', {}, t('stats.overdue')),
