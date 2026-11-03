@@ -60,8 +60,16 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
   function showCalories(): void {
     const years = Number(age.value);
     const kg = fromWeight(Number(caloriesWeight.value.replace(',', '.')));
-    if (!(heightCm > 0) || !(kg >= 20 && kg <= 400) || !(years >= 14 && years <= 100)) {
-      calories.replaceChildren(h('p', { className: 'hint' }, t('calc.needCalories')));
+    // Говорим, чего именно не хватает, а не общий список
+    const problem = !(heightCm > 0)
+      ? t('calc.needHeight')
+      : !(kg >= 20 && kg <= 400)
+        ? t('calc.badWeight')
+        : !(years >= 14 && years <= 100)
+          ? t('calc.badAge')
+          : undefined;
+    if (problem) {
+      calories.replaceChildren(h('p', { className: 'error' }, problem));
       return;
     }
     const keep = dailyCalories(sex, kg, heightCm, years, activity);

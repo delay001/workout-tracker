@@ -399,7 +399,9 @@ export const en: Record<keyof typeof ru, string> = {
   'calc.keep': 'Maintain weight',
   'calc.cut': 'Weight loss (−15%)',
   'calc.bulk': 'Muscle gain (+10%)',
-  'calc.needCalories': 'Height and sex in settings, weight and age are needed',
+  'calc.needHeight': 'Set your height in settings to calculate calories',
+  'calc.badWeight': 'Enter a weight from 20 to 400 kg',
+  'calc.badAge': 'Age from 14 to 100: the formula is made for teens and adults',
   'calc.caloriesFrom': 'Prefilled with the latest weight {weight} from {date}, you can change it',
   'calc.caloriesNote':
     'Mifflin–St Jeor formula. Activity: low — 1–3 workouts a week, medium — 3–5, high — 6–7, very high — plus physical work. This is an estimate, real needs may differ by 10–15%.',
