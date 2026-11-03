@@ -9,7 +9,7 @@ import { formatMonth, todayLocal } from './dates';
 import { db } from './db';
 import { h, showToast } from './dom';
 import { t, type MessageKey } from './i18n';
-import { getSetting, setSetting } from './settings';
+import { getMonthlyGoal, getSetting, setSetting } from './settings';
 import { select } from './ui';
 import { formatWeight } from './units';
 import { getFinishedWorkouts } from './workouts';
@@ -25,7 +25,13 @@ export async function currentStates(): Promise<AchievementState[]> {
   const active = await getWeightGoal();
   const goals = [...(await getGoalHistory()), ...(active ? [active] : [])];
   const reached = current !== undefined && goals.some((goal) => goalReached(goal, current));
-  return evaluateAchievements(workouts, todayLocal(), reached);
+  const exercises = await db.exercises.toArray();
+  return evaluateAchievements(workouts, todayLocal(), {
+    weightGoalReached: reached,
+    monthlyGoal: await getMonthlyGoal(),
+    exerciseName: (id) => exercises.find((exercise) => exercise.id === id)?.name,
+    weightLostKg: active && current !== undefined ? active.startKg - current : 0,
+  });
 }
 
 // При первом запуске уже заслуженное просто запоминается, без поздравлений

@@ -19,7 +19,7 @@ function workout(date: string, weight = 100, reps = 5, durationMin = 60, type = 
 }
 
 const state = (workouts: Workout[], id: string, goal = false) =>
-  evaluateAchievements(workouts, '2026-11-20', goal).find((item) => item.id === id);
+  evaluateAchievements(workouts, '2026-11-20', { weightGoalReached: goal }).find((item) => item.id === id);
 
 describe('уровни', () => {
   it('определяет уровень и остаток до следующего', () => {
@@ -80,8 +80,42 @@ describe('ачивки', () => {
     expect(state(weeks.map((date) => workout(date)), 'streak4')?.count).toBe(1);
   });
 
+  it('серия недель засчитывается и после того, как прервалась', () => {
+    const weeks = ['2026-09-07', '2026-09-08', '2026-09-14', '2026-09-15', '2026-09-21', '2026-09-22', '2026-09-28', '2026-09-29'];
+
+    expect(state(weeks.map((date) => workout(date)), 'streak4')?.count).toBe(1);
+  });
+
+  it('силовые: жим лежа по лучшему рабочему подходу', () => {
+    const name = (id: number): string => (id === 1 ? 'Жим лежа' : 'Другое');
+    const states = evaluateAchievements([workout('2026-11-01', 100, 3), workout('2026-11-02', 130, 1, 60, 'upper', 2)], '2026-11-20', {
+      exerciseName: name,
+    });
+
+    expect(states.find((item) => item.id === 'bench100')?.count).toBe(1);
+    expect(states.find((item) => item.id === 'bench120')?.count).toBe(0);
+  });
+
+  it('месяцы подряд с выполненной целью', () => {
+    const months = ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'];
+    const workouts = months.flatMap((month) => [workout(`${month}-01`), workout(`${month}-10`)]);
+    const goalMonths = (goal: number) =>
+      evaluateAchievements(workouts, '2026-11-20', { monthlyGoal: goal }).find((item) => item.id === 'goalMonths6');
+
+    expect(goalMonths(2)?.count).toBe(1);
+    expect(goalMonths(3)?.count).toBe(0);
+  });
+
+  it('кардио-неделя и минус 5 кг', () => {
+    const cardio = ['2026-11-02', '2026-11-04', '2026-11-06'].map((date) => workout(date, 0, 0, 30, 'cardio'));
+    const states = evaluateAchievements(cardio, '2026-11-20', { weightLostKg: 5.2 });
+
+    expect(states.find((item) => item.id === 'cardioWeek3')?.count).toBe(1);
+    expect(states.find((item) => item.id === 'minus5')?.count).toBe(1);
+  });
+
   it('новая ачивка определяется один раз', () => {
-    const states = evaluateAchievements(eight, '2026-11-20', false);
+    const states = evaluateAchievements(eight, '2026-11-20');
 
     expect(newAchievements(states, {}).map((item) => item.id)).toContain('month8');
     expect(newAchievements(states, { month8: 1 }).map((item) => item.id)).not.toContain('month8');
