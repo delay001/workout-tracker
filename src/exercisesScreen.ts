@@ -171,6 +171,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
           : []),
         ...(hasChart
           ? [
+              chartBox,
               ...(cardio
                 ? []
                 : [
@@ -193,7 +194,6 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
                 shownPeriod = value;
                 showChart();
               }),
-              chartBox,
             ]
           : []),
         ...(level
