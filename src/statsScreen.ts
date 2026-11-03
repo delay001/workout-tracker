@@ -134,7 +134,6 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
   const achievements = await currentStates();
   const earnedAchievements = achievements.filter((state) => state.count > 0).length;
   const today = todayLocal();
-  const top = topExercises(workouts, Infinity);
   const overdue = overdueExercises(workouts, await getOverdueDays(), today);
   const exercises = await db.exercises.toArray();
   const exerciseName = (id: number): string =>
@@ -142,9 +141,6 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
 
   const row = (name: string, value: string): HTMLElement =>
     h('p', { className: 'set-row' }, name, h('strong', {}, value));
-  const topRows = top.map((item) =>
-    row(exerciseName(item.exerciseId), t('stats.topRow', { count: item.count })),
-  );
   // Скрытые упражнения в подсказку «давно не делал» не попадают
   const overdueRows = overdue
     .filter((item) => !exercises.find((exercise) => exercise.id === item.exerciseId)?.hidden)
@@ -293,8 +289,17 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
               h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),
             ),
           ]),
-      h('h2', {}, t('stats.top')),
-      ...collapsible(topRows),
+      // «Чаще всего» — за выбранный период, как и все цифры выше; без тренировок блока нет
+      ...(periodWorkouts.length === 0
+        ? []
+        : [
+            h('h2', {}, t('stats.top')),
+            ...collapsible(
+              topExercises(periodWorkouts, Infinity).map((item) =>
+                row(exerciseName(item.exerciseId), t('stats.topRow', { count: item.count })),
+              ),
+            ),
+          ]),
       h('h2', {}, t('stats.overdue')),
       ...(overdueRows.length > 0 ? collapsible(overdueRows) : [h('p', { className: 'hint' }, t('stats.noOverdue'))]),
     );
