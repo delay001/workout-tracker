@@ -1102,6 +1102,19 @@ p.set-row {
   line-height: 1.3;
 }
 
+/* Идущий секундомер на главном экране, над кнопкой активной тренировки */
+.stopwatch-pill {
+  align-self: center;
+  margin: 0 auto 12px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  width: fit-content;
+}
+
 .stopwatch-laps[hidden] {
   display: none;
 }

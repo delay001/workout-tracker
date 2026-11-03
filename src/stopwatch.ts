@@ -127,3 +127,16 @@ export function stopwatchBar(workoutId: number): HTMLElement {
   const timer = setInterval(() => (bar.isConnected ? tick() : clearInterval(timer)), 1000);
   return bar;
 }
+
+// Идущий секундомер активной тренировки для главного экрана; на паузе не показывается
+export function runningStopwatch(workoutId: number): HTMLElement[] {
+  const watch = loadStopwatch(workoutId);
+  if (watch.startedAt === undefined) return [];
+  const time = h('strong', {}, formatTime(total(watch, Date.now())));
+  const pill = h('p', { className: 'stopwatch-pill', ariaLabel: t('stopwatch.title') }, '⏱ ', time);
+  const timer = setInterval(
+    () => (pill.isConnected ? (time.textContent = formatTime(total(watch, Date.now()))) : clearInterval(timer)),
+    1000,
+  );
+  return [pill];
+}

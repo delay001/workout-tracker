@@ -9,6 +9,7 @@ import { formatWeight } from './units';
 import { weekStreak } from './achievements';
 import { getFinishedWorkouts, getWorkoutTypes, startFromTemplate, workoutTypeName } from './workouts';
 import { t } from './i18n';
+import { runningStopwatch } from './stopwatch';
 
 export async function renderHomeScreen(
   root: HTMLElement,
@@ -106,6 +107,7 @@ export async function renderHomeScreen(
         h(
           'div',
           { className: 'centered' },
+          ...(active ? runningStopwatch(active.id) : []),
           active
             ? h(
                 'button',
