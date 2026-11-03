@@ -1,4 +1,4 @@
-import { t } from './i18n';
+import { LOCALE, t } from './i18n';
 
 // Создает элемент. Текст вставляется как текст, поэтому название упражнения не сломает страницу.
 export function h<K extends keyof HTMLElementTagNameMap>(
@@ -74,6 +74,69 @@ export function confetti(): void {
   }
   document.body.append(layer);
   setTimeout(() => layer.remove(), 2200);
+}
+
+export interface YearMonth {
+  year: number;
+  month: number;
+}
+
+// Свое окно выбора месяца: год стрелками, месяцы сеткой 3 × 4. Нажатие на месяц выбирает его и закрывает окно.
+export function pickMonth(shown: YearMonth, today: YearMonth): Promise<YearMonth | undefined> {
+  return new Promise((resolve) => {
+    let year = shown.year;
+    const close = (answer?: YearMonth): void => {
+      dialog.close();
+      dialog.remove();
+      resolve(answer);
+    };
+    const title = h('strong', { className: 'month-dialog-year' });
+    const grid = h('div', { className: 'month-dialog-grid' });
+    const render = (): void => {
+      title.textContent = String(year);
+      grid.replaceChildren(
+        ...Array.from({ length: 12 }, (_, month) => {
+          const name = new Date(2000, month, 1).toLocaleDateString(LOCALE, { month: 'long' });
+          const classes = ['month-dialog-month'];
+          if (year === shown.year && month === shown.month) classes.push('month-dialog-shown');
+          if (year === today.year && month === today.month) classes.push('month-dialog-today');
+          return h('button', { type: 'button', className: classes.join(' '), onclick: () => close({ year, month }) }, name);
+        }),
+      );
+    };
+    const yearButton = (label: string, name: string, delta: number): HTMLButtonElement =>
+      h('button', { type: 'button', className: 'step-button', ariaLabel: name, onclick: () => ((year += delta), render()) }, label);
+
+    const dialog = h(
+      'dialog',
+      { className: 'confirm-dialog month-dialog' },
+      h(
+        'div',
+        { className: 'month-nav' },
+        yearButton('‹', t('common.prevYear'), -1),
+        title,
+        yearButton('›', t('common.nextYear'), 1),
+      ),
+      grid,
+      h(
+        'div',
+        { className: 'card-actions' },
+        h('button', { type: 'button', className: 'button button-secondary', onclick: () => close() }, t('set.cancel')),
+        h('button', { type: 'button', className: 'button', onclick: () => close(today) }, t('common.thisMonth')),
+      ),
+    );
+    dialog.oncancel = (event) => {
+      event.preventDefault();
+      close();
+    };
+    // Нажатие мимо окна, на затемнение, закрывает его
+    dialog.onclick = (event) => {
+      if (event.target === dialog) close();
+    };
+    render();
+    document.body.append(dialog);
+    dialog.showModal();
+  });
 }
 
 // Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют

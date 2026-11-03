@@ -477,7 +477,9 @@ h2 {
 }
 
 .month-picker {
-  position: relative;
+  border: 0;
+  color: var(--text);
+  font-family: inherit;
   padding: 10px 16px;
   border-radius: 12px;
   background: var(--surface);
@@ -485,13 +487,6 @@ h2 {
   font-weight: 600;
 }
 
-/* Системный выбор месяца лежит поверх подписи и невидим: нажатие по подписи открывает его */
-.month-picker-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-}
 
 .home-header {
   display: flex;
@@ -960,6 +955,41 @@ textarea {
   margin: 0 0 16px;
   white-space: pre-line;
   font-size: 1.125rem;
+}
+
+.month-dialog .month-nav {
+  margin: 0 0 12px;
+}
+
+.month-dialog-year {
+  font-size: 1.25rem;
+}
+
+.month-dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.month-dialog-month {
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-transform: capitalize;
+}
+
+.month-dialog-today {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.month-dialog-shown {
+  background: var(--grad-1);
+  color: var(--on-accent);
+  font-weight: 600;
 }
 
 .finish-card {

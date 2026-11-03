@@ -2,7 +2,7 @@ import { pageHeader } from './avatar';
 import { renderBodyWeightView } from './bodyWeightScreen';
 import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
 import type { Workout } from './db';
-import { emptyState, h } from './dom';
+import { emptyState, h, pickMonth } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
 import { renderMeasurementsView } from './measurementsScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
@@ -140,29 +140,25 @@ async function renderWorkoutsView(
         label,
       );
 
-    // Месяц и год выбираются одним полем: название месяца поверх невидимого системного выбора месяца
+    // Месяц и год выбираются одной кнопкой: она открывает свое окно выбора месяца
     const monthPicker = (): HTMLElement => {
-      const input = h('input', {
-        type: 'month',
-        className: 'month-picker-input',
-        ariaLabel: t('history.pickMonth'),
-        value: `${shown.year}-${String(shown.month + 1).padStart(2, '0')}`,
-        onchange: () => {
-          const [year, month] = input.value.split('-').map(Number);
-          if (year && month) {
-            shown = { year, month: month - 1 };
-            show();
-          }
+      const now = new Date();
+      return h(
+        'button',
+        {
+          type: 'button',
+          className: 'month-picker',
+          ariaLabel: t('history.pickMonth'),
+          onclick: async () => {
+            const picked = await pickMonth(shown, { year: now.getFullYear(), month: now.getMonth() });
+            if (picked) {
+              shown = picked;
+              show();
+            }
+          },
         },
-      });
-      input.onclick = () => {
-        try {
-          input.showPicker();
-        } catch {
-          // Старые браузеры открывают выбор сами по нажатию на поле
-        }
-      };
-      return h('label', { className: 'month-picker' }, h('span', {}, `${formatMonth(shown.year, shown.month)} ▾`), input);
+        `${formatMonth(shown.year, shown.month)} ▾`,
+      );
     };
 
     const monthCount = workouts.filter((workout) => workout.date.startsWith(shownPrefix)).length;
