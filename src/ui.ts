@@ -85,7 +85,7 @@ export function radioChips<T extends string>(
   );
 }
 
-export const PERIODS: Period[] = ['1m', '3m', '6m', '1y', 'all'];
+export const PERIODS: Period[] = ['all', '1m', '3m', '6m', '1y'];
 
 export function periodChips(group: string, value: Period, onChange: (value: Period) => void): HTMLElement {
   return radioChips(

@@ -43,7 +43,7 @@ const METRICS: Record<Metric, (history: LastPerformance[]) => ChartDatum[]> = {
   tonnage: (history) => inUnits(tonnageSeries(history)),
 };
 
-let shownMetric: Metric = 'oneRepMax';
+let shownMetric: Metric = 'weight';
 let shownPeriod: Period = 'all';
 
 // В подтягиваниях поднимается вес тела, поэтому он входит в расчёт 1ПМ
@@ -83,27 +83,43 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
         (groupTimes.get(groupOf(b)) ?? 0) - (groupTimes.get(groupOf(a)) ?? 0),
     );
 
-    const items: HTMLElement[] = [];
-    let lastGroup: string | undefined;
-    for (const { exercise, best } of used) {
-      const group = exercise.muscleGroup ?? t('common.noGroup');
-      if (group !== lastGroup) {
-        items.push(h('h2', { className: 'group-heading' }, group));
-        lastGroup = group;
+    const list = h('div');
+    const search = h('input', {
+      type: 'search',
+      autocomplete: 'off',
+      placeholder: t('exercise.search'),
+      ariaLabel: t('exercise.search'),
+      oninput: () => showItems(),
+    });
+
+    function showItems(): void {
+      const query = search.value.trim().toLowerCase();
+      const items: HTMLElement[] = [];
+      let lastGroup: string | undefined;
+      for (const { exercise, best } of used.filter((item) => item.exercise.name.toLowerCase().includes(query))) {
+        const group = exercise.muscleGroup ?? t('common.noGroup');
+        if (group !== lastGroup) {
+          items.push(h('h2', { className: 'group-heading' }, group));
+          lastGroup = group;
+        }
+        items.push(
+          h(
+            'button',
+            { type: 'button', className: 'list-button', onclick: () => void showExercise(exercise) },
+            exercise.name,
+            h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
+          ),
+        );
       }
-      items.push(
-        h(
-          'button',
-          { type: 'button', className: 'list-button', onclick: () => void showExercise(exercise) },
-          exercise.name,
-          h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
-        ),
-      );
+      list.replaceChildren(...(items.length > 0 ? items : [h('p', { className: 'hint' }, t('exercise.notFound'))]));
     }
 
-    root.replaceChildren(
-      ...(used.length === 0 ? [h('p', { className: 'hint' }, t('exercise.noneYet'))] : items),
-    );
+    if (used.length === 0) {
+      root.replaceChildren(h('p', { className: 'hint' }, t('exercise.noneYet')));
+      return;
+    }
+    showItems();
+    root.replaceChildren(search, list);
   }
 
   async function showExercise(exercise: Exercise): Promise<void> {
@@ -156,6 +172,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     const summaryRows: [string, string | undefined][] = [
       [t('summary.times'), String(summary.times)],
       [t('summary.last'), summary.lastDate && formatDate(summary.lastDate)],
+      [t('summary.record'), best && formatBest(best)],
       ...(cardio
         ? []
         : ([
@@ -199,9 +216,9 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
                       'exercise-metric',
                       t('summary.metric'),
                       [
-                        ['oneRepMax', t('metric.oneRepMax')],
                         ['weight', t('metric.weight')],
                         ['tonnage', t('metric.tonnage')],
+                        ['oneRepMax', t('metric.oneRepMax')],
                       ],
                       shownMetric,
                       (value) => {
