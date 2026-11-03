@@ -13,6 +13,7 @@ import {
   parseAccent,
   parseTheme,
   setSetting,
+  type Accent,
   type Theme,
 } from './settings';
 import { numberInput, select } from './ui';
@@ -24,6 +25,16 @@ import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeName } from './workouts';
 import { LANGUAGE, setLanguage, t, type Language } from './i18n';
 import { renderOnboarding } from './onboarding';
+
+// В стандартном списке нельзя нарисовать кружок, поэтому цвет показывает эмодзи
+const ACCENT_DOTS: Record<Accent, string> = {
+  pink: '🩷',
+  orange: '🟠',
+  green: '🟢',
+  blue: '🔵',
+  violet: '🟣',
+  red: '🔴',
+};
 
 export async function renderSettingsScreen(
   root: HTMLElement,
@@ -201,7 +212,7 @@ export async function renderSettingsScreen(
     const accent = parseAccent(await getSetting('accent'));
 
     const accentSelect = select(
-      ACCENTS.map((value): [string, string] => [value, t(`accent.${value}`)]),
+      ACCENTS.map((value): [string, string] => [value, `${ACCENT_DOTS[value]} ${t(`accent.${value}`)}`]),
       accent,
       (value) => {
         applyAccent(parseAccent(value));

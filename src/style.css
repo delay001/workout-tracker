@@ -816,38 +816,6 @@ textarea {
   background: var(--surface);
 }
 
-.accent-chip::before {
-  content: '';
-  width: 14px;
-  height: 14px;
-  margin-right: 8px;
-  border-radius: 50%;
-}
-
-.accent-pink::before {
-  background: #e0559a;
-}
-
-.accent-orange::before {
-  background: #e0771f;
-}
-
-.accent-green::before {
-  background: #1f9d68;
-}
-
-.accent-blue::before {
-  background: #3b7fe0;
-}
-
-.accent-violet::before {
-  background: #8a5fe0;
-}
-
-.accent-red::before {
-  background: #dd4b4b;
-}
-
 .chip input {
   position: absolute;
   opacity: 0;
