@@ -799,6 +799,15 @@ textarea {
   stroke: var(--text);
 }
 
+.chart-bar {
+  fill: var(--accent);
+  opacity: 0.7;
+}
+
+.chart-bar-active {
+  opacity: 1;
+}
+
 .chart-hit {
   fill: transparent;
 }

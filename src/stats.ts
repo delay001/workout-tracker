@@ -1,5 +1,6 @@
 import type { ChartDatum } from './chart';
 import { shiftMonth } from './dates';
+import { shiftDays, weekStart } from './volume';
 import type { Workout, WorkoutSet } from './db';
 
 export interface MonthStats {
@@ -53,6 +54,32 @@ export function monthlyTonnage(workouts: Workout[], year: number, month: number,
       value: monthStats(workouts, shown.year, shown.month).tonnage,
     };
   });
+}
+
+export interface CountBucket {
+  start: string;
+  end: string;
+  count: number;
+}
+
+// Сколько тренировок было в каждую неделю (с понедельника) или в каждый месяц периода [from, to].
+// Крайние недели обрезаются по границам периода.
+export function workoutCounts(workouts: Workout[], from: string, to: string, by: 'week' | 'month'): CountBucket[] {
+  const buckets: CountBucket[] = [];
+  let start = by === 'week' ? weekStart(from) : `${from.slice(0, 7)}-01`;
+  while (start <= to) {
+    const nextMonth = shiftMonth(Number(start.slice(0, 4)), Number(start.slice(5, 7)) - 1, 1);
+    const next = by === 'week' ? shiftDays(start, 7) : `${monthPrefix(nextMonth.year, nextMonth.month)}-01`;
+    const end = shiftDays(next, -1) < to ? shiftDays(next, -1) : to;
+    const first = start < from ? from : start;
+    buckets.push({
+      start: first,
+      end,
+      count: workouts.filter((workout) => workout.date >= first && workout.date <= end).length,
+    });
+    start = next;
+  }
+  return buckets;
 }
 
 export function averageRating(workouts: Workout[]): number | undefined {

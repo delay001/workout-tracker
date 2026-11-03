@@ -1,5 +1,5 @@
 import { pageHeader } from './avatar';
-import { lineChart } from './chart';
+import { barChart, lineChart } from './chart';
 import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, todayLocal } from './dates';
 import { db } from './db';
 import { collapsible, emptyState, h } from './dom';
@@ -8,7 +8,7 @@ import { currentStates, renderAchievementsScreen, renderYearScreen } from './mot
 import { overdueExercises, topExercises, workoutStats } from './progress';
 import { formatWeight, toWeight, weightUnit } from './units';
 import { getMonthlyGoal, getOverdueDays } from './settings';
-import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage } from './stats';
+import { averageRating, goalPercent, monthlyTonnage, monthStats, sortTypes, tonnage, workoutCounts } from './stats';
 import { radioChips, segmented } from './ui';
 import { renderVolumeView } from './volumeScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
@@ -200,6 +200,25 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
       6: 'stats.tonnageHalfYear',
       12: 'stats.tonnageYear',
     } as const;
+    // До 3 месяцев столбец — неделя, дальше — месяц
+    const byWeek = months <= 3;
+    const monthEnd = `${to}-${String(new Date(shown.year, shown.month + 1, 0).getDate()).padStart(2, '0')}`;
+    // Будущие недели не показываются: последний столбец — текущая неделя
+    const periodEnd = monthEnd < today ? monthEnd : today;
+    const countBars = workoutCounts(periodWorkouts, `${from}-01`, periodEnd, byWeek ? 'week' : 'month').map(
+      (bucket) => {
+        const [year, month, day] = bucket.start.split('-').map(Number);
+        const when = byWeek
+          ? `${formatDate(bucket.start).slice(0, 5)} – ${formatDate(bucket.end).slice(0, 5)}`
+          : formatMonth(year, month - 1);
+        return {
+          value: bucket.count,
+          label: byWeek ? `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}` : formatMonth(year, month - 1).slice(0, 3),
+          readout: t('stats.countReadout', { count: bucket.count, when }),
+        };
+      },
+    );
+
     const formatChartMonth = (date: string): string => {
       const [year, month] = date.split('-').map(Number);
       return formatMonth(year, month - 1);
@@ -243,6 +262,8 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
       ...(stats.count === 0
         ? [emptyState('📊', t('stats.noWorkouts'))]
         : [
+            h('h2', {}, t(byWeek ? 'stats.countByWeek' : 'stats.countByMonth')),
+            barChart(countBars, t(byWeek ? 'stats.countByWeek' : 'stats.countByMonth')),
             h('h2', {}, t('stats.byType')),
             ...sortTypes(stats.byType).map(([type, count]) =>
               h('p', { className: 'set-row' }, workoutTypeName(type), h('strong', {}, String(count))),

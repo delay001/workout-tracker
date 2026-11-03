@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Workout, WorkoutSet } from './db';
-import { goalPercent, monthlyTonnage, monthStats, tonnage } from './stats';
+import { goalPercent, monthlyTonnage, monthStats, tonnage, workoutCounts } from './stats';
 
 const set = (weight: number, reps: number, warmup = false): WorkoutSet => ({ weight, reps, warmup });
 
@@ -15,6 +15,31 @@ function workout(date: string, type: string, sets: WorkoutSet[], durationMin?: n
     exerciseIds: [1],
   };
 }
+
+describe('тренировки по неделям и месяцам', () => {
+  const workouts = ['2026-10-01', '2026-10-04', '2026-10-05', '2026-10-31', '2026-11-02'].map((date) =>
+    workout(date, 'upper', [set(50, 5)]),
+  );
+
+  it('недели начинаются с понедельника и обрезаются по периоду', () => {
+    expect(workoutCounts(workouts, '2026-10-01', '2026-10-31', 'week')).toEqual([
+      { start: '2026-10-01', end: '2026-10-04', count: 2 },
+      { start: '2026-10-05', end: '2026-10-11', count: 1 },
+      { start: '2026-10-12', end: '2026-10-18', count: 0 },
+      { start: '2026-10-19', end: '2026-10-25', count: 0 },
+      { start: '2026-10-26', end: '2026-10-31', count: 1 },
+    ]);
+  });
+
+  it('месяцы идут через границу года', () => {
+    expect(workoutCounts(workouts, '2026-10-01', '2027-01-31', 'month').map((item) => [item.start, item.end, item.count])).toEqual([
+      ['2026-10-01', '2026-10-31', 4],
+      ['2026-11-01', '2026-11-30', 1],
+      ['2026-12-01', '2026-12-31', 0],
+      ['2027-01-01', '2027-01-31', 0],
+    ]);
+  });
+});
 
 describe('тоннаж', () => {
   it('считает рабочие подходы, разминочные и свой вес не добавляют', () => {
