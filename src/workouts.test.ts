@@ -69,7 +69,7 @@ describe('ход тренировки', () => {
     expect(await active()).toMatchObject({ date: '2026-10-30', type: 'lower' });
   });
 
-  it('подход сохраняется сразу и только в своём упражнении', async () => {
+  it('подход сохраняется сразу и только в своем упражнении', async () => {
     await startWorkout('2026-11-02', 'upper');
     await addExerciseToWorkout(await active(), 1);
     await addExerciseToWorkout(await active(), 2);
@@ -117,7 +117,7 @@ describe('прошлый раз', () => {
     return (await getLastPerformance(1, await active()))?.sets[0].weight;
   }
 
-  it('берёт самую позднюю тренировку с этим упражнением', async () => {
+  it('берет самую позднюю тренировку с этим упражнением', async () => {
     await finished('2026-10-01', 1, 60);
     await finished('2026-10-20', 1, 70);
     await finished('2026-10-25', 2, 99);
@@ -137,7 +137,7 @@ describe('прошлый раз', () => {
     expect(await lastWeight()).toBe(70);
   });
 
-  it('для тренировки задним числом не берёт более поздние', async () => {
+  it('для тренировки задним числом не берет более поздние', async () => {
     await finished('2026-10-01', 1, 60);
     await finished('2026-10-20', 1, 70);
     await startWorkout('2026-10-10', 'upper');
@@ -145,7 +145,7 @@ describe('прошлый раз', () => {
     expect(await lastWeight()).toBe(60);
   });
 
-  it('из двух тренировок за день берёт внесённую позже', async () => {
+  it('из двух тренировок за день берет внесенную позже', async () => {
     await finished('2026-10-20', 1, 60);
     await finished('2026-10-20', 1, 70);
     await startWorkout('2026-11-02', 'upper');
@@ -175,7 +175,7 @@ describe('пиковый подход', () => {
     expect(bestSet([set(50, 20), set(52, 12)])).toEqual(set(52, 12));
   });
 
-  it('при равном весе берёт больше повторений', () => {
+  it('при равном весе берет больше повторений', () => {
     expect(bestSet([set(52, 8), set(52, 12), set(52, 10)])).toEqual(set(52, 12));
   });
 
@@ -183,7 +183,7 @@ describe('пиковый подход', () => {
     expect(bestSet([set(60, 5, true), set(50, 8)])).toEqual(set(50, 8));
   });
 
-  it('если подходы только разминочные, берёт из них', () => {
+  it('если подходы только разминочные, берет из них', () => {
     expect(bestSet([set(40, 10, true), set(50, 5, true)])).toEqual(set(50, 5, true));
   });
 
@@ -309,7 +309,7 @@ describe('история', () => {
   const save = (date: string, status: 'active' | 'finished' = 'finished') =>
     saveWorkout({ type: 'upper', exercises: [{ exerciseId: 1, sets: [SET] }], date, status });
 
-  it('показывает только завершённые, новые сверху', async () => {
+  it('показывает только завершенные, новые сверху', async () => {
     await save('2026-10-01');
     await save('2026-10-20');
     await save('2026-10-10');
@@ -329,7 +329,7 @@ describe('история', () => {
     expect((await getFinishedWorkouts()).map((workout) => workout.date)).toEqual(['2026-10-20']);
   });
 
-  it('правка завершённой тренировки меняет дату, тип и оценку', async () => {
+  it('правка завершенной тренировки меняет дату, тип и оценку', async () => {
     const id = await save('2026-10-01');
     const workout = await db.workouts.get(id);
 
@@ -360,7 +360,7 @@ describe('история по упражнению', () => {
     await saveWorkout({ date, type: 'upper', status: 'finished', exercises: [{ exerciseId, sets }] });
   }
 
-  it('показывает только это упражнение и только завершённые, новые сверху', async () => {
+  it('показывает только это упражнение и только завершенные, новые сверху', async () => {
     await finished('2026-10-01', 1, [set(60, 8)]);
     await finished('2026-10-20', 1, [set(70, 8)]);
     await finished('2026-10-10', 2, [set(99, 8)]);
@@ -380,7 +380,7 @@ describe('история по упражнению', () => {
     expect(bestResult(await getExerciseHistory(1))).toEqual({ set: set(52, 12), date: '2026-10-01' });
   });
 
-  it('повторённый рекорд датируется первым разом', async () => {
+  it('повторенный рекорд датируется первым разом', async () => {
     await finished('2026-10-01', 1, [set(52, 12)]);
     await finished('2026-10-20', 1, [set(52, 12)]);
 
@@ -391,9 +391,9 @@ describe('история по упражнению', () => {
     expect(bestResult([])).toBeUndefined();
   });
 
-  it('список использованных упражнений идёт по группам и с лучшим результатом', async () => {
+  it('список использованных упражнений идет по группам и с лучшим результатом', async () => {
     const legs = await findOrCreateExercise('Румынская тяга', 'Ноги');
-    const chest = await findOrCreateExercise('Жим лёжа', 'Грудь');
+    const chest = await findOrCreateExercise('Жим лежа', 'Грудь');
     await findOrCreateExercise('Ни разу не выполнялось', 'Спина');
     await finished('2026-10-01', legs.id, [set(80, 8)]);
     await finished('2026-10-02', chest.id, [set(100, 3)]);
@@ -401,7 +401,7 @@ describe('история по упражнению', () => {
     const used = await getUsedExercises();
 
     expect(used.map((item) => [item.exercise.name, item.best?.set.weight])).toEqual([
-      ['Жим лёжа', 100],
+      ['Жим лежа', 100],
       ['Румынская тяга', 80],
     ]);
   });
@@ -474,7 +474,7 @@ describe('личные рекорды', () => {
     expect(recordLabels([set(105, 1)], [set(100, 10)])).toEqual(['Рекорд: Вес']);
   });
 
-  it('повторённый результат не рекорд, разминочные и свой вес не считаются', () => {
+  it('повторенный результат не рекорд, разминочные и свой вес не считаются', () => {
     expect(recordLabels([set(100, 3), set(200, 1, true), set(0, 20)], [set(100, 3)])).toEqual(['', '', '']);
   });
 
@@ -486,7 +486,7 @@ describe('личные рекорды', () => {
     expect(recordLabels([set(50, 8)], [])).toEqual(['']);
   });
 
-  it('прошлые подходы берутся из завершённых тренировок без разминочных', async () => {
+  it('прошлые подходы берутся из завершенных тренировок без разминочных', async () => {
     await saveWorkout({
       date: '2026-10-01',
       type: 'upper',
@@ -576,14 +576,14 @@ describe('управление упражнениями', () => {
 
   it('переименование меняет название и в шаблонах', async () => {
     const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
-    await saveTemplate('upper', ['Жим лёжа', 'Молотки']);
+    await saveTemplate('upper', ['Жим лежа', 'Молотки']);
 
     await updateExercise(exercise, 'Хаммер сгибания', 'Бицепс');
 
-    expect((await db.templates.get('upper'))?.exerciseNames).toEqual(['Жим лёжа', 'Хаммер сгибания']);
+    expect((await db.templates.get('upper'))?.exerciseNames).toEqual(['Жим лежа', 'Хаммер сгибания']);
   });
 
-  it('смена только группы не создаёт лишних записей', async () => {
+  it('смена только группы не создает лишних записей', async () => {
     const exercise = await findOrCreateExercise('Молотки', 'Бицепс');
 
     await updateExercise(exercise, 'Молотки', 'Предплечья');
@@ -593,7 +593,7 @@ describe('управление упражнениями', () => {
 
   it('нельзя переименовать в уже существующее или пустое название', async () => {
     await findOrCreateExercise('Молотки');
-    const other = await findOrCreateExercise('Жим лёжа');
+    const other = await findOrCreateExercise('Жим лежа');
 
     await expect(updateExercise(other, 'молотки')).rejects.toThrow('уже есть');
     await expect(updateExercise(other, '  ')).rejects.toThrow('пустым');
@@ -613,20 +613,20 @@ describe('поиск упражнений', () => {
     expect(options.at(-1)?.muscleGroup).toBe('Кардио');
   });
 
-  it('находит по части названия без учёта регистра', async () => {
+  it('находит по части названия без учета регистра', async () => {
     expect(await names('МОЛОТ')).toEqual(['Молотки']);
   });
 
   it('находит по старому названию из записей', async () => {
-    expect(await names('жим платформы')).toEqual(['Жим ногами в тренажёре']);
+    expect(await names('жим платформы')).toEqual(['Жим ногами в тренажере']);
     expect(await names('брусья')).toEqual(['Отжимания на брусьях']);
   });
 
-  it('не различает е и ё', async () => {
+  it('не различает е и е', async () => {
     expect(await names('бабочка в тренажере')).toEqual(['Бабочка']);
   });
 
-  it('своё упражнение показывается, а без группы идёт в конце', async () => {
+  it('свое упражнение показывается, а без группы идет в конце', async () => {
     await findOrCreateExercise('Армрестлинг');
 
     expect((await names('')).at(-1)).toBe('Армрестлинг');
@@ -642,9 +642,9 @@ describe('поиск упражнений', () => {
   });
 
   it('использованное упражнение находится и по старому названию', async () => {
-    await findOrCreateExercise('Жим ногами в тренажёре', 'Ноги');
+    await findOrCreateExercise('Жим ногами в тренажере', 'Ноги');
 
-    expect(await names('жим платформы')).toEqual(['Жим ногами в тренажёре']);
+    expect(await names('жим платформы')).toEqual(['Жим ногами в тренажере']);
   });
 
   it('точное совпадение учитывает другие названия', async () => {

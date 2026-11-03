@@ -34,7 +34,7 @@ export function movingAverage(weights: BodyWeight[]): ChartDatum[] {
   });
 }
 
-// Изменение тренда за N дней. Берётся ближайшая запись не позже чем N дней назад.
+// Изменение тренда за N дней. Берется ближайшая запись не позже чем N дней назад.
 export function trendChange(trend: ChartDatum[], days: number): number | undefined {
   const last = trend.at(-1);
   const earlier = [...trend].reverse().find((item) => last && daysBetween(item.date, last.date) >= days);

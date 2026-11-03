@@ -23,7 +23,7 @@ const state = (workouts: Workout[], id: string, goal = false) =>
 
 describe('уровни', () => {
   it('определяет уровень и остаток до следующего', () => {
-    expect(strengthLevel('Жим лёжа', 100, 80, 'male')).toEqual({
+    expect(strengthLevel('Жим лежа', 100, 80, 'male')).toEqual({
       level: 'intermediate',
       next: 'advanced',
       missingKg: 40,
@@ -31,11 +31,11 @@ describe('уровни', () => {
   });
 
   it('ниже первого порога уровня нет', () => {
-    expect(strengthLevel('Жим лёжа', 30, 80, 'male')?.level).toBeUndefined();
+    expect(strengthLevel('Жим лежа', 30, 80, 'male')?.level).toBeUndefined();
   });
 
   it('на верхнем уровне следующего нет', () => {
-    expect(strengthLevel('Жим лёжа', 200, 80, 'male')).toEqual({ level: 'elite', next: undefined, missingKg: undefined });
+    expect(strengthLevel('Жим лежа', 200, 80, 'male')).toEqual({ level: 'elite', next: undefined, missingKg: undefined });
   });
 
   it('упражнения без таблицы не получают уровень', () => {
@@ -43,7 +43,7 @@ describe('уровни', () => {
   });
 
   it('для женщин пороги ниже', () => {
-    expect(strengthLevel('Жим лёжа', 60, 80, 'female')?.level).toBe('beginner');
+    expect(strengthLevel('Жим лежа', 60, 80, 'female')?.level).toBe('beginner');
   });
 });
 
@@ -60,7 +60,7 @@ describe('ачивки', () => {
     expect(state([workout('2026-11-01'), workout('2026-11-02')], 'month10')).toMatchObject({ value: 2, target: 10, count: 0 });
   });
 
-  it('разовая выдаётся один раз', () => {
+  it('разовая выдается один раз', () => {
     const many = Array.from({ length: 12 }, () => workout('2026-10-01'));
 
     expect(state(many, 'total10')?.count).toBe(1);

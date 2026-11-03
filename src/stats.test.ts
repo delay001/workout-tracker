@@ -47,11 +47,11 @@ describe('статистика месяца', () => {
     expect(monthStats(workouts, 2026, 10, 2)).toMatchObject({ count: 4, tonnage: 2500 });
   });
 
-  it('пустой месяц даёт нули', () => {
+  it('пустой месяц дает нули', () => {
     expect(monthStats(workouts, 2026, 0)).toMatchObject({ count: 0, tonnage: 0, byType: [] });
   });
 
-  it('тоннаж по месяцам идёт по порядку и через границу года', () => {
+  it('тоннаж по месяцам идет по порядку и через границу года', () => {
     expect(monthlyTonnage([workout('2025-12-05', 'upper', [set(10, 10)])], 2026, 0, 2)).toEqual([
       { date: '2025-12-01', value: 100 },
       { date: '2026-01-01', value: 0 },

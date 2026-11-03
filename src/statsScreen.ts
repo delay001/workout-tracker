@@ -60,7 +60,7 @@ export function goalBar(count: number, goal: number): HTMLElement {
   );
 }
 
-// Сводка за всё время, открывается с главного экрана
+// Сводка за все время, открывается с главного экрана
 export async function renderTotalsScreen(root: HTMLElement, onBack: () => void): Promise<void> {
   const workouts = await getFinishedWorkouts();
   const minutes = workouts.reduce((sum, workout) => sum + (workout.durationMin ?? 0), 0);
@@ -126,7 +126,7 @@ export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () =>
   await showView();
 }
 
-// Расчёты, ачивки и итоги открываются на всю вкладку, а не под шапкой статистики
+// Расчеты, ачивки и итоги открываются на всю вкладку, а не под шапкой статистики
 async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSettings: () => void): Promise<void> {
   const back = (): void => void renderStatsScreen(page, onOpenSettings);
   const workouts = await getFinishedWorkouts();

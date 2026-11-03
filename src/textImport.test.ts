@@ -57,7 +57,7 @@ describe('разбор текста', () => {
         note: 'хорошо пошло',
         entries: [
           { name: 'Элипс', sets: [{ weight: 0, reps: 0, warmup: false, minutes: 7 }] },
-          { name: 'Жим лёжа', sets: Array(2).fill({ weight: 100, reps: 3, warmup: false }) },
+          { name: 'Жим лежа', sets: Array(2).fill({ weight: 100, reps: 3, warmup: false }) },
           { name: 'Подтягивания', sets: [{ weight: 0, reps: 5, warmup: false }] },
         ],
       },
@@ -70,7 +70,7 @@ describe('разбор текста', () => {
     expect(workouts.map((workout) => workout.type)).toEqual(['lower', 'upper']);
   });
 
-  it('без года берёт последнюю прошедшую дату', async () => {
+  it('без года берет последнюю прошедшую дату', async () => {
     const { workouts } = await parse('Верх 01.03\nМолотки 20кг 8 на 1\nВерх 20.12\nМолотки 20кг 8 на 1');
 
     expect(workouts.map((workout) => workout.date)).toEqual(['2026-03-01', '2025-12-20']);
@@ -93,7 +93,7 @@ describe('разбор текста', () => {
 describe('добавление в историю', () => {
   const text = 'Верх 01.03\nМолотки 20кг 8 на 1\nМолотки 22кг 8 на 1\nЖим лежа 100кг 3 на 1';
 
-  it('создаёт завершённую тренировку и объединяет повторы упражнения', async () => {
+  it('создает завершенную тренировку и объединяет повторы упражнения', async () => {
     const { workouts } = parseWorkoutsText(text, await getNameKeys(), TODAY);
 
     expect(await importParsedWorkouts(workouts)).toBe(1);
@@ -106,7 +106,7 @@ describe('добавление в историю', () => {
     expect(hammers?.muscleGroup).toBe('Бицепс');
   });
 
-  it('повторный импорт не создаёт дублей', async () => {
+  it('повторный импорт не создает дублей', async () => {
     const { workouts } = parseWorkoutsText(text, await getNameKeys(), TODAY);
 
     await importParsedWorkouts(workouts);

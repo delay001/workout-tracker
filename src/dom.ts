@@ -1,6 +1,6 @@
 import { t } from './i18n';
 
-// Создаёт элемент. Текст вставляется как текст, поэтому название упражнения не сломает страницу.
+// Создает элемент. Текст вставляется как текст, поэтому название упражнения не сломает страницу.
 export function h<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   props: Partial<HTMLElementTagNameMap[K]> = {},
@@ -25,7 +25,7 @@ export function showToast(text: string): void {
   setTimeout(() => toast.remove(), 4000);
 }
 
-// Своё окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют
+// Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют
 export function confirmDialog(text: string): Promise<boolean> {
   return new Promise((resolve) => {
     const close = (answer: boolean): void => {

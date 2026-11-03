@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bodyMassIndex, estimateOneRepMax, navyBodyFat } from './formulas';
 
-describe('расчёт 1ПМ', () => {
+describe('расчет 1ПМ', () => {
   it('считает три формулы и среднее', () => {
     const result = estimateOneRepMax(100, 5);
 
@@ -17,7 +17,7 @@ describe('расчёт 1ПМ', () => {
 });
 
 describe('ИМТ', () => {
-  it('совпадает с ручным расчётом', () => {
+  it('совпадает с ручным расчетом', () => {
     expect(bodyMassIndex(80, 180)).toBe(24.7);
   });
 });
@@ -27,7 +27,7 @@ describe('процент жира', () => {
     expect(navyBodyFat('male', 180, 85, 40)).toBe(14.5);
   });
 
-  it('женской формуле нужны бёдра', () => {
+  it('женской формуле нужны бедра', () => {
     expect(navyBodyFat('female', 165, 70, 33)).toBeUndefined();
     expect(navyBodyFat('female', 165, 70, 33, 98)).toBe(25.9);
   });

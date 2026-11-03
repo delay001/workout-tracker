@@ -122,7 +122,7 @@ describe('график', () => {
     expect(points[1].x).toBe(10);
   });
 
-  it('одна запись не ломает расчёт', () => {
+  it('одна запись не ломает расчет', () => {
     const [point] = chartPoints([{ date: '2026-10-01', value: 80 }], BOX);
 
     expect(Number.isFinite(point.x) && Number.isFinite(point.y)).toBe(true);

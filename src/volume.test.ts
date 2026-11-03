@@ -33,7 +33,7 @@ const bench: Exercise = {
 };
 const row: Exercise = { id: 2, name: 'Тяга', nameKey: 'тяга', primaryMuscle: 'lats', movement: 'pull' };
 
-describe('объём', () => {
+describe('объем', () => {
   it('основная мышца — 1, вспомогательная — 0,5, разминка не считается', () => {
     const workouts = [
       workout('2026-11-03', 'upper', [[1, 4]]),
@@ -53,7 +53,7 @@ describe('объём', () => {
   });
 
   it('упражнение без разметки не считается', () => {
-    const plain: Exercise = { id: 3, name: 'Своё', nameKey: 'своё' };
+    const plain: Exercise = { id: 3, name: 'Свое', nameKey: 'свое' };
 
     expect(muscleVolume([workout('2026-11-03', 'upper', [[3, 4]])], [plain], '2026-11-02', '2026-11-08').chest).toBe(0);
   });

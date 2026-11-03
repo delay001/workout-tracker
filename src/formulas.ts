@@ -25,7 +25,7 @@ export function bodyMassIndex(kg: number, heightCm: number): number {
   return round(kg / (heightCm / 100) ** 2);
 }
 
-// Формула ВМС США. Женщинам нужен ещё обхват бёдер.
+// Формула ВМС США. Женщинам нужен еще обхват бедер.
 export function navyBodyFat(
   sex: Sex,
   heightCm: number,

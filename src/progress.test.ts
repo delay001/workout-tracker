@@ -35,7 +35,7 @@ const history = [
 ];
 
 describe('ряды для графиков', () => {
-  it('1ПМ берёт лучший рабочий подход и идёт от старых дат к новым', () => {
+  it('1ПМ берет лучший рабочий подход и идет от старых дат к новым', () => {
     expect(oneRepMaxSeries(history)).toEqual([
       { date: '2026-10-01', value: 120 },
       { date: '2026-11-01', value: 120 },
@@ -46,7 +46,7 @@ describe('ряды для графиков', () => {
     expect(oneRepMaxSeries([{ date: '2026-10-01', sets: [set(50, 20)] }])).toEqual([]);
   });
 
-  it('вес берётся по лучшему подходу без разминочных', () => {
+  it('вес берется по лучшему подходу без разминочных', () => {
     expect(workingWeightSeries(history).map((point) => point.value)).toEqual([120, 90]);
   });
 
@@ -78,7 +78,7 @@ describe('периоды', () => {
 });
 
 describe('показатели упражнения', () => {
-  it('совпадают с ручным расчётом', () => {
+  it('совпадают с ручным расчетом', () => {
     expect(exerciseSummary(history, TODAY)).toEqual({
       times: 2,
       lastDate: '2026-11-01',
@@ -109,7 +109,7 @@ describe('показатели упражнения', () => {
     expect(summary.fromPeak).toBeUndefined();
   });
 
-  it('пустая история не ломает расчёт', () => {
+  it('пустая история не ломает расчет', () => {
     expect(exerciseSummary([], TODAY)).toMatchObject({ times: 0, maxTonnage: 0 });
   });
 });
@@ -142,7 +142,7 @@ describe('давно не делал', () => {
     ]);
   });
 
-  it('не напоминает об упражнениях, сделанных меньше трёх раз', () => {
+  it('не напоминает об упражнениях, сделанных меньше трех раз', () => {
     const workouts = [workout('2025-01-01', [1]), workout('2025-02-01', [1])];
 
     expect(overdueExercises(workouts, 21, TODAY)).toEqual([]);
@@ -169,7 +169,7 @@ describe('общая статистика', () => {
     });
   });
 
-  it('топ упражнений идёт по частоте', () => {
+  it('топ упражнений идет по частоте', () => {
     const workouts = [workout('2026-11-01', [1, 2]), workout('2026-11-02', [2]), workout('2026-11-03', [3])];
 
     expect(topExercises(workouts, 2)).toEqual([

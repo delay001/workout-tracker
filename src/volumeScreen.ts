@@ -103,7 +103,7 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
   const lastWeek = shiftDays(thisWeek, -7);
   const maxRatio = Number(await getSetting('balanceRatio')) || 3;
 
-  // «Всё время» — среднее по всем прошедшим неделям, начиная с недели первой тренировки
+  // «Все время» — среднее по всем прошедшим неделям, начиная с недели первой тренировки
   const firstWeek = weekStart(workouts[workouts.length - 1]?.date ?? today);
   const allWeeks = Math.max(1, Math.round((Date.parse(lastWeek) - Date.parse(firstWeek)) / (7 * 86_400_000)) + 1);
   const spans: Record<Span, { from: string; volume: () => Volume }> = {

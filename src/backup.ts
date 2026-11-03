@@ -109,7 +109,7 @@ export function parseBackup(text: string): Backup {
     throw new Error(t('backup.badData'));
   }
 
-  // В копиях старых версий этих разделов ещё не было
+  // В копиях старых версий этих разделов еще не было
   const workoutTypes = data.workoutTypes ?? [];
   const settings = data.settings ?? [];
   const templates = data.templates ?? [];

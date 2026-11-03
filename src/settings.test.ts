@@ -13,7 +13,7 @@ describe('темы', () => {
     expect(resolveTheme('dark', false)).toBe('dark');
   });
 
-  it('по умолчанию тёмная тема и розовый акцент', () => {
+  it('по умолчанию темная тема и розовый акцент', () => {
     expect(parseTheme('')).toBe('dark');
     expect(parseAccent('')).toBe('pink');
     expect(parseAccent('неизвестный')).toBe('pink');

@@ -10,7 +10,7 @@ import { formatWeight, fromWeight, toWeight, weightUnit } from './units';
 import { bestSet, getExerciseHistory } from './workouts';
 
 export async function renderCalcScreen(root: HTMLElement, onBack: () => void): Promise<void> {
-  const bench = await db.exercises.where('nameKey').equals('жим лёжа').first();
+  const bench = await db.exercises.where('nameKey').equals('жим лежа').first();
   const benchSets = bench ? (await getExerciseHistory(bench.id)).flatMap((entry) => entry.sets) : [];
   const best = bestSet(benchSets);
 

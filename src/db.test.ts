@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db, findOrCreateExercise, requestPersistentStorage, saveWorkout } from './db';
+import { db, findOrCreateExercise, replaceYo, requestPersistentStorage, saveWorkout } from './db';
 
 beforeEach(async () => {
   await db.exercises.clear();
@@ -12,21 +12,44 @@ afterEach(() => {
 });
 
 describe('упражнения', () => {
-  it('создаёт новое упражнение с группой мышц', async () => {
-    const exercise = await findOrCreateExercise('Жим лёжа', 'Грудь');
+  it('создает новое упражнение с группой мышц', async () => {
+    const exercise = await findOrCreateExercise('Жим лежа', 'Грудь');
 
     expect(await db.exercises.get(exercise.id)).toMatchObject({
-      name: 'Жим лёжа',
+      name: 'Жим лежа',
       muscleGroup: 'Грудь',
     });
   });
 
-  it('не создаёт дубль, если отличаются только регистр и пробелы', async () => {
-    const first = await findOrCreateExercise('Жим лёжа');
-    const second = await findOrCreateExercise('  жим ЛЁЖА ');
+  it('не создает дубль, если отличаются только регистр и пробелы', async () => {
+    const first = await findOrCreateExercise('Жим лежа');
+    const second = await findOrCreateExercise('  жим ЛЕЖА ');
 
     expect(second.id).toBe(first.id);
     expect(await db.exercises.count()).toBe(1);
+  });
+
+  it('убирает «ё» из нового названия', async () => {
+    expect((await findOrCreateExercise('Жим лёжа')).name).toBe('Жим лежа');
+  });
+
+  it('переписывает старые названия с «ё» и сливает дубль с историей', async () => {
+    const old = await db.exercises.add({ name: 'Жим лёжа', nameKey: 'жим лёжа' });
+    const same = await db.exercises.add({ name: 'Жим лежа', nameKey: 'жим лежа', hidden: true });
+    const alone = await db.exercises.add({ name: 'Бицепс в тренажёре', nameKey: 'бицепс в тренажёре' });
+    const id = await saveWorkout({
+      date: '2026-11-02',
+      type: 'upper',
+      status: 'finished',
+      exercises: [{ exerciseId: old, sets: [{ weight: 100, reps: 5, warmup: false }] }],
+    });
+
+    await replaceYo();
+
+    expect(await db.exercises.get(old)).toBeUndefined();
+    expect(await db.exercises.get(same)).toMatchObject({ hidden: false });
+    expect(await db.exercises.get(alone)).toMatchObject({ name: 'Бицепс в тренажере', nameKey: 'бицепс в тренажере' });
+    expect(await db.workouts.get(id)).toMatchObject({ exerciseIds: [same], exercises: [{ exerciseId: same }] });
   });
 
   it('не принимает пустое название', async () => {
@@ -91,7 +114,7 @@ describe('тренировки', () => {
     expect(found[0].exerciseIds).toEqual([1, 2]);
   });
 
-  it('при повторном сохранении обновляет, а не создаёт новую', async () => {
+  it('при повторном сохранении обновляет, а не создает новую', async () => {
     const base = { date: '2026-11-02', type: 'other', status: 'active', exercises: [] } as const;
     const id = await saveWorkout({ ...base, exercises: [] });
 

@@ -73,7 +73,7 @@ export interface ExerciseSummary {
   lastDate?: string;
   bestOneRepMax?: number;
   currentOneRepMax?: number;
-  // Текущий 1ПМ в процентах от лучшего за всё время
+  // Текущий 1ПМ в процентах от лучшего за все время
   fromPeak?: number;
   maxTonnage: number;
 }

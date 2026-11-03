@@ -36,7 +36,7 @@ function day(date: string): number {
   return new Date(`${date}T00:00:00Z`).getTime();
 }
 
-// Координаты на графике: ось X идёт по датам, поэтому пропуски между записями видны
+// Координаты на графике: ось X идет по датам, поэтому пропуски между записями видны
 export function chartPoints(data: ChartDatum[], box: ChartBox): ChartPoint[] {
   if (data.length === 0) {
     return [];

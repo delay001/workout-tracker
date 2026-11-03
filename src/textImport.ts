@@ -86,7 +86,7 @@ function workoutType(title: string): string {
   return ['верх', 'грудь', 'спина', 'плечи'].includes(key) ? 'upper' : 'other';
 }
 
-// Без года берётся последняя такая дата не позже сегодняшней
+// Без года берется последняя такая дата не позже сегодняшней
 function fullDate(day: string, month: string, year: string | undefined, today: string): string {
   const pad = (value: string): string => value.padStart(2, '0');
   if (year) {

@@ -20,7 +20,7 @@ const round = (value: number, digits: number): number => {
   return Math.round(value * scale) / scale;
 };
 
-// В базе вес всегда в кг, а длина в см. Пересчёт только при показе и вводе.
+// В базе вес всегда в кг, а длина в см. Пересчет только при показе и вводе.
 export function toWeight(kg: number): number {
   return units === 'imperial' ? round(kg * LB_IN_KG, 1) : kg;
 }

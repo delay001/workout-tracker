@@ -18,7 +18,7 @@ describe('справочник мышц', () => {
     }
   });
 
-  it('размечено каждое упражнение каталога, вспомогательных не больше трёх', () => {
+  it('размечено каждое упражнение каталога, вспомогательных не больше трех', () => {
     for (const { name } of CATALOG) {
       const markup = CATALOG_MARKUP[name];
 
@@ -37,12 +37,12 @@ describe('справочник мышц', () => {
 
 describe('разметка упражнений', () => {
   it('новое упражнение из каталога сразу размечено', async () => {
-    const { id } = await findOrCreateExercise('Жим лёжа', 'Грудь');
+    const { id } = await findOrCreateExercise('Жим лежа', 'Грудь');
 
     expect(await db.exercises.get(id)).toMatchObject({ primaryMuscle: 'chest', movement: 'push' });
   });
 
-  it('своё упражнение остаётся без разметки', async () => {
+  it('свое упражнение остается без разметки', async () => {
     const { id } = await findOrCreateExercise('Армрестлинг');
 
     expect((await db.exercises.get(id))?.primaryMuscle).toBeUndefined();

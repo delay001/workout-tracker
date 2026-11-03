@@ -30,21 +30,21 @@ const mark = (primaryMuscle: Muscle, movement: Movement, ...secondaryMuscles: Mu
   movement,
 });
 
-// Разметка упражнений каталога: основная мышца, тип движения, вспомогательные мышцы (до трёх)
+// Разметка упражнений каталога: основная мышца, тип движения, вспомогательные мышцы (до трех)
 export const CATALOG_MARKUP: Record<string, MuscleMarkup> = {
-  'Жим лёжа': mark('chest', 'push', 'triceps', 'frontDelt'),
+  'Жим лежа': mark('chest', 'push', 'triceps', 'frontDelt'),
   'Жим гантелей под 45': mark('chest', 'push', 'frontDelt', 'triceps'),
   'Жим гантелей под 30–35': mark('chest', 'push', 'frontDelt', 'triceps'),
-  'Жим под 45 в тренажёре': mark('chest', 'push', 'frontDelt', 'triceps'),
+  'Жим под 45 в тренажере': mark('chest', 'push', 'frontDelt', 'triceps'),
   'Жим под 35 в Хамере': mark('chest', 'push', 'frontDelt', 'triceps'),
   Бабочка: mark('chest', 'push', 'frontDelt'),
 
   'Тяга верхнего блока': mark('lats', 'pull', 'biceps', 'rearDelt'),
-  'Верхняя тяга в тренажёре': mark('lats', 'pull', 'biceps', 'rearDelt'),
+  'Верхняя тяга в тренажере': mark('lats', 'pull', 'biceps', 'rearDelt'),
   'Вертикальная тяга в Хамере': mark('lats', 'pull', 'biceps', 'rearDelt'),
   'Тяга горизонтального блока': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
-  'Гребная тяга в тренажёре одной рукой': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
-  'Гребная тяга в тренажёре двумя руками': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
+  'Гребная тяга в тренажере одной рукой': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
+  'Гребная тяга в тренажере двумя руками': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
   'Гребная тяга в Хамере': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
   'Тяга штанги в наклоне': mark('lats', 'pull', 'traps', 'biceps', 'hamstrings'),
   'Тяга Йейтса': mark('lats', 'pull', 'traps', 'biceps', 'rearDelt'),
@@ -59,7 +59,7 @@ export const CATALOG_MARKUP: Record<string, MuscleMarkup> = {
   Гиперэкстензия: mark('hamstrings', 'pull', 'glutes'),
 
   'Махи гантелей в сторону': mark('sideDelt', 'other', 'traps'),
-  'Дельты в тренажёре': mark('sideDelt', 'other', 'traps'),
+  'Дельты в тренажере': mark('sideDelt', 'other', 'traps'),
   'Протяжка на плечи': mark('sideDelt', 'pull', 'traps', 'biceps'),
   'Жим гантелей сидя': mark('frontDelt', 'push', 'sideDelt', 'triceps'),
   'Жим штанги стоя': mark('frontDelt', 'push', 'sideDelt', 'triceps'),
@@ -68,10 +68,10 @@ export const CATALOG_MARKUP: Record<string, MuscleMarkup> = {
 
   'Супинация на бицепс': mark('biceps', 'pull', 'forearms'),
   Молотки: mark('biceps', 'pull', 'forearms'),
-  'Подъём штанги на бицепс': mark('biceps', 'pull', 'forearms'),
-  'Подъём на бицепс обратным хватом': mark('biceps', 'pull', 'forearms'),
-  'Подъём EZ-грифа на бицепс': mark('biceps', 'pull', 'forearms'),
-  'Бицепс в тренажёре': mark('biceps', 'pull'),
+  'Подъем штанги на бицепс': mark('biceps', 'pull', 'forearms'),
+  'Подъем на бицепс обратным хватом': mark('biceps', 'pull', 'forearms'),
+  'Подъем EZ-грифа на бицепс': mark('biceps', 'pull', 'forearms'),
+  'Бицепс в тренажере': mark('biceps', 'pull'),
 
   'Жим блока на трицепс': mark('triceps', 'push'),
   'Разгибания сидя на трицепс': mark('triceps', 'push'),
@@ -84,13 +84,13 @@ export const CATALOG_MARKUP: Record<string, MuscleMarkup> = {
   'Разгибание ног сидя': mark('quads', 'push'),
   'Разгибание ног одной ногой': mark('quads', 'push'),
   'Сгибание ног сидя': mark('hamstrings', 'pull'),
-  'Сгибание ног лёжа': mark('hamstrings', 'pull'),
-  'Жим ногами в тренажёре': mark('quads', 'push', 'glutes', 'hamstrings'),
+  'Сгибание ног лежа': mark('hamstrings', 'pull'),
+  'Жим ногами в тренажере': mark('quads', 'push', 'glutes', 'hamstrings'),
   'Румынская тяга': mark('hamstrings', 'pull', 'glutes', 'traps'),
   'Румынская тяга в Смите': mark('hamstrings', 'pull', 'glutes', 'traps'),
-  'Подъём на носки стоя': mark('calves', 'push'),
-  'Подъём на носки сидя': mark('calves', 'push'),
-  'Разведение ног в тренажёре': mark('glutes', 'other'),
+  'Подъем на носки стоя': mark('calves', 'push'),
+  'Подъем на носки сидя': mark('calves', 'push'),
+  'Разведение ног в тренажере': mark('glutes', 'other'),
 
   Элипс: mark('quads', 'other'),
   Лестница: mark('quads', 'other'),

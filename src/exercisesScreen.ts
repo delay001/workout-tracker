@@ -27,6 +27,7 @@ import {
   getExerciseHistory,
   getUsedExercises,
   isCardio,
+  normalize,
   type BestResult,
   type LastPerformance,
   type UsedExercise,
@@ -46,7 +47,7 @@ const METRICS: Record<Metric, (history: LastPerformance[]) => ChartDatum[]> = {
 let shownMetric: Metric = 'weight';
 let shownPeriod: Period = 'all';
 
-// В подтягиваниях поднимается вес тела, поэтому он входит в расчёт 1ПМ
+// В подтягиваниях поднимается вес тела, поэтому он входит в расчет 1ПМ
 function pullUpOneRepMax(history: LastPerformance[], bodyKg: number): number | undefined {
   const values = history
     .flatMap((entry) => entry.sets)
@@ -93,10 +94,10 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     });
 
     function showItems(): void {
-      const query = search.value.trim().toLowerCase();
+      const query = normalize(search.value);
       const items: HTMLElement[] = [];
       let lastGroup: string | undefined;
-      for (const { exercise, best } of used.filter((item) => item.exercise.name.toLowerCase().includes(query))) {
+      for (const { exercise, best } of used.filter((item) => normalize(item.exercise.name).includes(query))) {
         const group = exercise.muscleGroup ?? t('common.noGroup');
         if (group !== lastGroup) {
           items.push(h('h2', { className: 'group-heading' }, group));

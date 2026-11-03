@@ -64,7 +64,7 @@ export async function renderWorkoutScreen(
   let workout = startedWorkout;
   const workoutTypes = await getWorkoutTypes();
   const weightStep = await getWeightStep();
-  // Завершённая тренировка открыта из истории: изменения в ней сохраняются сразу же
+  // Завершенная тренировка открыта из истории: изменения в ней сохраняются сразу же
   const isEditing = startedWorkout.status === 'finished';
   const nextExercise =
     workout.exercises.find((item) => item.sets.length === 0) ?? workout.exercises.at(-1);
@@ -321,7 +321,7 @@ export async function renderWorkoutScreen(
       {
         type: 'button',
         className: 'button button-secondary bottom-action',
-        // Пустая тренировка при завершении удаляется, поэтому завершённую спрашиваем
+        // Пустая тренировка при завершении удаляется, поэтому завершенную спрашиваем
         onclick: async () => {
           const hasSets = workout.exercises.some((item) => item.sets.length > 0);
           if (isEditing && !hasSets && !(await confirmDialog(t('workout.emptyDeleted')))) {
@@ -350,7 +350,7 @@ export async function renderWorkoutScreen(
               { type: 'button', className: 'button button-secondary', onclick: showFinish },
               t('workout.finish'),
             ),
-            // Тренировка остаётся активной, вернуться можно с вкладки «Тренировка»
+            // Тренировка остается активной, вернуться можно с вкладки «Тренировка»
             h('button', { type: 'button', className: 'button button-secondary', onclick: onClosed }, t('common.back')),
           ]
         : [backButton];

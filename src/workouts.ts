@@ -2,6 +2,7 @@ import { CARDIO_GROUP, CATALOG, MUSCLE_GROUPS } from './catalog';
 import {
   db,
   findOrCreateExercise,
+  withoutYo,
   saveWorkout,
   type Exercise,
   type Workout,
@@ -85,7 +86,7 @@ export async function getActiveWorkout(): Promise<Workout | undefined> {
   return db.workouts.where('status').equals('active').first();
 }
 
-// Сначала самые новые: по дате тренировки, а за один день — внесённая позже
+// Сначала самые новые: по дате тренировки, а за один день — внесенная позже
 export async function getFinishedWorkouts(): Promise<Workout[]> {
   const workouts = await db.workouts.where('status').equals('finished').toArray();
   return workouts.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
@@ -102,9 +103,9 @@ export async function startWorkout(date: string, type: WorkoutType): Promise<voi
   await saveWorkout({ date, type, status: 'active', exercises: [] });
 }
 
-// «Жим лежа» и «жим лёжа» при поиске считаются одним и тем же
+// «Жим лежа» и «жим лежа» при поиске считаются одним и тем же
 export function normalize(text: string): string {
-  return text.trim().toLowerCase().replaceAll('ё', 'е');
+  return withoutYo(text.trim().toLowerCase());
 }
 
 function groupRank(group?: string): number {
@@ -175,13 +176,13 @@ export async function setExerciseHidden(exerciseId: number, hidden: boolean): Pr
   await db.exercises.update(exerciseId, { hidden });
 }
 
-// История привязана к упражнению, а не к названию, поэтому переименование её не теряет
+// История привязана к упражнению, а не к названию, поэтому переименование ее не теряет
 export async function updateExercise(
   exercise: Exercise,
   name: string,
   muscleGroup?: string,
 ): Promise<void> {
-  const cleanName = name.trim();
+  const cleanName = withoutYo(name.trim());
   const nameKey = cleanName.toLowerCase();
   if (!cleanName) {
     throw new Error(t('exercise.emptyName'));
@@ -243,8 +244,8 @@ export async function removeExercise(workout: Workout, exerciseId: number): Prom
   await saveWorkout({ ...workout, exercises });
 }
 
-// Последняя завершённая тренировка с этим упражнением, не позже даты текущей.
-// Так тренировка, внесённая задним числом, сравнивается с тем, что было до неё.
+// Последняя завершенная тренировка с этим упражнением, не позже даты текущей.
+// Так тренировка, внесенная задним числом, сравнивается с тем, что было до нее.
 export async function getLastPerformance(
   exerciseId: number,
   workout: Workout,
@@ -272,7 +273,7 @@ export function bestSet(sets: WorkoutSet[]): WorkoutSet | undefined {
   );
 }
 
-// Расчётный 1ПМ по формуле Эпли. Считается только по подходам до 12 повторений с весом.
+// Расчетный 1ПМ по формуле Эпли. Считается только по подходам до 12 повторений с весом.
 export function oneRepMax(set: WorkoutSet): number | undefined {
   if (set.weight === 0 || set.reps > 12) {
     return undefined;
@@ -280,7 +281,7 @@ export function oneRepMax(set: WorkoutSet): number | undefined {
   return set.reps === 1 ? set.weight : set.weight * (1 + set.reps / 30);
 }
 
-// Рабочие подходы упражнения из завершённых тренировок не позже этой
+// Рабочие подходы упражнения из завершенных тренировок не позже этой
 export async function getPriorSets(exerciseId: number, workout: Workout): Promise<WorkoutSet[]> {
   const candidates = await db.workouts.where('exerciseIds').equals(exerciseId).toArray();
   return candidates
@@ -291,7 +292,7 @@ export async function getPriorSets(exerciseId: number, workout: Workout): Promis
     .filter((set) => !set.warmup);
 }
 
-// Какие рекорды бьёт подход по сравнению с уже сделанными
+// Какие рекорды бьет подход по сравнению с уже сделанными
 function recordKinds(set: WorkoutSet, seen: WorkoutSet[]): string[] {
   const sameOrMoreReps = seen.filter((old) => old.reps >= set.reps).map((old) => old.weight);
   const sameWeight = seen.filter((old) => old.weight === set.weight).map((old) => old.reps);
@@ -330,7 +331,7 @@ export function formatSet(set: WorkoutSet): string {
   return `${toWeight(set.weight)} × ${set.reps}${marks.length > 0 ? ` (${marks.join(', ')})` : ''}`;
 }
 
-// Все подходы упражнения по завершённым тренировкам, новые сверху
+// Все подходы упражнения по завершенным тренировкам, новые сверху
 export async function getExerciseHistory(exerciseId: number): Promise<LastPerformance[]> {
   const workouts = await getFinishedWorkouts();
   return workouts.flatMap((workout) =>
@@ -340,7 +341,7 @@ export async function getExerciseHistory(exerciseId: number): Promise<LastPerfor
   );
 }
 
-// Лучший подход за всё время и дата, когда он был сделан впервые
+// Лучший подход за все время и дата, когда он был сделан впервые
 export function bestResult(history: LastPerformance[]): BestResult | undefined {
   const oldestFirst = [...history].reverse();
   const set = bestSet(oldestFirst.flatMap((entry) => entry.sets));
@@ -348,7 +349,7 @@ export function bestResult(history: LastPerformance[]): BestResult | undefined {
   return set && date ? { set, date } : undefined;
 }
 
-// Упражнения из завершённых тренировок с лучшим результатом: по группам мышц, затем по алфавиту
+// Упражнения из завершенных тренировок с лучшим результатом: по группам мышц, затем по алфавиту
 export async function getUsedExercises(): Promise<UsedExercise[]> {
   const workouts = await getFinishedWorkouts();
   const ids = [...new Set(workouts.flatMap((workout) => workout.exerciseIds))];
@@ -398,7 +399,7 @@ export async function removeSet(workout: Workout, exerciseId: number, setIndex: 
   await saveWorkout({ ...workout, exercises });
 }
 
-// Упражнения без подходов не сохраняются. Тренировка без подходов удаляется, тогда вернётся false.
+// Упражнения без подходов не сохраняются. Тренировка без подходов удаляется, тогда вернется false.
 export async function finishWorkout(
   workout: Workout,
   details: Partial<Pick<Workout, 'date' | 'type' | 'durationMin' | 'rating' | 'note'>>,

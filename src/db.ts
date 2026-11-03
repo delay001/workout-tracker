@@ -9,11 +9,11 @@ export type WorkoutStatus = 'active' | 'finished';
 export interface Exercise {
   id: number;
   name: string;
-  // Название в нижнем регистре: «Жим лёжа» и «жим лёжа» — одно упражнение
+  // Название в нижнем регистре: «Жим лежа» и «жим лежа» — одно упражнение
   nameKey: string;
   muscleGroup?: string;
   note?: string;
-  // Скрытое упражнение не предлагается при выборе, но остаётся в истории
+  // Скрытое упражнение не предлагается при выборе, но остается в истории
   hidden?: boolean;
   primaryMuscle?: Muscle;
   secondaryMuscles?: Muscle[];
@@ -93,8 +93,13 @@ db.version(2).stores({ workoutTypes: 'name' });
 db.version(3).stores({ settings: 'key', templates: 'type', bodyWeights: 'date' });
 db.version(4).stores({ measurements: 'date' });
 
+// В русском «е» вместо «е» пишут почти всегда, поэтому названия хранятся без «е»
+export function withoutYo(text: string): string {
+  return text.replaceAll('\u0451', '\u0435').replaceAll('\u0401', '\u0415');
+}
+
 export async function findOrCreateExercise(name: string, muscleGroup?: string): Promise<Exercise> {
-  const cleanName = name.trim();
+  const cleanName = withoutYo(name.trim());
   if (!cleanName) {
     throw new Error(t('exercise.emptyName'));
   }
@@ -114,8 +119,47 @@ export async function findOrCreateExercise(name: string, muscleGroup?: string): 
   return { ...exercise, id };
 }
 
+// Старые названия с «е» переписываются через «е». Если такое упражнение уже есть,
+// история переносится на него, а дубль удаляется.
+export async function replaceYo(): Promise<void> {
+  const hasYo = (text: string): boolean => withoutYo(text) !== text;
+  const old = await db.exercises.filter((exercise) => hasYo(exercise.name)).toArray();
+  const templates = (await db.templates.toArray()).filter((template) => template.exerciseNames.some(hasYo));
+  if (old.length === 0 && templates.length === 0) {
+    return;
+  }
+  await db.transaction('rw', db.exercises, db.workouts, db.templates, async () => {
+    for (const exercise of old) {
+      const name = withoutYo(exercise.name);
+      const nameKey = name.toLowerCase();
+      const same = await db.exercises.where('nameKey').equals(nameKey).first();
+      if (!same) {
+        await db.exercises.update(exercise.id, { name, nameKey });
+        continue;
+      }
+      await db.workouts
+        .where('exerciseIds')
+        .equals(exercise.id)
+        .modify((workout) => {
+          workout.exercises = workout.exercises.map((item) =>
+            item.exerciseId === exercise.id ? { ...item, exerciseId: same.id } : item,
+          );
+          workout.exerciseIds = [...new Set(workout.exercises.map((item) => item.exerciseId))];
+        });
+      if (same.hidden && !exercise.hidden) {
+        await db.exercises.update(same.id, { hidden: false });
+      }
+      await db.exercises.delete(exercise.id);
+    }
+    for (const template of templates) {
+      await db.templates.put({ ...template, exerciseNames: template.exerciseNames.map(withoutYo) });
+    }
+  });
+}
+
 // Дополняет упражнения разметкой мышц из каталога. Структура базы не меняется, заполненное не трогается.
 export async function markUpExercises(): Promise<void> {
+  await replaceYo();
   const exercises = await db.exercises.filter((exercise) => !exercise.primaryMuscle).toArray();
   for (const exercise of exercises) {
     const markup = markupFor(exercise.name);
