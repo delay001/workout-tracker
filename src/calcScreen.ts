@@ -30,9 +30,6 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
     }
     const estimate = estimateOneRepMax(kg, count);
     result.replaceChildren(
-      h('p', { className: 'set-row' }, t('calc.epley'), h('span', {}, formatWeight(estimate.epley))),
-      h('p', { className: 'set-row' }, t('calc.brzycki'), h('span', {}, formatWeight(estimate.brzycki))),
-      h('p', { className: 'set-row' }, t('calc.lombardi'), h('span', {}, formatWeight(estimate.lombardi))),
       h('p', { className: 'set-row' }, t('calc.average'), h('strong', {}, formatWeight(estimate.average))),
     );
   }
