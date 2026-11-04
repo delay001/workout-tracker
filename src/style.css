@@ -1396,9 +1396,9 @@ p.set-row {
 }
 
 .measure-inputs input {
-  min-height: 44px;
-  padding: 8px 10px;
-  font-size: 1.125rem;
+  min-height: 36px;
+  padding: 4px 10px;
+  font-size: 1rem;
 }
 
 .set-inputs-3 {
