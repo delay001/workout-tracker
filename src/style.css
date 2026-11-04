@@ -102,6 +102,11 @@ button:active {
   }
 }
 
+/* Спрятанный элемент не показывается, даже если его стиль задает свое отображение (например, у кнопок) */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100dvh;
@@ -1154,10 +1159,6 @@ p.set-row {
   font-variant-numeric: tabular-nums;
   text-align: center;
   width: fit-content;
-}
-
-.stopwatch-laps[hidden] {
-  display: none;
 }
 
 .stopwatch-laps span {
