@@ -185,6 +185,8 @@ export const ru = {
   'settings.groupLook': 'Внешний вид',
   'settings.groupTraining': 'Тренировки',
   'settings.groupData': 'Данные',
+  'settings.storageSafe': '✅ Хранение постоянное: браузер не сотрет данные сам',
+  'settings.storageAtRisk': '⚠️ Хранение не постоянное: браузер может стереть данные при нехватке места. Установите приложение на главный экран и регулярно делайте копию',
   'settings.open': 'Открыть настройки',
   'settings.templates': 'Шаблоны',
 

@@ -258,6 +258,9 @@ export async function renderSettingsScreen(
       return chip;
     };
 
+    // Разрешил ли браузер постоянное хранение: без него данные могут стереться при нехватке места
+    const persisted = (await navigator.storage?.persisted?.()) ?? false;
+
     const link = (label: string, onclick: () => void): HTMLButtonElement =>
       h('button', { type: 'button', className: 'button button-secondary', onclick }, label);
 
@@ -357,6 +360,9 @@ export async function renderSettingsScreen(
       link(t('settings.norms'), () => void showNorms()),
 
       h('h2', {}, t('settings.groupData')),
+      persisted
+        ? h('p', { className: 'hint' }, t('settings.storageSafe'))
+        : h('p', { className: 'error' }, t('settings.storageAtRisk')),
       link(t('import.title'), () => void renderImportScreen(root, () => void showMain())),
       backup,
       link(t('settings.onboarding'), () => void renderOnboarding(root, () => void showMain())),
