@@ -18,7 +18,8 @@ Apk собирает GitHub (`.github/workflows/apk.yml`), подписывая 
    Номер версии = номер запуска сценария (1.0.N); тег — только для запуска и имени релиза.
 4. Ждать в фоне ~4–5 минут (`sleep 270` с `run_in_background`), не опрашивать API GitHub без авторизации — он быстро упирается в лимит.
 5. Проверить файл без API:
-   `curl -sI -L "https://github.com/delay001/workout-tracker/releases/download/<тег>/workout-tracker-1.0.<N>.apk"` → `200` и размер ~3 МБ.
+   `curl -sI -L "https://github.com/delay001/workout-tracker/releases/download/<тег>/workout-tracker-1.0.<N>.apk"` → в ответе есть `Content-Type: application/vnd.android.package-archive` и размер ~3 МБ.
+   Строке `HTTP/1.1 200` не верить: сетевой прокси отвечает «200 Connection established» и на несуществующий файл.
    Номер N не угадывать: если файла нет, открыть страницу Actions «Сборка APK» в браузере и посмотреть номер последнего запуска и его статус.
 6. Дать пользователю прямую ссылку на apk, коротко: что вошло в версию, «ставится поверх, данные сохраняются», что проверить на телефоне.
 
