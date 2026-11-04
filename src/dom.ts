@@ -14,16 +14,43 @@ export function h<K extends keyof HTMLElementTagNameMap>(
 }
 
 // Заметная плашка поверх экрана, которая исчезает сама
-export function showToast(text: string): void {
+function toastStack(): HTMLElement {
   // Несколько плашек подряд встают друг под другом, а не одна поверх другой
   let stack = document.querySelector<HTMLElement>('.toast-stack');
   if (!stack) {
     stack = h('div', { className: 'toast-stack' });
     document.body.append(stack);
   }
+  return stack;
+}
+
+export function showToast(text: string): void {
   const toast = h('div', { className: 'toast', role: 'status' }, text);
-  stack.append(toast);
+  toastStack().append(toast);
   setTimeout(() => toast.remove(), 4000);
+}
+
+// Плашка «Удалено · Отменить» на 5 секунд: нажатие возвращает удаленное
+export function showUndo(text: string, onUndo: () => void | Promise<void>): void {
+  const toast = h(
+    'div',
+    { className: 'toast toast-undo', role: 'status' },
+    text,
+    h(
+      'button',
+      {
+        type: 'button',
+        className: 'toast-action',
+        onclick: () => {
+          toast.remove();
+          void onUndo();
+        },
+      },
+      t('common.undo'),
+    ),
+  );
+  toastStack().append(toast);
+  setTimeout(() => toast.remove(), 5000);
 }
 
 // Первые строки видны сразу, остальные открываются кнопкой

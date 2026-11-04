@@ -16,7 +16,7 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { confetti, confirmDialog, dateField, field, h, requiredMark, showToast } from './dom';
+import { confetti, confirmDialog, dateField, field, h, requiredMark, showToast, showUndo } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -74,6 +74,15 @@ export async function renderWorkoutScreen(
   let currentId = isEditing ? undefined : nextExercise?.exerciseId;
   // Номер подхода текущего упражнения, который сейчас исправляется
   let editedIndex: number | undefined;
+
+  // Отмена удаления: тренировка записывается такой, какой была до него
+  async function restore(before: Workout): Promise<void> {
+    await db.workouts.put(before);
+    // Если уже ушли с экрана тренировки, данные вернулись, а экран не трогаем
+    if (root.isConnected && root.querySelector('.workout-screen')) {
+      await reload();
+    }
+  }
 
   async function reload(): Promise<void> {
     editedIndex = undefined;
@@ -222,8 +231,10 @@ export async function renderWorkoutScreen(
             className: 'remove-button',
             ariaLabel: t('set.delete'),
             onclick: async () => {
+              const before = workout;
               await removeSet(workout, item.exerciseId, index);
               await reload();
+              showUndo(t('undo.set'), () => restore(before));
             },
           },
           '✕',
@@ -251,8 +262,10 @@ export async function renderWorkoutScreen(
           onclick: async () => {
             const question = t('workout.deleteExercise', { name: exercise.name });
             if (item.sets.length === 0 || (await confirmDialog(question))) {
+              const before = workout;
               await removeExercise(workout, item.exerciseId);
               await reload();
+              showUndo(t('undo.exercise', { name: exercise.name }), () => restore(before));
             }
           },
         },
@@ -403,7 +416,7 @@ export async function renderWorkoutScreen(
     root.replaceChildren(
       h(
         'div',
-        { className: 'screen' },
+        { className: 'screen workout-screen' },
         h('h1', {}, `${workoutTypeName(workout.type)}, ${formatDate(workout.date)}`),
         ...(isEditing ? [] : [stopwatchBar(workout.id)]),
         ...(isEditing && details ? [h('p', { className: 'hint' }, details)] : []),
@@ -668,8 +681,14 @@ export async function renderWorkoutScreen(
                   className: 'button button-danger',
                   onclick: async () => {
                     if (await confirmDialog(t('workout.deleteConfirm', { date: formatDate(workout.date) }))) {
+                      const before = workout;
                       await deleteWorkout(workout.id);
                       onClosed();
+                      // Тренировка возвращается в историю; экран истории перерисовывается заново
+                      showUndo(t('undo.workout'), async () => {
+                        await db.workouts.put(before);
+                        onClosed();
+                      });
                     }
                   },
                 },

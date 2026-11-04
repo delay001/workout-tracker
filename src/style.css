@@ -1244,6 +1244,24 @@ p.set-row {
   pointer-events: none;
 }
 
+/* Плашка с кнопкой «Отменить» ловит нажатия, в отличие от обычных сообщений */
+.toast-undo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.toast-action {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 22%);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+}
+
 .toast {
   max-width: 100%;
   padding: 8px 14px;
