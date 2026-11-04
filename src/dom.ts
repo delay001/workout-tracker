@@ -278,6 +278,49 @@ export function dateField(input: HTMLInputElement): HTMLElement {
 }
 
 // Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют
+// Ручка ⋮⋮: тянешь — элемент меняется местами с соседями, отпустил — вызывается onDrop
+export function dragHandle(item: HTMLElement, label: string, onDrop: () => void): HTMLElement {
+  item.dataset.sortable = '';
+  const isSortable = (el: Element | null): el is HTMLElement =>
+    el instanceof HTMLElement && el.dataset.sortable !== undefined;
+  const middle = (el: HTMLElement): number => {
+    const rect = el.getBoundingClientRect();
+    return rect.top + rect.height / 2;
+  };
+  const handle = h('span', { className: 'drag-handle', role: 'img', ariaLabel: label }, '⋮⋮');
+  handle.onpointerdown = (down: PointerEvent) => {
+    down.preventDefault();
+    item.classList.add('dragging');
+    // Слушаем все окно: при перестановке элемента браузер теряет захват пальца
+    const move = (event: PointerEvent): void => {
+      let prev = item.previousElementSibling;
+      let next = item.nextElementSibling;
+      while (isSortable(prev) && event.clientY < middle(prev)) {
+        prev.before(item);
+        prev = item.previousElementSibling;
+      }
+      while (isSortable(next) && event.clientY > middle(next)) {
+        next.after(item);
+        next = item.nextElementSibling;
+      }
+      // Длинный список: у края экрана он прокручивается сам
+      if (event.clientY < 60) scrollBy(0, -12);
+      if (event.clientY > innerHeight - 60) scrollBy(0, 12);
+    };
+    const drop = (): void => {
+      removeEventListener('pointermove', move);
+      removeEventListener('pointerup', drop);
+      removeEventListener('pointercancel', drop);
+      item.classList.remove('dragging');
+      onDrop();
+    };
+    addEventListener('pointermove', move);
+    addEventListener('pointerup', drop);
+    addEventListener('pointercancel', drop);
+  };
+  return handle;
+}
+
 export function confirmDialog(text: string): Promise<boolean> {
   return new Promise((resolve) => {
     const close = (answer: boolean): void => {

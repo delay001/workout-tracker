@@ -92,6 +92,7 @@ export const ru = {
   'common.nextYear': 'Следующий год',
   'common.thisMonth': 'Этот месяц',
   'common.undo': 'Отменить',
+  'workout.dragExercise': 'Перетащить упражнение',
   'undo.set': 'Подход удален',
   'undo.exercise': 'Упражнение «{name}» удалено',
   'undo.workout': 'Тренировка удалена',

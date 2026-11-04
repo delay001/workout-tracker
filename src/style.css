@@ -674,6 +674,37 @@ textarea {
   background: var(--card);
 }
 
+/* Ручка для перетаскивания: палец на ней не прокручивает страницу */
+.card[data-sortable] {
+  position: relative;
+}
+
+.card[data-sortable] .card-title {
+  padding-right: 44px;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 12px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 48px;
+  color: var(--muted);
+  font-size: 1.25rem;
+  letter-spacing: -2px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.card.dragging {
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+  opacity: 0.9;
+}
+
 .card-current {
   border-color: var(--accent);
 }

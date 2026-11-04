@@ -11,12 +11,13 @@ import { formatDate, formatDuration } from './dates';
 import {
   db,
   findOrCreateExercise,
+  saveWorkout,
   type Exercise,
   type Workout,
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { confetti, confirmDialog, dateField, field, h, requiredMark, showToast, showUndo } from './dom';
+import { confetti, confirmDialog, dateField, dragHandle, field, h, requiredMark, showToast, showUndo } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -273,7 +274,7 @@ export async function renderWorkoutScreen(
       ),
     );
 
-    return h(
+    const card = h(
       'article',
       { className: isCurrent ? 'card card-current' : 'card' },
       h(
@@ -294,6 +295,24 @@ export async function renderWorkoutScreen(
       h('ol', { className: 'set-list' }, ...rows),
       ...(isCurrent ? [setForm(item, exercise), actions] : []),
     );
+    card.dataset.exerciseId = String(item.exerciseId);
+    if (workout.exercises.length > 1) {
+      card.prepend(dragHandle(card, t('workout.dragExercise'), () => void saveOrder()));
+    }
+    return card;
+  }
+
+  // Порядок карточек после перетаскивания записывается в тренировку
+  async function saveOrder(): Promise<void> {
+    const ids = [...root.querySelectorAll<HTMLElement>('[data-exercise-id]')].map((card) =>
+      Number(card.dataset.exerciseId),
+    );
+    if (ids.every((id, index) => id === workout.exercises[index]?.exerciseId)) return;
+    const exercises = [...workout.exercises].sort(
+      (a, b) => ids.indexOf(a.exerciseId) - ids.indexOf(b.exerciseId),
+    );
+    await saveWorkout({ ...workout, exercises });
+    await reload();
   }
 
   const statRow = (label: string, value: string): HTMLElement =>

@@ -104,6 +104,7 @@ export const en: Record<keyof typeof ru, string> = {
   'common.nextYear': 'Next year',
   'common.thisMonth': 'This month',
   'common.undo': 'Undo',
+  'workout.dragExercise': 'Drag exercise',
   'undo.set': 'Set deleted',
   'undo.exercise': '“{name}” removed',
   'undo.workout': 'Workout deleted',
