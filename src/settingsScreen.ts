@@ -362,7 +362,10 @@ export async function renderSettingsScreen(
       link(t('notify.title'), () => void renderNotificationsScreen(root, () => void showMain())),
 
       h('h2', {}, t('settings.groupData')),
-      persisted
+      // В apk данные лежат внутри приложения, а не в браузере: проверка браузера там ничего не значит
+      import.meta.env.MODE === 'apk'
+        ? h('p', { className: 'hint' }, t('settings.storageApp'))
+        : persisted
         ? h('p', { className: 'hint' }, t('settings.storageSafe'))
         : h('p', { className: 'error' }, t('settings.storageAtRisk')),
       link(t('import.title'), () => void renderImportScreen(root, () => void showMain())),

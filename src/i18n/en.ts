@@ -253,6 +253,7 @@ export const en: Record<keyof typeof ru, string> = {
   'settings.groupLook': 'Appearance',
   'settings.groupTraining': 'Training',
   'settings.groupData': 'Data',
+  'settings.storageApp': '✅ Data is stored in the app: it is erased only if you uninstall the app or clear its data',
   'settings.storageSafe': '✅ Persistent storage: the browser won’t clear your data on its own',
   'settings.storageAtRisk': '⚠️ Storage is not persistent: the browser may clear your data when space runs low. Install the app to your home screen and back up regularly',
   'settings.open': 'Open settings',
