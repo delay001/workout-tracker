@@ -205,14 +205,15 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
       },
       field(t('common.date'), dateField(date)),
       h('p', { className: 'hint' }, t('measure.allIn', { unit: lengthUnit() })),
-      h(
-        'div',
-        { className: 'set-inputs measure-inputs' },
-        ...SINGLES.map((key) => field(labelOf(key), inputOf(key))),
-      ),
+      // Одна сетка: подпись слева, поле справа; у парных замеров два поля — левый и правый
       h(
         'div',
         { className: 'measure-pairs' },
+        ...SINGLES.flatMap((key) => {
+          const input = inputOf(key);
+          input.classList.add('measure-wide');
+          return [h('span', { className: 'measure-pair-title' }, labelOf(key)), input];
+        }),
         h('span'),
         h('span', { className: 'measure-side' }, t('measure.left')),
         h('span', { className: 'measure-side' }, t('measure.right')),

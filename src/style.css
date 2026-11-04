@@ -1427,28 +1427,6 @@ p.set-row {
   gap: 8px;
 }
 
-/* Замеры: три узких поля в ряд, подписи мельче; поля выровнены по низу, даже если подпись в две строки */
-.measure-inputs {
-  grid-template-columns: repeat(3, 1fr);
-  align-items: end;
-  gap: 4px 8px;
-}
-
-.measure-inputs .field {
-  margin-bottom: 4px;
-}
-
-.measure-inputs .field span {
-  font-size: 0.8125rem;
-  line-height: 1.2;
-}
-
-.measure-inputs input {
-  min-height: 36px;
-  padding: 4px 10px;
-  font-size: 1rem;
-}
-
 .set-inputs-3 {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -1723,8 +1701,14 @@ p.set-row {
 }
 
 .measure-side {
+  margin-top: 4px;
   color: var(--muted);
   font-size: 0.8125rem;
+}
+
+/* Одиночный замер — одно поле на обе колонки */
+.measure-pairs .measure-wide {
+  grid-column: span 2;
 }
 
 .measure-pair-title {
