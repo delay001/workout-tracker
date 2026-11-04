@@ -21,7 +21,8 @@ function shiftDate(date: string, days: number): string {
   return new Date((dayNumber(date) + days) * DAY_MS).toISOString().slice(0, 10);
 }
 
-export function filterByPeriod(series: ChartDatum[], period: Period, today: string): ChartDatum[] {
+// Точки графика или записи истории за период: у всех есть дата
+export function filterByPeriod<T extends { date: string }>(series: T[], period: Period, today: string): T[] {
   if (period === 'all') {
     return series;
   }

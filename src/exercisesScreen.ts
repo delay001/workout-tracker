@@ -3,7 +3,7 @@ import { CARDIO_GROUP, exerciseLabel, groupKey, groupLabel } from './catalog';
 import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
-import { emptyState, groupedList, h, statRow } from './dom';
+import { collapsible, emptyState, groupedList, h, statRow } from './dom';
 import { withMuscleIcon } from './muscleIcons';
 import { t } from './i18n';
 import {
@@ -124,6 +124,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
   async function showExercise(exercise: Exercise): Promise<void> {
     const history = await getExerciseHistory(exercise.id);
     const best = bestResult(history);
+    // Уровень считается по лучшему результату за все время, итоги ниже — за выбранный период
     const summary = exerciseSummary(history, todayLocal());
     const records = historyRecords(history);
     const bodyKg = (await getBodyWeights()).at(-1)?.kg;
@@ -154,6 +155,52 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
       return t('chart.setsCount', { count: sets.filter((set) => !set.warmup).length });
     };
 
+    // Итоги и подходы за выбранный период: меняются вместе с графиком
+    const periodBox = h('div');
+    function showPeriod(): void {
+      const shownHistory = hasChart ? filterByPeriod(history, shownPeriod, todayLocal()) : history;
+      const periodSummary = exerciseSummary(shownHistory, todayLocal());
+      const periodBest = bestResult(shownHistory);
+      const summaryRows: [string, string | undefined][] = [
+        [t('summary.times'), String(periodSummary.times)],
+        [t('summary.last'), periodSummary.lastDate && formatDate(periodSummary.lastDate)],
+        [t('summary.record'), periodBest && formatBest(periodBest)],
+        ...(cardio
+          ? []
+          : ([
+              [t('summary.bestOneRepMax'), kilograms(periodSummary.bestOneRepMax)],
+              [t('summary.maxTonnage'), kilograms(periodSummary.maxTonnage)],
+            ] as [string, string | undefined][])),
+      ];
+      // История новыми вперед, поэтому записи за период идут с начала и номера рекордов совпадают
+      const cards = shownHistory.map((entry, entryIndex) =>
+        h(
+          'article',
+          { className: 'card' },
+          h('h2', { className: 'history-date' }, formatDate(entry.date)),
+          h(
+            'ol',
+            { className: 'set-list' },
+            ...entry.sets.map((set, setIndex) =>
+              h(
+                'li',
+                {},
+                formatSet(set),
+                ...(records[entryIndex][setIndex] ? [h('span', { className: 'record' }, records[entryIndex][setIndex])] : []),
+              ),
+            ),
+          ),
+        ),
+      );
+      periodBox.replaceChildren(
+        ...summaryRows.flatMap(([label, value]) => (value === undefined ? [] : [statRow(label, value)])),
+        ...collapsible(cards, 3),
+      );
+      if (hasChart) {
+        showChart();
+      }
+    }
+
     function showChart(): void {
       const points = filterByPeriod(currentSeries(), shownPeriod, todayLocal());
       chartBox.replaceChildren(
@@ -168,21 +215,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     // Фильтры нужны только там, где есть что сравнивать
     const hasChart = history.length > 1;
 
-    const summaryRows: [string, string | undefined][] = [
-      [t('summary.times'), String(summary.times)],
-      [t('summary.last'), summary.lastDate && formatDate(summary.lastDate)],
-      [t('summary.record'), best && formatBest(best)],
-      ...(cardio
-        ? []
-        : ([
-            [t('summary.bestOneRepMax'), kilograms(summary.bestOneRepMax)],
-            [t('summary.maxTonnage'), kilograms(summary.maxTonnage)],
-          ] as [string, string | undefined][])),
-    ];
-
-    if (hasChart) {
-      showChart();
-    }
+    showPeriod();
 
     root.replaceChildren(
       h(
@@ -223,7 +256,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
                   ]),
               periodChips('exercise-period', shownPeriod, (value) => {
                 shownPeriod = value;
-                showChart();
+                showPeriod();
               }),
             ]
           : []),
@@ -248,30 +281,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
           : STANDARDS[exercise.name] && !bodyKg
             ? [h('p', { className: 'hint' }, t('level.needWeight'))]
             : []),
-        ...summaryRows.flatMap(([label, value]) =>
-          value === undefined ? [] : [statRow(label, value)],
-        ),
-        ...history.map((entry, entryIndex) =>
-          h(
-            'article',
-            { className: 'card' },
-            h('h2', { className: 'history-date' }, formatDate(entry.date)),
-            h(
-              'ol',
-              { className: 'set-list' },
-              ...entry.sets.map((set, setIndex) =>
-                h(
-                  'li',
-                  {},
-                  formatSet(set),
-                  ...(records[entryIndex][setIndex]
-                    ? [h('span', { className: 'record' }, records[entryIndex][setIndex])]
-                    : []),
-                ),
-              ),
-            ),
-          ),
-        ),
+        periodBox,
         h(
           'button',
           {
