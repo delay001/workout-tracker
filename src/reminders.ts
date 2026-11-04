@@ -26,15 +26,33 @@ export const DEFAULT_REMINDERS: ReminderSettings = {
 };
 
 // Сохраненные настройки поверх значений по умолчанию: новые виды напоминаний появятся сами
+// Поле берется из сохраненного, только если оно того же вида, что и по умолчанию (число, строка, список):
+// испорченная настройка не должна выключать все напоминания разом
 export function parseReminders(saved: string): ReminderSettings {
+  let value: Record<string, Record<string, unknown>> = {};
   try {
-    const value = JSON.parse(saved) as Partial<ReminderSettings>;
-    return Object.fromEntries(
-      REMINDER_KINDS.map((kind) => [kind, { ...DEFAULT_REMINDERS[kind], ...value[kind] }]),
-    ) as unknown as ReminderSettings;
+    const parsed: unknown = JSON.parse(saved);
+    if (parsed && typeof parsed === 'object') value = parsed as typeof value;
   } catch {
-    return DEFAULT_REMINDERS;
+    // Нет сохраненных настроек — все по умолчанию
   }
+  const sameKind = (a: unknown, b: unknown): boolean =>
+    Array.isArray(a) ? Array.isArray(b) && b.every((item) => typeof item === typeof a[0]) : typeof a === typeof b;
+  return Object.fromEntries(
+    REMINDER_KINDS.map((kind) => {
+      const defaults = DEFAULT_REMINDERS[kind] as Record<string, unknown>;
+      const own = value[kind] && typeof value[kind] === 'object' ? value[kind] : {};
+      return [
+        kind,
+        Object.fromEntries(
+          Object.entries(defaults).map(([field, fallback]) => [
+            field,
+            sameKind(fallback, own[field]) ? own[field] : structuredClone(fallback),
+          ]),
+        ),
+      ];
+    }),
+  ) as unknown as ReminderSettings;
 }
 
 // Что известно о данных на момент расчета. Даты — «ГГГГ-ММ-ДД» по местному времени.

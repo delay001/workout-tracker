@@ -69,4 +69,17 @@ describe('planReminders', () => {
     expect(settings.idle).toEqual(DEFAULT_REMINDERS.idle);
     expect(parseReminders('')).toEqual(DEFAULT_REMINDERS);
   });
+
+  it('испорченные настройки не ломают расчет', () => {
+    const settings = parseReminders(
+      JSON.stringify({ creatine: { on: true, times: '09:00' }, workout: { days: ['пн'], time: 18 }, idle: null }),
+    );
+    expect(settings.creatine.times).toEqual(DEFAULT_REMINDERS.creatine.times);
+    expect(settings.workout).toEqual(DEFAULT_REMINDERS.workout);
+    expect(settings.idle).toEqual(DEFAULT_REMINDERS.idle);
+    expect(() => planReminders(settings, facts(), NOW)).not.toThrow();
+    // Значения по умолчанию не должны меняться через полученные настройки
+    settings.creatine.times.push('12:00');
+    expect(DEFAULT_REMINDERS.creatine.times).toEqual(['09:00']);
+  });
 });

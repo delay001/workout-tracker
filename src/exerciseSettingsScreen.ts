@@ -2,7 +2,7 @@ import { db, findOrCreateExercise } from './db';
 import { exerciseLabel, groupKey, groupLabel, guessMuscleGroup } from './catalog';
 import { markupFor, MUSCLES, type Movement, type Muscle } from './muscles';
 import { select } from './ui';
-import { field, groupedList, h } from './dom';
+import { backButton, field, groupedList, h } from './dom';
 import { muscleIcon, pickIcon, withMuscleIcon, type IconSource } from './muscleIcons';
 import { groupSelect } from './workoutScreen';
 import {
@@ -14,14 +14,6 @@ import {
   type ExerciseOption,
 } from './workouts';
 import { t } from './i18n';
-
-function backButton(onclick: () => void): HTMLButtonElement {
-  return h(
-    'button',
-    { type: 'button', className: 'button button-secondary bottom-action', onclick },
-    t('common.back'),
-  );
-}
 
 // Окно создания или правки упражнения. Им же пользуется тренировка, когда нужного упражнения нет в каталоге.
 export async function renderExerciseForm(

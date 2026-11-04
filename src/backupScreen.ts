@@ -2,6 +2,8 @@ import { exportData, importData, parseBackup, type Backup } from './backup';
 import { todayLocal } from './dates';
 import { confirmDialog } from './dom';
 import { saveFile } from './files';
+import { clearStopwatch } from './stopwatch';
+import { getActiveWorkout } from './workouts';
 import { parseHaptics, setHaptics } from './haptics';
 import { applySavedLook, getSetting, setSetting } from './settings';
 import { t } from './i18n';
@@ -56,6 +58,9 @@ export function renderBackupScreen(root: HTMLElement, onImported: (message: stri
         return;
       }
 
+      // Начатая тренировка заменяется данными из файла: ее секундомер (и таймер в шторке) больше не нужен
+      const active = await getActiveWorkout();
+      if (active) clearStopwatch(active.id);
       await importData(backup);
       await applySavedLook();
       setHaptics(parseHaptics(await getSetting('haptics')));

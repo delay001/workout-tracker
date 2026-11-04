@@ -5,9 +5,10 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 let t: typeof import('./i18n').t;
 
-async function waitFor<T>(find: () => T | null | undefined, what: string): Promise<T> {
-  for (let i = 0; i < 100; i++) {
-    const found = find();
+async function waitFor<T>(find: () => T | null | undefined | Promise<T | null | undefined>, what: string): Promise<T> {
+  // До 10 секунд: экран статистики в имитации браузера рисуется не мгновенно
+  for (let i = 0; i < 500; i++) {
+    const found = await find();
     if (found) return found;
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
@@ -49,7 +50,7 @@ beforeAll(async () => {
   await import('./main');
 });
 
-describe('экраны', () => {
+describe('экраны', { timeout: 30_000 }, () => {
   it('тренировка: начать, добавить упражнение и подход, завершить, увидеть в статистике', async () => {
     (await button(t('home.newEntry'))).click();
     (await button(t('type.upper'))).click();
@@ -73,7 +74,54 @@ describe('экраны', () => {
 
     (await button(t('finish.done'))).click();
     (await button(t('tab.stats'))).click();
+    // Плитки с числами есть и на главном экране: сначала дождаться, что открылась именно статистика
+    await heading(t('tab.stats'));
     const tile = await waitFor(() => document.querySelector('.stat strong'), 'плитка статистики');
     expect(tile.textContent).toBe('1');
+  });
+
+  it('тренировка: перетаскивание меняет порядок упражнений, «Отменить» возвращает удаленный подход', async () => {
+    const { getActiveWorkout } = await import('./workouts');
+    const names = async (): Promise<string[]> => {
+      const { db } = await import('./db');
+      const workout = await getActiveWorkout();
+      const exercises = await db.exercises.bulkGet(workout?.exercises.map((item) => item.exerciseId) ?? []);
+      return exercises.map((exercise) => exercise?.name ?? '');
+    };
+    const addSet = async (name: string, weight: string, reps: string): Promise<void> => {
+      (await button(t('workout.addExercise'))).click();
+      type(await input(t('common.name')), name);
+      (await button(name)).click();
+      type(await input(t('weight.input', { unit: 'кг' })), weight);
+      type(await input(t('set.reps')), reps);
+      (await button(t('set.record'))).click();
+      await waitFor(() => document.querySelector('.card-current .set-list li'), `подход в «${name}»`);
+    };
+
+    (await button(t('tab.workout'))).click();
+    await waitFor(() => !document.querySelector('h1')?.textContent?.includes(t('tab.stats')), 'главный экран');
+    (await button(t('home.newEntry'))).click();
+    (await button(t('type.upper'))).click();
+    await addSet('Жим лежа', '60', '8');
+    await addSet('Подтягивания', '0', '10');
+    expect(await names()).toEqual(['Жим лежа', 'Подтягивания']);
+
+    // Тянем «Жим лежа» за ручку вниз и отпускаем
+    const handle = await waitFor(() => document.querySelector<HTMLElement>('.card .drag-handle'), 'ручка перетаскивания');
+    handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientY: 0, pointerId: 1 }));
+    window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientY: 500, pointerId: 1 }));
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientY: 500, pointerId: 1 }));
+    await waitFor(async () => (await names())[0] === 'Подтягивания', 'новый порядок в базе');
+    expect(await names()).toEqual(['Подтягивания', 'Жим лежа']);
+
+    // Удаляем подход в раскрытом упражнении и отменяем удаление
+    const sets = async (): Promise<number> =>
+      (await getActiveWorkout())?.exercises.reduce((sum, item) => sum + item.sets.length, 0) ?? 0;
+    expect(await sets()).toBe(2);
+    [...document.querySelectorAll<HTMLButtonElement>('.card-current button')]
+      .find((item) => item.ariaLabel === t('set.delete'))!
+      .click();
+    (await button(t('common.undo'))).click();
+    await waitFor(async () => (await sets()) === 2 && document.querySelectorAll('.set-list li').length === 2, 'подход вернулся');
   });
 });

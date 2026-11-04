@@ -1,17 +1,9 @@
 import type { WorkoutType } from './db';
-import { field, h } from './dom';
+import { backButton, field, h } from './dom';
 import { getTemplate, getWorkoutTypes, saveTemplate, searchOptions, workoutTypeName } from './workouts';
 import { t } from './i18n';
 
 export async function renderTemplateSettings(root: HTMLElement, onBack: () => void): Promise<void> {
-  function backButton(onclick: () => void): HTMLButtonElement {
-    return h(
-      'button',
-      { type: 'button', className: 'button button-secondary bottom-action', onclick },
-      t('common.back'),
-    );
-  }
-
   async function showTemplate(type: WorkoutType): Promise<void> {
     const names = await getTemplate(type);
     const options = await searchOptions('');

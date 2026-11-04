@@ -26,6 +26,7 @@ import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeNa
 import { LANGUAGE, setLanguage, t, type Language } from './i18n';
 import { renderOnboarding } from './onboarding';
 import { renderNotificationsScreen } from './notificationsScreen';
+import { renderHelpScreen } from './helpScreen';
 import { MASCOTS, mascotIcon, parseMascot, type Mascot } from './mascot';
 import { HAPTIC_LEVELS, parseHaptics, setHaptics, vibrate, type HapticLevel } from './haptics';
 
@@ -211,6 +212,7 @@ export async function renderSettingsScreen(
       }
     };
     const avatar = await getSetting('avatar');
+    const keepScreenOn = (await getSetting('keepAwake')) !== 'off';
     const theme = parseTheme(await getSetting('theme'));
     const accent = parseAccent(await getSetting('accent'));
 
@@ -355,6 +357,17 @@ export async function renderSettingsScreen(
       field(t('settings.goal'), goal),
       field(t('settings.weightStep'), weightStep),
       field(t('settings.overdueDays'), overdueDays),
+      h(
+        'label',
+        { className: 'checkbox' },
+        h('input', {
+          type: 'checkbox',
+          checked: keepScreenOn,
+          onchange: (event: Event) =>
+            void setSetting('keepAwake', (event.target as HTMLInputElement).checked ? '' : 'off'),
+        }),
+        t('settings.keepAwake'),
+      ),
       link(t('common.exercises'), () => void renderExerciseSettings(root, () => void showMain())),
       link(t('settings.workoutTypes'), () => void showTypes()),
       link(t('settings.templates'), () => void renderTemplateSettings(root, () => void showMain())),
@@ -371,6 +384,7 @@ export async function renderSettingsScreen(
       link(t('import.title'), () => void renderImportScreen(root, () => void showMain())),
       backup,
       link(t('settings.onboarding'), () => void renderOnboarding(root, () => void showMain())),
+      link(t('help.title'), () => renderHelpScreen(root, () => void showMain())),
     );
     renderBackupScreen(backup, onImported);
   }

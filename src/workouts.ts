@@ -1,4 +1,4 @@
-import { CARDIO_GROUP, CATALOG, CATALOG_EN, exerciseLabel, groupKey, groupRank } from './catalog';
+import { CATALOG, CATALOG_EN, exerciseLabel, groupKey, groupRank } from './catalog';
 import type { Muscle } from './muscles';
 import {
   db,
@@ -341,7 +341,10 @@ export function formatSet(set: WorkoutSet): string {
 
 // Все подходы упражнения по завершенным тренировкам, новые сверху
 export async function getExerciseHistory(exerciseId: number): Promise<LastPerformance[]> {
-  const workouts = await getFinishedWorkouts();
+  return historyOf(exerciseId, await getFinishedWorkouts());
+}
+
+function historyOf(exerciseId: number, workouts: Workout[]): LastPerformance[] {
   return workouts.flatMap((workout) =>
     workout.exercises
       .filter((item) => item.exerciseId === exerciseId)
@@ -363,13 +366,11 @@ export async function getUsedExercises(): Promise<UsedExercise[]> {
   const ids = [...new Set(workouts.flatMap((workout) => workout.exerciseIds))];
   const exercises = await db.exercises.bulkGet(ids);
 
-  const used = await Promise.all(
-    exercises.flatMap((exercise) =>
-      exercise
-        ? [getExerciseHistory(exercise.id).then((history) => ({ exercise, best: bestResult(history), times: history.length }))]
-        : [],
-    ),
-  );
+  const used = exercises.flatMap((exercise) => {
+    if (!exercise) return [];
+    const history = historyOf(exercise.id, workouts);
+    return [{ exercise, best: bestResult(history), times: history.length }];
+  });
   return used.sort((a, b) => byGroupAndName(a.exercise, b.exercise));
 }
 
@@ -426,7 +427,7 @@ export function stepValue(text: string, delta: number, min: number, max = Infini
 }
 
 export function isCardio(exercise: Exercise): boolean {
-  return exercise.muscleGroup === CARDIO_GROUP;
+  return groupKey(exercise) === 'cardio';
 }
 
 export function parseCardioSet(minutesText: string): WorkoutSet {

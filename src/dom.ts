@@ -270,6 +270,11 @@ export function dateField(input: HTMLInputElement): HTMLElement {
 }
 
 // Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют
+// Кнопка «Назад» внизу экрана
+export function backButton(onclick: () => void): HTMLButtonElement {
+  return h('button', { type: 'button', className: 'button button-secondary bottom-action', onclick }, t('common.back'));
+}
+
 // Строка «подпись — значение» на подложке
 export function statRow(label: string, value: string): HTMLElement {
   return h('p', { className: 'set-row' }, label, h('strong', {}, value));

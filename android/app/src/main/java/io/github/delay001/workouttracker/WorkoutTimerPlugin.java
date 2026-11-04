@@ -74,6 +74,20 @@ public class WorkoutTimerPlugin extends Plugin {
         }
     }
 
+    /** Экран не гаснет, пока открыта начатая тренировка. Флаг окна меняется только в главном потоке. */
+    @PluginMethod
+    public void keepAwake(PluginCall call) {
+        boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
+        getActivity().runOnUiThread(() -> {
+            if (on) {
+                getActivity().getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            } else {
+                getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+            call.resolve();
+        });
+    }
+
     @PluginMethod
     public void hide(PluginCall call) {
         NotificationManagerCompat.from(getContext()).cancel(NOTIFICATION_ID);

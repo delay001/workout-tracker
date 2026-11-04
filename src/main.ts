@@ -12,6 +12,7 @@ import { renderSettingsScreen } from './settingsScreen';
 import { renderStatsScreen } from './statsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
 import { getActiveWorkout } from './workouts';
+import { keepAwake } from './keepAwake';
 import { t } from './i18n';
 
 type Tab = 'workout' | 'history' | 'stats' | 'settings';
@@ -32,7 +33,6 @@ const TABS: [Tab, string, string][] = [
 ];
 
 const app = document.querySelector<HTMLDivElement>('#app');
-const content = h('main', { className: 'tab-content' });
 
 function appear(element: HTMLElement): void {
   element.animate(
@@ -68,6 +68,9 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
     return button;
   });
   const bar = h('nav', { className: 'tabs' }, ...buttons);
+  // Своя область для каждого открытия вкладки: если нажать другую вкладку, пока эта еще загружается,
+  // запоздавшая загрузка дорисует уже скрытую область и не перекроет новую вкладку
+  const content = h('main', { className: 'tab-content' });
   app.replaceChildren(content, bar);
   // Маскот живет только на первой вкладке
   if (tab === 'workout') {
@@ -96,7 +99,12 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
 
 async function openWorkout(workout: Workout, onClosed: () => void): Promise<void> {
   if (app) {
-    await renderWorkoutScreen(app, workout, onClosed);
+    // Пока открыта начатая тренировка, экран не гаснет
+    void keepAwake(workout.status === 'active');
+    await renderWorkoutScreen(app, workout, () => {
+      void keepAwake(false);
+      onClosed();
+    });
     appear(app);
   }
 }
