@@ -1712,3 +1712,40 @@ p.set-row {
 .icon-choice-current {
   box-shadow: inset 0 0 0 2px var(--accent);
 }
+
+/* Парные замеры: подпись слева, поля левой и правой стороны рядом */
+.measure-pairs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.measure-side {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.measure-pair-title {
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.measure-pairs input {
+  min-height: 36px;
+  padding: 4px 10px;
+  font-size: 1rem;
+}
+
+/* Полоса под системной панелью (часы, батарея): при прокрутке текст уходит под нее, а не под часы */
+body::before {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 4;
+  height: var(--safe-top);
+  background: var(--bg);
+  content: '';
+}

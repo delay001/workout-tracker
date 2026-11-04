@@ -2,7 +2,7 @@ import { lineChart } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Measurement } from './db';
 import { collapsible, confirmDialog, emptyState, dateField, field, h } from './dom';
-import { t } from './i18n';
+import { t, type MessageKey } from './i18n';
 import {
   compareMeasurements,
   deleteMeasurement,
@@ -19,7 +19,14 @@ import { lengthUnit, toLength } from './units';
 let shownKey = 'waist';
 let shownPeriod: Period = 'all';
 
-const withUnit = (label: string): string => t('measure.withUnit', { name: label, unit: lengthUnit() });
+// Парные замеры идут строкой: подпись, левая и правая сторона. Так подписи не переносятся на две строки.
+const PAIRS: [MessageKey, string, string][] = [
+  ['measure.biceps', 'bicepsLeft', 'bicepsRight'],
+  ['measure.forearm', 'forearmLeft', 'forearmRight'],
+  ['measure.thigh', 'thighLeft', 'thighRight'],
+  ['measure.calf', 'calfLeft', 'calfRight'],
+];
+const SINGLES = ['neck', 'waist', 'chest', 'hips', 'wrist'];
 
 export async function renderMeasurementsView(root: HTMLElement, edited?: Measurement): Promise<void> {
   const measurements = await getMeasurements();
@@ -37,6 +44,13 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
     const value = edited?.values[key];
     return [key, numberInput('decimal', value === undefined ? '' : String(toLength(value)))] as const;
   });
+  const labelOf = (key: string): string => MEASUREMENT_FIELDS.find(([item]) => item === key)?.[1] ?? key;
+  // У поля в паре нет своей подписи над ним, поэтому полное название — для экранного диктора
+  const inputOf = (key: string): HTMLInputElement => {
+    const input = inputs.find(([item]) => item === key)![1];
+    input.ariaLabel = labelOf(key);
+    return input;
+  };
   const error = h('p', { className: 'error', role: 'alert' });
   const chartBox = h('div');
 
@@ -190,10 +204,23 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
         },
       },
       field(t('common.date'), dateField(date)),
+      h('p', { className: 'hint' }, t('measure.allIn', { unit: lengthUnit() })),
       h(
         'div',
         { className: 'set-inputs measure-inputs' },
-        ...MEASUREMENT_FIELDS.map(([, label], index) => field(withUnit(label), inputs[index][1])),
+        ...SINGLES.map((key) => field(labelOf(key), inputOf(key))),
+      ),
+      h(
+        'div',
+        { className: 'measure-pairs' },
+        h('span'),
+        h('span', { className: 'measure-side' }, t('measure.left')),
+        h('span', { className: 'measure-side' }, t('measure.right')),
+        ...PAIRS.flatMap(([title, left, right]) => [
+          h('span', { className: 'measure-pair-title' }, t(title)),
+          inputOf(left),
+          inputOf(right),
+        ]),
       ),
       error,
       h('button', { type: 'submit', className: 'button' }, edited ? t('common.save') : t('measure.record')),

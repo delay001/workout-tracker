@@ -63,10 +63,16 @@ export function applyAccent(accent: Accent): void {
   document.documentElement.dataset.accent = accent;
 }
 
-export async function loadTheme(): Promise<void> {
+// Внешний вид и единицы из настроек. Вызывается при запуске и сразу после восстановления из копии,
+// иначе цвет из копии появился бы только при следующем запуске.
+export async function applySavedLook(): Promise<void> {
   applyTheme(parseTheme(await getSetting('theme')));
   applyAccent(parseAccent(await getSetting('accent')));
   setUnits(await getSetting('units'));
+}
+
+export async function loadTheme(): Promise<void> {
+  await applySavedLook();
 
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (chosenTheme === 'system') {

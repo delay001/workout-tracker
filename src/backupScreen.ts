@@ -2,6 +2,8 @@ import { exportData, importData, parseBackup, type Backup } from './backup';
 import { todayLocal } from './dates';
 import { confirmDialog } from './dom';
 import { saveFile } from './files';
+import { parseHaptics, setHaptics } from './haptics';
+import { applySavedLook, getSetting } from './settings';
 import { t } from './i18n';
 
 function countsOf(backup: Backup): { exercises: number; workouts: number } {
@@ -53,6 +55,8 @@ export function renderBackupScreen(root: HTMLElement, onImported: (message: stri
       }
 
       await importData(backup);
+      await applySavedLook();
+      setHaptics(parseHaptics(await getSetting('haptics')));
       // В копии может быть начатая тренировка, поэтому экран строится заново
       onImported(t('backup.restored', countsOf(backup)));
     } catch (error) {

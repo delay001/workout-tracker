@@ -151,11 +151,15 @@ export async function importData(backup: Backup): Promise<void> {
     db.measurements,
   ];
   await db.transaction('rw', tables, async () => {
+    // Настройки из копии главнее, но тех, которых в копии нет (например, имя и возраст из знакомства
+    // на новом телефоне), импорт не стирает
+    const inBackup = new Set(backup.settings.map((item) => item.key));
+    const keptSettings = (await db.settings.toArray()).filter((item) => !inBackup.has(item.key));
     await Promise.all(tables.map((table) => table.clear()));
     await db.exercises.bulkAdd(backup.exercises);
     await db.workouts.bulkAdd(backup.workouts);
     await db.workoutTypes.bulkAdd(backup.workoutTypes.map((name) => ({ name })));
-    await db.settings.bulkAdd(backup.settings);
+    await db.settings.bulkAdd([...backup.settings, ...keptSettings]);
     await db.templates.bulkAdd(backup.templates);
     await db.bodyWeights.bulkAdd(backup.bodyWeights);
     await db.measurements.bulkAdd(backup.measurements);

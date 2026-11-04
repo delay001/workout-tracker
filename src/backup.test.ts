@@ -84,6 +84,24 @@ describe('экспорт и импорт', () => {
     expect(await db.workouts.count()).toBe(1);
   });
 
+  it('настройки из копии главнее, а тех, что в копии нет, импорт не стирает', async () => {
+    await fillData();
+    await db.settings.put({ key: 'accent', value: 'green' });
+    const backup = await exportData();
+    // Новый телефон: знакомство уже пройдено, имя другое, есть возраст
+    await db.settings.clear();
+    await db.settings.bulkAdd([
+      { key: 'name', value: 'Илья' },
+      { key: 'age', value: '24' },
+      { key: 'accent', value: 'pink' },
+    ]);
+
+    await importData(backup);
+
+    const settings = Object.fromEntries((await db.settings.toArray()).map((item) => [item.key, item.value]));
+    expect(settings).toEqual({ name: 'Артем', accent: 'green', age: '24' });
+  });
+
   it('при ошибке импорта старые данные остаются', async () => {
     await fillData();
     const backup = await exportData();
