@@ -1,7 +1,7 @@
 import { BODY_KG_MAX, BODY_KG_MIN, getBodyWeights } from './bodyWeight';
 import { formatDate, todayLocal } from './dates';
 import { db } from './db';
-import { field, h } from './dom';
+import { field, h, statRow } from './dom';
 import { radioChips, segmented } from './ui';
 import { activityFor, bodyMassIndex, dailyCalories, estimateOneRepMax, navyBodyFat, type Activity, type Sex } from './formulas';
 import { LOCALE, t } from './i18n';
@@ -77,7 +77,7 @@ export async function renderCalcScreen(root: HTMLElement, onBack: () => void): P
     }
     const keep = dailyCalories(sex, kg, cm, years, activity);
     const row = (label: string, value: number): HTMLElement =>
-      h('p', { className: 'set-row' }, label, h('strong', {}, t('calc.kcal', { value: value.toLocaleString(LOCALE) })));
+      statRow(label, t('calc.kcal', { value: value.toLocaleString(LOCALE) }));
     calories.replaceChildren(
       row(t('calc.keep'), keep),
       row(t('calc.cut'), Math.round((keep * 0.85) / 10) * 10),

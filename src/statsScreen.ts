@@ -3,7 +3,7 @@ import { pageHeader } from './avatar';
 import { barChart, lineChart } from './chart';
 import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, todayLocal } from './dates';
 import { db } from './db';
-import { collapsible, emptyState, h } from './dom';
+import { collapsible, emptyState, h, statRow, stepButton } from './dom';
 import { renderCalcScreen } from './calcScreen';
 import { currentStates, renderAchievementsScreen, renderYearScreen } from './motivationScreens';
 import { overdueExercises, topExercises, workoutStats } from './progress';
@@ -78,8 +78,7 @@ export async function renderTotalsScreen(root: HTMLElement, onBack: () => void):
     const year = workout.date.slice(0, 4);
     years.set(year, (years.get(year) ?? 0) + 1);
   }
-  const row = (name: string, value: string): HTMLElement =>
-    h('p', { className: 'set-row' }, name, h('strong', {}, value));
+  const row = statRow;
 
   root.replaceChildren(
     h(
@@ -147,7 +146,7 @@ function chartCarousel(slides: ChartSlide[]): HTMLElement[] {
     box.replaceChildren(render(name));
   };
   const arrow = (label: string, name: string, delta: number): HTMLButtonElement =>
-    h('button', { type: 'button', className: 'step-button', ariaLabel: name, onclick: () => show(delta) }, label);
+    stepButton(label, name, () => show(delta));
   show(0);
   return [h('div', { className: 'chart-switch' }, arrow('‹', t('stats.prevChart'), -1), title, arrow('›', t('stats.nextChart'), 1)), box];
 }
@@ -164,8 +163,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
   const exerciseName = (id: number): string =>
     exerciseLabel(exercises.find((exercise) => exercise.id === id)?.name ?? '');
 
-  const row = (name: string, value: string): HTMLElement =>
-    h('p', { className: 'set-row' }, name, h('strong', {}, value));
+  const row = statRow;
   // Скрытые упражнения в подсказку «давно не делал» не попадают
   const overdueRows = overdue
     .filter((item) => !exercises.find((exercise) => exercise.id === item.exerciseId)?.hidden)
@@ -187,19 +185,10 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
     }));
 
     const monthButton = (label: string, name: string, delta: number): HTMLButtonElement =>
-      h(
-        'button',
-        {
-          type: 'button',
-          className: 'step-button',
-          ariaLabel: name,
-          onclick: () => {
-            shown = shiftMonth(shown.year, shown.month, delta * months);
-            show();
-          },
-        },
-        label,
-      );
+      stepButton(label, name, () => {
+        shown = shiftMonth(shown.year, shown.month, delta * months);
+        show();
+      });
 
     const tile = (value: string, label: string): HTMLElement =>
       h('div', { className: 'stat' }, h('strong', {}, value), label);

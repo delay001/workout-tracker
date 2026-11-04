@@ -133,7 +133,7 @@ export function pickMonth(shown: YearMonth, today: YearMonth): Promise<YearMonth
       );
     };
     const yearButton = (label: string, name: string, delta: number): HTMLButtonElement =>
-      h('button', { type: 'button', className: 'step-button', ariaLabel: name, onclick: () => ((year += delta), render()) }, label);
+      stepButton(label, name, () => ((year += delta), render()));
 
     const dialog = h(
       'dialog',
@@ -197,19 +197,10 @@ export function pickDate(value: string): Promise<string | undefined> {
       );
     };
     const monthButton = (label: string, name: string, delta: number): HTMLButtonElement =>
-      h(
-        'button',
-        {
-          type: 'button',
-          className: 'step-button',
-          ariaLabel: name,
-          onclick: () => {
-            shown = shiftMonth(shown.year, shown.month, delta);
-            render();
-          },
-        },
-        label,
-      );
+      stepButton(label, name, () => {
+        shown = shiftMonth(shown.year, shown.month, delta);
+        render();
+      });
 
     const dialog = h(
       'dialog',
@@ -278,6 +269,16 @@ export function dateField(input: HTMLInputElement): HTMLElement {
 }
 
 // Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют
+// Строка «подпись — значение» на подложке
+export function statRow(label: string, value: string): HTMLElement {
+  return h('p', { className: 'set-row' }, label, h('strong', {}, value));
+}
+
+// Круглая кнопка-стрелка: ‹ › у месяцев и графиков, − + у полей
+export function stepButton(label: string, name: string, onclick: () => void): HTMLButtonElement {
+  return h('button', { type: 'button', className: 'step-button', ariaLabel: name, onclick }, label);
+}
+
 // Список с заголовками групп: заголовок ставится там, где меняется группа
 export function groupedList<T>(
   items: T[],

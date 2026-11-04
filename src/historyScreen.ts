@@ -2,7 +2,7 @@ import { pageHeader } from './avatar';
 import { renderBodyWeightView } from './bodyWeightScreen';
 import { formatDate, formatDuration, formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
 import type { Workout } from './db';
-import { emptyState, h, pickMonth } from './dom';
+import { emptyState, h, pickMonth, stepButton } from './dom';
 import { renderExercisesScreen } from './exercisesScreen';
 import { renderMeasurementsView } from './measurementsScreen';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
@@ -126,19 +126,10 @@ async function renderWorkoutsView(
     };
 
     const monthButton = (label: string, name: string, delta: number): HTMLButtonElement =>
-      h(
-        'button',
-        {
-          type: 'button',
-          className: 'step-button',
-          ariaLabel: name,
-          onclick: () => {
-            shown = shiftMonth(shown.year, shown.month, delta);
-            show();
-          },
-        },
-        label,
-      );
+      stepButton(label, name, () => {
+        shown = shiftMonth(shown.year, shown.month, delta);
+        show();
+      });
 
     // Месяц и год выбираются одной кнопкой: она открывает свое окно выбора месяца
     const monthPicker = (): HTMLElement => {

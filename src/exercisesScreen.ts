@@ -3,7 +3,7 @@ import { CARDIO_GROUP, exerciseLabel, groupKey, groupLabel } from './catalog';
 import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
-import { emptyState, groupedList, h } from './dom';
+import { emptyState, groupedList, h, statRow } from './dom';
 import { t } from './i18n';
 import {
   exerciseSummary,
@@ -245,7 +245,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
             ? [h('p', { className: 'hint' }, t('level.needWeight'))]
             : []),
         ...summaryRows.flatMap(([label, value]) =>
-          value === undefined ? [] : [h('p', { className: 'set-row' }, label, h('strong', {}, value))],
+          value === undefined ? [] : [statRow(label, value)],
         ),
         ...history.map((entry, entryIndex) =>
           h(

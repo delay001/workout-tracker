@@ -1,4 +1,4 @@
-import { h } from './dom';
+import { h, stepButton } from './dom';
 import { t } from './i18n';
 import type { Period } from './progress';
 import { stepValue } from './workouts';
@@ -35,26 +35,17 @@ export function bodyWeightInput(value = ''): HTMLInputElement {
 }
 
 export function stepper(input: HTMLInputElement, step: number, min: number, max?: number): HTMLElement {
-  const stepButton = (label: string, name: string, delta: number): HTMLButtonElement =>
-    h(
-      'button',
-      {
-        type: 'button',
-        className: 'step-button',
-        ariaLabel: name,
-        onclick: () => {
-          input.value = stepValue(input.value, delta, min, max);
-        },
-      },
-      label,
-    );
+  const arrow = (label: string, name: string, delta: number): HTMLButtonElement =>
+    stepButton(label, name, () => {
+      input.value = stepValue(input.value, delta, min, max);
+    });
 
   return h(
     'div',
     { className: 'stepper' },
-    stepButton('−', t('set.decrease'), -step),
+    arrow('−', t('set.decrease'), -step),
     input,
-    stepButton('+', t('set.increase'), step),
+    arrow('+', t('set.increase'), step),
   );
 }
 

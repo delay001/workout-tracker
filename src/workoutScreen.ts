@@ -18,7 +18,7 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { confetti, confirmDialog, dateField, dragHandle, field, groupedList, h, requiredMark, showToast, showUndo } from './dom';
+import { confetti, confirmDialog, dateField, dragHandle, field, groupedList, h, requiredMark, showToast, showUndo, statRow } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -315,9 +315,6 @@ export async function renderWorkoutScreen(
     await saveWorkout({ ...workout, exercises });
     await reload();
   }
-
-  const statRow = (label: string, value: string): HTMLElement =>
-    h('p', { className: 'set-row' }, label, h('strong', {}, value));
 
   // Итоги тренировки: упражнения, подходы, тоннаж
   async function statRowsFor(shown: Workout): Promise<HTMLElement[]> {
