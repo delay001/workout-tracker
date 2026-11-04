@@ -467,7 +467,7 @@ export async function renderWorkoutScreen(
     let selectedGroup: GroupKey | '' = '';
     const groupFilter = h(
       'div',
-      { className: 'chips', role: 'radiogroup', ariaLabel: t('common.muscleGroup') },
+      { className: 'chips segmented segmented-scroll', role: 'radiogroup', ariaLabel: t('common.muscleGroup') },
       ...[
         [t('common.all'), ''] as const,
         ...[...MUSCLES, 'cardio' as const].map((key) => [groupLabel(key), key] as const),
@@ -480,8 +480,10 @@ export async function renderWorkoutScreen(
             name: 'group-filter',
             checked: value === '',
             // click, а не change: «Все» выбрано сразу, но нажатие на него тоже открывает список
-            onclick: () => {
+            onclick: (event: Event) => {
               selectedGroup = value;
+              // Выбранная группа выезжает в середину полоски, чтобы были видны соседние
+              (event.target as HTMLElement).parentElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
               results.hidden = false;
               void updateResults();
             },

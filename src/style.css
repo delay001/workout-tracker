@@ -1452,6 +1452,22 @@ p.set-row {
   text-align: center;
 }
 
+/* Длинный список в одну строку: листается вбок пальцем, полоса прокрутки скрыта */
+.segmented-scroll {
+  grid-auto-columns: max-content;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.segmented-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.segmented-scroll .chip {
+  padding: 6px 14px;
+  white-space: nowrap;
+}
+
 /* Четыре длинных подписи: шрифт чуть меньше, чтобы слова не переносились */
 .segmented-small .chip {
   font-size: 0.875rem;
