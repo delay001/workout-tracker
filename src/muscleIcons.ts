@@ -1,4 +1,5 @@
 import type { GroupKey } from './catalog';
+import { EXERCISE_ICONS } from './exerciseIcons';
 
 // Значки групп мышц: тонкие линии, цвет берется из текста (currentColor).
 // Человечки показывают упражнение на эту мышцу; голова — кружок.
@@ -40,17 +41,18 @@ const ICONS: Record<GroupKey, string> = {
   none: `<path d="M6 8v8M9 6v12M15 6v12M18 8v8M9 12h6M3 12h3M18 12h3"/>`,
 };
 
-export function muscleIcon(key: GroupKey): HTMLElement {
+// У упражнения каталога свой значок, у своего упражнения пользователя — значок группы
+export function muscleIcon(key: GroupKey, name = ''): HTMLElement {
   const icon = document.createElement('span');
   icon.className = 'muscle-icon';
   icon.setAttribute('aria-hidden', 'true');
-  icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg>`;
+  icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${EXERCISE_ICONS[name] ?? ICONS[key]}</svg>`;
   return icon;
 }
 
-// Кнопка списка упражнений со значком группы слева
-export function withMuscleIcon<T extends HTMLElement>(element: T, key: GroupKey): T {
+// Кнопка списка упражнений со значком слева
+export function withMuscleIcon<T extends HTMLElement>(element: T, key: GroupKey, name: string): T {
   element.classList.add('has-muscle-icon');
-  element.prepend(muscleIcon(key));
+  element.prepend(muscleIcon(key, name));
   return element;
 }

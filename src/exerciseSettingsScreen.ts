@@ -165,6 +165,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
           withMuscleIcon(
             h('button', { type: 'button', className: 'list-button', onclick: () => showEdit(option) }, exerciseLabel(option.name)),
             groupKey(option),
+            option.name,
           ),
       );
 
@@ -184,7 +185,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
               },
             },
             exerciseLabel(exercise.name),
-          ), groupKey(exercise)),
+          ), groupKey(exercise), exercise.name),
         );
       }
       results.replaceChildren(...items);

@@ -45,3 +45,10 @@ describe('catalog English names and groups', () => {
     expect(groupKey({ name: 'Мое упражнение', primaryMuscle: 'calves' })).toBe('calves');
   });
 });
+
+describe('exercise icons', () => {
+  it('every catalog exercise has its own icon', async () => {
+    const { EXERCISE_ICONS } = await import('./exerciseIcons');
+    expect(CATALOG.filter((item) => !EXERCISE_ICONS[item.name]).map((item) => item.name)).toEqual([]);
+  });
+});
