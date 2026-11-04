@@ -432,6 +432,10 @@ export function startCustomSelects(): void {
       const rect = select.getBoundingClientRect();
       return (
         !select.disabled &&
+        // Нажатие должно прийти на само поле (на его подпись или блок вокруг), а не на то, что лежит поверх:
+        // иначе вкладка внизу, под которой прокручен список, открывала бы его окно
+        event.target instanceof Node &&
+        event.target.contains(select) &&
         event.clientX >= rect.left &&
         event.clientX <= rect.right &&
         event.clientY >= rect.top &&
