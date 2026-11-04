@@ -114,8 +114,15 @@ body {
   color: var(--text);
 }
 
+/* Отступы под системные панели телефона (часы и батарея сверху, полоска жестов снизу).
+   В apk их передает Capacitor (--safe-area-inset-*), в браузере — env(); на обычном экране они нулевые. */
+:root {
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+}
+
 #app {
-  padding: 16px;
+  padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
 }
 
 h1 {
@@ -316,7 +323,7 @@ h2 {
 }
 
 .tab-content .screen {
-  min-height: calc(100dvh - 120px);
+  min-height: calc(100dvh - 120px - var(--safe-top) - var(--safe-bottom));
 }
 
 /* Выбранный маскот обведен рамкой: на цветной заливке розовый персонаж бы потерялся */
@@ -453,7 +460,7 @@ h2 {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-bottom);
   border-top: 1px solid var(--surface);
   background: var(--bg);
 }
@@ -1306,7 +1313,7 @@ p.set-row {
 /* Плашка уже экрана и по центру, чтобы меньше закрывать карточки под ней; нажатия проходят сквозь нее */
 .toast-stack {
   position: fixed;
-  top: 8px;
+  top: calc(8px + var(--safe-top));
   right: 32px;
   left: 32px;
   z-index: 2;
@@ -1566,7 +1573,7 @@ p.set-row {
 .screen {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 32px);
+  min-height: calc(100dvh - 32px - var(--safe-top) - var(--safe-bottom));
 }
 
 .bottom-action {
