@@ -1,4 +1,5 @@
 import { formatMonth, monthCells, shiftMonth, todayLocal } from './dates';
+import { vibrate } from './haptics';
 import { LOCALE, t } from './i18n';
 
 // Создает элемент. Текст вставляется как текст, поэтому название упражнения не сломает страницу.
@@ -298,46 +299,108 @@ export function groupedList<T>(
   return result;
 }
 
-// Ручка ⋮⋮: тянешь — элемент меняется местами с соседями, отпустил — вызывается onDrop
-export function dragHandle(item: HTMLElement, label: string, onDrop: () => void): HTMLElement {
+// Перетаскивание карточки: сразу за ручку ⋮⋮ или долгим нажатием на holdArea (название).
+// Пока палец ведет, карточка едет за ним, а соседи расступаются; переставляется она только при отпускании —
+// если переставлять ее под пальцем, телефон обрывает жест.
+export function dragHandle(item: HTMLElement, label: string, onDrop: () => void, holdArea?: HTMLElement): HTMLElement {
   item.dataset.sortable = '';
-  const isSortable = (el: Element | null): el is HTMLElement =>
-    el instanceof HTMLElement && el.dataset.sortable !== undefined;
-  const middle = (el: HTMLElement): number => {
-    const rect = el.getBoundingClientRect();
-    return rect.top + rect.height / 2;
-  };
-  const handle = h('span', { className: 'drag-handle', role: 'img', ariaLabel: label }, '⋮⋮');
-  handle.onpointerdown = (down: PointerEvent) => {
-    down.preventDefault();
+  let dragging = false;
+  let justDragged = false;
+
+  function startDrag(startY: number): void {
+    const siblings = [...(item.parentElement?.children ?? [])].filter(
+      (el): el is HTMLElement => el instanceof HTMLElement && el.dataset.sortable !== undefined,
+    );
+    const from = siblings.indexOf(item);
+    const rects = siblings.map((el) => el.getBoundingClientRect());
+    const gap = rects.length > 1 ? Math.max(0, rects[1].top - rects[0].bottom) : 0;
+    const step = rects[from].height + gap;
+    const middle = (index: number): number => rects[index].top + rects[index].height / 2;
+    const startScroll = scrollY;
+    let to = from;
+    dragging = true;
     item.classList.add('dragging');
-    // Слушаем все окно: при перестановке элемента браузер теряет захват пальца
+    vibrate(20);
+
     const move = (event: PointerEvent): void => {
-      let prev = item.previousElementSibling;
-      let next = item.nextElementSibling;
-      while (isSortable(prev) && event.clientY < middle(prev)) {
-        prev.before(item);
-        prev = item.previousElementSibling;
-      }
-      while (isSortable(next) && event.clientY > middle(next)) {
-        next.after(item);
-        next = item.nextElementSibling;
-      }
       // Длинный список: у края экрана он прокручивается сам
       if (event.clientY < 60) scrollBy(0, -12);
       if (event.clientY > innerHeight - 60) scrollBy(0, 12);
+      const shift = event.clientY - startY + (scrollY - startScroll);
+      item.style.transform = `translateY(${shift}px)`;
+      const center = middle(from) + shift;
+      to = from;
+      siblings.forEach((_, index) => {
+        if (index < from && center < middle(index)) to = Math.min(to, index);
+        if (index > from && center > middle(index)) to = Math.max(to, index);
+      });
+      siblings.forEach((el, index) => {
+        if (el === item) return;
+        const offset = from < index && index <= to ? -step : to <= index && index < from ? step : 0;
+        el.style.transform = offset ? `translateY(${offset}px)` : '';
+      });
     };
     const drop = (): void => {
       removeEventListener('pointermove', move);
       removeEventListener('pointerup', drop);
       removeEventListener('pointercancel', drop);
+      siblings.forEach((el) => (el.style.transform = ''));
       item.classList.remove('dragging');
+      dragging = false;
+      if (to > from) siblings[to].after(item);
+      if (to < from) siblings[to].before(item);
       onDrop();
     };
     addEventListener('pointermove', move);
     addEventListener('pointerup', drop);
     addEventListener('pointercancel', drop);
+  }
+
+  const handle = h('span', { className: 'drag-handle', role: 'img', ariaLabel: label }, '⋮⋮');
+  handle.onpointerdown = (down: PointerEvent) => {
+    down.preventDefault();
+    startDrag(down.clientY);
   };
+
+  if (holdArea) {
+    // Пока идет перетаскивание, палец не прокручивает страницу. Слушатель висит заранее:
+    // телефон решает, можно ли отменить прокрутку, в момент касания.
+    holdArea.addEventListener('touchmove', (event) => dragging && event.preventDefault(), { passive: false });
+    holdArea.addEventListener('contextmenu', (event) => event.preventDefault());
+    holdArea.addEventListener('pointerdown', (down) => {
+      if (down.button !== 0) return;
+      const cleanup = (): void => {
+        clearTimeout(timer);
+        removeEventListener('pointermove', cancelIfMoved);
+        removeEventListener('pointerup', cleanup);
+        removeEventListener('pointercancel', cleanup);
+      };
+      // Палец сдвинулся раньше времени — это прокрутка страницы, а не перетаскивание
+      const cancelIfMoved = (event: PointerEvent): void => {
+        if (Math.abs(event.clientY - down.clientY) > 8 || Math.abs(event.clientX - down.clientX) > 8) cleanup();
+      };
+      const timer = setTimeout(() => {
+        cleanup();
+        justDragged = true;
+        startDrag(down.clientY);
+      }, 450);
+      addEventListener('pointermove', cancelIfMoved);
+      addEventListener('pointerup', cleanup);
+      addEventListener('pointercancel', cleanup);
+    });
+    // После долгого нажатия отпускание пальца не должно считаться обычным нажатием на название
+    item.addEventListener(
+      'click',
+      (event) => {
+        if (justDragged) {
+          justDragged = false;
+          event.stopPropagation();
+          event.preventDefault();
+        }
+      },
+      true,
+    );
+  }
   return handle;
 }
 

@@ -284,8 +284,9 @@ export async function renderWorkoutScreen(
         {
           type: 'button',
           className: 'card-title',
+          // Нажатие на название раскрытого упражнения сворачивает его, на свернутое — раскрывает
           onclick: () => {
-            currentId = item.exerciseId;
+            currentId = isCurrent ? undefined : item.exerciseId;
             editedIndex = undefined;
             void showWorkout();
           },
@@ -300,7 +301,9 @@ export async function renderWorkoutScreen(
     card.dataset.exerciseId = String(item.exerciseId);
     withMuscleIcon(card.querySelector<HTMLElement>('.card-title')!, exercise);
     if (workout.exercises.length > 1) {
-      card.prepend(dragHandle(card, t('workout.dragExercise'), () => void saveOrder()));
+      card.prepend(
+        dragHandle(card, t('workout.dragExercise'), () => void saveOrder(), card.querySelector<HTMLElement>('.card-title')!),
+      );
     }
     return card;
   }
@@ -457,6 +460,8 @@ export async function renderWorkoutScreen(
       }
       currentId = exercise.id;
       await reload();
+      // Новое упражнение оказывается внизу списка: экран сам доезжает до него
+      root.querySelector('.card-current')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     const nameInput = h('input', { type: 'text', autocomplete: 'off' });

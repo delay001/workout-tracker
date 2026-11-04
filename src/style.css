@@ -1733,3 +1733,20 @@ body::before {
   background: var(--bg);
   content: '';
 }
+
+/* Перетаскивание: соседи плавно расступаются, перетаскиваемая карточка поверх остальных */
+.card[data-sortable] {
+  transition: transform 0.15s ease;
+  scroll-margin-top: calc(12px + var(--safe-top));
+}
+
+.card[data-sortable].dragging {
+  z-index: 2;
+  transition: none;
+}
+
+/* Долгое нажатие на название не выделяет текст и не открывает меню телефона */
+.card[data-sortable] .card-title {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
