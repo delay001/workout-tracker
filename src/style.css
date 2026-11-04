@@ -1633,3 +1633,75 @@ p.set-row {
   font-size: 0.9375rem;
   line-height: 1.35;
 }
+
+/* Выбор картинки упражнения */
+.icon-pick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+.icon-pick .muscle-icon,
+.icon-choice .muscle-icon {
+  position: static;
+  flex-shrink: 0;
+  transform: none;
+}
+
+.icon-pick .muscle-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  overflow-x: hidden;
+  gap: 6px;
+  max-height: 60dvh;
+  overflow-y: auto;
+}
+
+.icon-choice {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.icon-choice .muscle-icon {
+  width: 100%;
+  height: 100%;
+}
+
+/* «Автоматически» — во всю ширину строки, с подписью */
+.icon-choice:first-child {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 10px;
+  aspect-ratio: auto;
+  padding: 8px 12px;
+}
+
+.icon-choice:first-child .muscle-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-choice-current {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}

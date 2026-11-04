@@ -16,6 +16,8 @@ export interface Exercise {
   // Скрытое упражнение не предлагается при выборе, но остается в истории
   hidden?: boolean;
   primaryMuscle?: Muscle;
+  // Картинка, выбранная вручную: название упражнения каталога или group:мышца
+  icon?: string;
   secondaryMuscles?: Muscle[];
   movement?: Movement;
 }

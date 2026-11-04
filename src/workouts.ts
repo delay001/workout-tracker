@@ -80,6 +80,7 @@ export interface ExerciseOption {
   name: string;
   muscleGroup?: string;
   primaryMuscle?: Muscle;
+  icon?: string;
   // Название и другие его варианты в виде для поиска
   keys: string[];
 }
@@ -155,6 +156,7 @@ export async function searchOptions(query: string): Promise<ExerciseOption[]> {
       name: exercise.name,
       muscleGroup: exercise.muscleGroup,
       primaryMuscle: exercise.primaryMuscle,
+      icon: exercise.icon,
       keys: [exercise.name, ...(aliases.get(normalize(exercise.name)) ?? [])].map(normalize),
     })),
     ...CATALOG.filter((item) => !savedKeys.has(normalize(item.name))).map((item) => ({

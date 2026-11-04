@@ -1,4 +1,7 @@
-import type { GroupKey } from './catalog';
+import { h } from './dom';
+import { t } from './i18n';
+import { groupKey, type GroupKey } from './catalog';
+import type { Muscle } from './muscles';
 import { EXERCISE_ICONS } from './exerciseIcons';
 
 // Значки групп мышц: тонкие линии, цвет берется из текста (currentColor).
@@ -41,18 +44,84 @@ const ICONS: Record<GroupKey, string> = {
   none: `<path d="M6 8v8M9 6v12M15 6v12M18 8v8M9 12h6M3 12h3M18 12h3"/>`,
 };
 
-// У упражнения каталога свой значок, у своего упражнения пользователя — значок группы
-export function muscleIcon(key: GroupKey, name = ''): HTMLElement {
+// Что нужно, чтобы выбрать значок: выбранный вручную, свой у упражнения каталога или значок группы
+export interface IconSource {
+  name: string;
+  muscleGroup?: string;
+  primaryMuscle?: Muscle;
+  // Выбранный вручную: название упражнения каталога или group:мышца
+  icon?: string;
+}
+
+function iconBody(source: IconSource): string {
+  const chosen = source.icon?.startsWith('group:')
+    ? ICONS[source.icon.slice(6) as GroupKey]
+    : source.icon && EXERCISE_ICONS[source.icon];
+  return chosen || EXERCISE_ICONS[source.name] || ICONS[groupKey(source)];
+}
+
+export function muscleIcon(source: IconSource): HTMLElement {
   const icon = document.createElement('span');
   icon.className = 'muscle-icon';
   icon.setAttribute('aria-hidden', 'true');
-  icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${EXERCISE_ICONS[name] ?? ICONS[key]}</svg>`;
+  icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${iconBody(source)}</svg>`;
   return icon;
 }
 
 // Кнопка списка упражнений со значком слева
-export function withMuscleIcon<T extends HTMLElement>(element: T, key: GroupKey, name: string): T {
+export function withMuscleIcon<T extends HTMLElement>(element: T, source: IconSource): T {
   element.classList.add('has-muscle-icon');
-  element.prepend(muscleIcon(key, name));
+  element.prepend(muscleIcon(source));
   return element;
+}
+
+// Все значки для выбора вручную: свои у упражнений каталога, затем значки групп
+export const ICON_CHOICES: string[] = [
+  ...Object.keys(EXERCISE_ICONS),
+  ...Object.keys(ICONS).map((key) => `group:${key}`),
+];
+
+// Окно выбора картинки: сетка всех значков, первым «Автоматически».
+// Возвращает выбранный значок, '' для автоматического или null, если окно закрыли без выбора.
+export function pickIcon(source: IconSource): Promise<string | null> {
+  return new Promise((resolve) => {
+    const close = (value: string | null): void => {
+      dialog.close();
+      dialog.remove();
+      resolve(value);
+    };
+    const choice = (value: string, icon: HTMLElement, label?: string): HTMLButtonElement =>
+      h(
+        'button',
+        {
+          type: 'button',
+          className: (source.icon ?? '') === value ? 'icon-choice icon-choice-current' : 'icon-choice',
+          ariaLabel: label ?? value,
+          onclick: () => close(value),
+        },
+        icon,
+        ...(label ? [h('span', {}, label)] : []),
+      );
+    const dialog = h(
+      'dialog',
+      { className: 'confirm-dialog icon-dialog' },
+      h('h2', {}, t('exercise.icon')),
+      h(
+        'div',
+        { className: 'icon-grid' },
+        choice('', muscleIcon({ ...source, icon: undefined }), t('exercise.iconAuto')),
+        ...ICON_CHOICES.map((value) => choice(value, muscleIcon({ name: '', icon: value }))),
+      ),
+    );
+    dialog.onclick = (event) => {
+      if (event.target === dialog) close(null);
+    };
+    dialog.oncancel = (event) => {
+      event.preventDefault();
+      close(null);
+    };
+    document.body.append(dialog);
+    dialog.showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+  });
 }

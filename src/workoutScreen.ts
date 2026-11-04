@@ -298,7 +298,7 @@ export async function renderWorkoutScreen(
       ...(isCurrent ? [setForm(item, exercise), actions] : []),
     );
     card.dataset.exerciseId = String(item.exerciseId);
-    withMuscleIcon(card.querySelector<HTMLElement>('.card-title')!, groupKey(exercise), exercise.name);
+    withMuscleIcon(card.querySelector<HTMLElement>('.card-title')!, exercise);
     if (workout.exercises.length > 1) {
       card.prepend(dragHandle(card, t('workout.dragExercise'), () => void saveOrder()));
     }
@@ -549,8 +549,7 @@ export async function renderWorkoutScreen(
                 },
                 exerciseLabel(option.name),
               ),
-              groupKey(option),
-              option.name,
+              option,
             ),
         ),
       );

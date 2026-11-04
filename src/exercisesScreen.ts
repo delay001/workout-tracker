@@ -107,8 +107,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
             exerciseLabel(exercise.name),
             h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
           ),
-          groupKey(exercise),
-          exercise.name,
+          exercise,
         ),
       );
       list.replaceChildren(...(items.length > 0 ? items : [h('p', { className: 'hint' }, t('exercise.notFound'))]));

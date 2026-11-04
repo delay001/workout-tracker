@@ -3,7 +3,7 @@ import { exerciseLabel, groupKey, groupLabel, guessMuscleGroup } from './catalog
 import { markupFor, MUSCLES, type Movement, type Muscle } from './muscles';
 import { select } from './ui';
 import { field, groupedList, h } from './dom';
-import { withMuscleIcon } from './muscleIcons';
+import { muscleIcon, pickIcon, withMuscleIcon, type IconSource } from './muscleIcons';
 import { groupSelect } from './workoutScreen';
 import {
   getHiddenExercises,
@@ -62,9 +62,37 @@ export async function renderExerciseForm(
       return [muscle, box] as const;
     });
 
+    // Картинка: по умолчанию своя у упражнения каталога или значок основной мышцы; можно выбрать любую
+    let icon = saved?.icon;
+    const iconSource = (): IconSource => ({
+      name: name.value.trim(),
+      muscleGroup: group.value || undefined,
+      primaryMuscle: (primary.value || undefined) as Muscle | undefined,
+      icon,
+    });
+    const iconButton = h('button', {
+      type: 'button',
+      className: 'icon-pick',
+      onclick: async () => {
+        const picked = await pickIcon(iconSource());
+        if (picked !== null) {
+          icon = picked || undefined;
+          showIcon();
+        }
+      },
+    });
+    const showIcon = (): void =>
+      iconButton.replaceChildren(muscleIcon(iconSource()), icon ? t('exercise.iconChange') : t('exercise.iconAuto'));
+    showIcon();
+    // Пока картинка автоматическая, она меняется вслед за названием и основной мышцей
+    name.addEventListener('input', showIcon);
+    group.addEventListener('change', showIcon);
+    primary.addEventListener('change', showIcon);
+
     async function saveMarkup(name: string): Promise<void> {
       const row = await findOrCreateExercise(name);
       await db.exercises.update(row.id, {
+        icon,
         primaryMuscle: primary.value ? (primary.value as Muscle) : undefined,
         secondaryMuscles: secondary.filter(([, box]) => box.checked).map(([muscle]) => muscle),
         movement: movement.value as Movement,
@@ -106,6 +134,7 @@ export async function renderExerciseForm(
             },
           },
           field(t('common.name'), name, true),
+          field(t('exercise.icon'), iconButton),
           field(t('common.muscleGroup'), group, true),
           h('h2', {}, t('exercise.markup')),
           field(t('exercise.primary'), primary, true),
@@ -164,8 +193,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
         (option) =>
           withMuscleIcon(
             h('button', { type: 'button', className: 'list-button', onclick: () => showEdit(option) }, exerciseLabel(option.name)),
-            groupKey(option),
-            option.name,
+            option,
           ),
       );
 
@@ -185,7 +213,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
               },
             },
             exerciseLabel(exercise.name),
-          ), groupKey(exercise), exercise.name),
+          ), exercise),
         );
       }
       results.replaceChildren(...items);
