@@ -1,4 +1,5 @@
-import { MUSCLE_GROUPS } from './catalog';
+import { exerciseLabel, groupKey, groupLabel, MUSCLE_GROUPS, type GroupKey } from './catalog';
+import { MUSCLES } from './muscles';
 import { renderExerciseForm } from './exerciseSettingsScreen';
 import { vibrate } from './haptics';
 import { clearStopwatch, loadStopwatch, pause, saveStopwatch, start, stopwatchBar, toMinutes, total } from './stopwatch';
@@ -17,7 +18,7 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from './db';
-import { confetti, confirmDialog, dateField, dragHandle, field, h, requiredMark, showToast, showUndo } from './dom';
+import { confetti, confirmDialog, dateField, dragHandle, field, groupedList, h, requiredMark, showToast, showUndo } from './dom';
 import { workoutStats } from './progress';
 import {
   addExerciseToWorkout,
@@ -125,7 +126,7 @@ export async function renderWorkoutScreen(
                 showToast(
                   t('record.toast', {
                     set: `${toWeight(set.weight)}×${set.reps}`,
-                    name: exercise.name,
+                    name: exerciseLabel(exercise.name),
                     kinds: record.replace(t('record.prefix', { kinds: '' }), ''),
                   }),
                 );
@@ -261,12 +262,12 @@ export async function renderWorkoutScreen(
           type: 'button',
           className: 'button button-secondary',
           onclick: async () => {
-            const question = t('workout.deleteExercise', { name: exercise.name });
+            const question = t('workout.deleteExercise', { name: exerciseLabel(exercise.name) });
             if (item.sets.length === 0 || (await confirmDialog(question))) {
               const before = workout;
               await removeExercise(workout, item.exerciseId);
               await reload();
-              showUndo(t('undo.exercise', { name: exercise.name }), () => restore(before));
+              showUndo(t('undo.exercise', { name: exerciseLabel(exercise.name) }), () => restore(before));
             }
           },
         },
@@ -288,8 +289,8 @@ export async function renderWorkoutScreen(
             void showWorkout();
           },
         },
-        exercise.name,
-        h('span', { className: 'muscle-group' }, exercise.muscleGroup ?? ''),
+        exerciseLabel(exercise.name),
+        h('span', { className: 'muscle-group' }, groupLabel(groupKey(exercise))),
       ),
       ...(isCurrent ? [lastTimeBlock(last)] : []),
       h('ol', { className: 'set-list' }, ...rows),
@@ -466,11 +467,14 @@ export async function renderWorkoutScreen(
       results.hidden = false;
     };
 
-    let selectedGroup = '';
+    let selectedGroup: GroupKey | '' = '';
     const groupFilter = h(
       'div',
       { className: 'chips', role: 'radiogroup', ariaLabel: t('common.muscleGroup') },
-      ...[[t('common.all'), ''], ...MUSCLE_GROUPS.map((group) => [group, group])].map(([label, value]) =>
+      ...[
+        [t('common.all'), ''] as const,
+        ...[...MUSCLES, 'cardio' as const].map((key) => [groupLabel(key), key] as const),
+      ].map(([label, value]) =>
         h(
           'label',
           { className: 'chip' },
@@ -513,32 +517,27 @@ export async function renderWorkoutScreen(
       const name = nameInput.value.trim();
       const found = await searchOptions(name);
       const shown = selectedGroup
-        ? found.filter((option) => option.muscleGroup === selectedGroup)
+        ? found.filter((option) => groupKey(option) === selectedGroup)
         : found;
 
-      const items: HTMLElement[] = [];
-      let lastGroup: string | undefined;
-      for (const option of shown) {
-        const group = option.muscleGroup ?? NO_GROUP;
-        if (group !== lastGroup) {
-          items.push(h('h2', { className: 'group-heading' }, group));
-          lastGroup = group;
-        }
-        items.push(
-          h(
-            'button',
-            {
-              type: 'button',
-              className: 'list-button',
-              onclick: async () => {
-                await choose(await findOrCreateExercise(option.name, option.muscleGroup));
+      results.replaceChildren(
+        ...groupedList(
+          shown,
+          (option) => groupLabel(groupKey(option)),
+          (option) =>
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'list-button',
+                onclick: async () => {
+                  await choose(await findOrCreateExercise(option.name, option.muscleGroup));
+                },
               },
-            },
-            option.name,
-          ),
-        );
-      }
-      results.replaceChildren(...items);
+              exerciseLabel(option.name),
+            ),
+        ),
+      );
 
       newExercise.hidden = name === '' || isExactMatch(found, name);
     }

@@ -12,6 +12,7 @@ export const ru = {
   'common.workouts': 'Тренировки',
   'common.muscleGroup': 'Группа мышц',
   'common.noGroup': 'Без группы',
+  'group.cardio': 'Кардио',
   'common.all': 'Все',
   'common.prevMonth': 'Предыдущий месяц',
   'common.nextMonth': 'Следующий месяц',

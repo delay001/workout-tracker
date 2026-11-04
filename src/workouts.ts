@@ -1,4 +1,5 @@
-import { CARDIO_GROUP, CATALOG, MUSCLE_GROUPS } from './catalog';
+import { CARDIO_GROUP, CATALOG, CATALOG_EN, exerciseLabel, groupKey, groupRank } from './catalog';
+import type { Muscle } from './muscles';
 import {
   db,
   findOrCreateExercise,
@@ -78,6 +79,7 @@ export interface UsedExercise {
 export interface ExerciseOption {
   name: string;
   muscleGroup?: string;
+  primaryMuscle?: Muscle;
   // Название и другие его варианты в виде для поиска
   keys: string[];
 }
@@ -108,9 +110,12 @@ export function normalize(text: string): string {
   return withoutYo(text.trim().toLowerCase());
 }
 
-function groupRank(group?: string): number {
-  const index = group ? MUSCLE_GROUPS.indexOf(group) : -1;
-  return index === -1 ? MUSCLE_GROUPS.length : index;
+// По группе мышц, внутри группы по названию на языке интерфейса
+function byGroupAndName(
+  a: { name: string; muscleGroup?: string; primaryMuscle?: Muscle },
+  b: { name: string; muscleGroup?: string; primaryMuscle?: Muscle },
+): number {
+  return groupRank(groupKey(a)) - groupRank(groupKey(b)) || exerciseLabel(a.name).localeCompare(exerciseLabel(b.name));
 }
 
 // Упражнения пользователя плюс каталог, без повторов. Каталог в базу не пишется:
@@ -140,27 +145,28 @@ export async function searchOptions(query: string): Promise<ExerciseOption[]> {
   const key = normalize(query);
   const saved = await db.exercises.toArray();
   const savedKeys = new Set(saved.map((exercise) => normalize(exercise.name)));
-  const aliases = new Map(CATALOG.map((item) => [normalize(item.name), item.aliases ?? []]));
+  // Упражнение каталога находится и по английскому названию
+  const aliases = new Map(
+    CATALOG.map((item) => [normalize(item.name), [...(item.aliases ?? []), CATALOG_EN[item.name] ?? item.name]]),
+  );
 
   const options: ExerciseOption[] = [
     ...saved.filter((exercise) => !exercise.hidden).map((exercise) => ({
       name: exercise.name,
       muscleGroup: exercise.muscleGroup,
+      primaryMuscle: exercise.primaryMuscle,
       keys: [exercise.name, ...(aliases.get(normalize(exercise.name)) ?? [])].map(normalize),
     })),
     ...CATALOG.filter((item) => !savedKeys.has(normalize(item.name))).map((item) => ({
       name: item.name,
       muscleGroup: item.group,
-      keys: [item.name, ...(item.aliases ?? [])].map(normalize),
+      keys: [item.name, ...(aliases.get(normalize(item.name)) ?? [])].map(normalize),
     })),
   ];
 
   return options
     .filter((option) => option.keys.some((optionKey) => optionKey.includes(key)))
-    .sort(
-      (a, b) =>
-        groupRank(a.muscleGroup) - groupRank(b.muscleGroup) || a.name.localeCompare(b.name, 'ru'),
-    );
+    .sort(byGroupAndName);
 }
 
 export function isExactMatch(options: ExerciseOption[], query: string): boolean {
@@ -362,11 +368,7 @@ export async function getUsedExercises(): Promise<UsedExercise[]> {
         : [],
     ),
   );
-  return used.sort(
-    (a, b) =>
-      groupRank(a.exercise.muscleGroup) - groupRank(b.exercise.muscleGroup) ||
-      a.exercise.name.localeCompare(b.exercise.name, 'ru'),
-  );
+  return used.sort((a, b) => byGroupAndName(a.exercise, b.exercise));
 }
 
 export async function addSet(workout: Workout, exerciseId: number, set: WorkoutSet): Promise<void> {

@@ -1,8 +1,8 @@
 import { db, findOrCreateExercise } from './db';
-import { guessMuscleGroup } from './catalog';
+import { exerciseLabel, groupKey, groupLabel, guessMuscleGroup } from './catalog';
 import { markupFor, MUSCLES, type Movement, type Muscle } from './muscles';
 import { select } from './ui';
-import { field, h } from './dom';
+import { field, groupedList, h } from './dom';
 import { groupSelect } from './workoutScreen';
 import {
   getHiddenExercises,
@@ -157,22 +157,16 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
       const options = await searchOptions(search.value);
       const hidden = await getHiddenExercises();
 
-      const items: HTMLElement[] = [];
-      let lastGroup: string | undefined;
-      for (const option of options) {
-        const group = option.muscleGroup ?? t('common.noGroup');
-        if (group !== lastGroup) {
-          items.push(h('h2', { className: 'group-heading' }, group));
-          lastGroup = group;
-        }
-        items.push(
+      const items = groupedList(
+        options,
+        (option) => groupLabel(groupKey(option)),
+        (option) =>
           h(
             'button',
             { type: 'button', className: 'list-button', onclick: () => showEdit(option) },
-            option.name,
+            exerciseLabel(option.name),
           ),
-        );
-      }
+      );
 
       if (hidden.length > 0) {
         items.push(h('h2', { className: 'group-heading' }, t('exercise.hiddenList')));
@@ -189,7 +183,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
                 await updateResults();
               },
             },
-            exercise.name,
+            exerciseLabel(exercise.name),
           ),
         );
       }

@@ -1,3 +1,4 @@
+import { exerciseLabel } from './catalog';
 import { pageHeader } from './avatar';
 import { barChart, lineChart } from './chart';
 import { formatDate, formatDuration, formatMonth, formatMonthRange, shiftMonth, todayLocal } from './dates';
@@ -161,7 +162,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
   const overdue = overdueExercises(workouts, await getOverdueDays(), today);
   const exercises = await db.exercises.toArray();
   const exerciseName = (id: number): string =>
-    exercises.find((exercise) => exercise.id === id)?.name ?? '';
+    exerciseLabel(exercises.find((exercise) => exercise.id === id)?.name ?? '');
 
   const row = (name: string, value: string): HTMLElement =>
     h('p', { className: 'set-row' }, name, h('strong', {}, value));

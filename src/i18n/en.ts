@@ -14,6 +14,7 @@ export const en: Record<keyof typeof ru, string> = {
   'common.workouts': 'Workouts',
   'common.muscleGroup': 'Muscle group',
   'common.noGroup': 'No group',
+  'group.cardio': 'Cardio',
   'common.all': 'All',
   'common.prevMonth': 'Previous month',
   'common.nextMonth': 'Next month',

@@ -1,3 +1,4 @@
+import { exerciseLabel } from './catalog';
 import type { Sex } from './formulas';
 import { todayLocal } from './dates';
 import { db } from './db';
@@ -191,7 +192,7 @@ export async function renderVolumeView(root: HTMLElement): Promise<void> {
           (workout) => workout.date >= span.from && workout.date <= to && workout.exerciseIds.includes(exercise.id),
         ),
       )
-      .map((exercise) => exercise.name);
+      .map((exercise) => exerciseLabel(exercise.name));
     detail.textContent = t('volume.detail', {
       muscle: t(`muscle.${muscle}`),
       sets: round(volume[muscle]),

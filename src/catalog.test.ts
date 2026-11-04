@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG, guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
+import { CATALOG, CATALOG_EN, groupKey, guessMuscleGroup, MUSCLE_GROUPS } from './catalog';
 
 describe('каталог', () => {
   it('у каждого упражнения группа из общего списка', () => {
@@ -30,5 +30,18 @@ describe('угадывание группы мышц', () => {
 
   it('если подсказки нет, группа остается пустой', () => {
     expect(guessMuscleGroup('Армрестлинг')).toBeUndefined();
+  });
+});
+
+describe('catalog English names and groups', () => {
+  it('every catalog exercise has an English name', () => {
+    expect(CATALOG.filter((item) => !CATALOG_EN[item.name]).map((item) => item.name)).toEqual([]);
+  });
+
+  it('groups by primary muscle, cardio separately', () => {
+    expect(groupKey({ name: 'Жим лежа' })).toBe('chest');
+    expect(groupKey({ name: 'Дорожка', muscleGroup: 'Кардио' })).toBe('cardio');
+    expect(groupKey({ name: 'Мое упражнение' })).toBe('none');
+    expect(groupKey({ name: 'Мое упражнение', primaryMuscle: 'calves' })).toBe('calves');
   });
 });

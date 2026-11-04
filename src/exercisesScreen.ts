@@ -1,9 +1,9 @@
 import { getBodyWeights } from './bodyWeight';
-import { CARDIO_GROUP } from './catalog';
+import { CARDIO_GROUP, exerciseLabel, groupKey, groupLabel } from './catalog';
 import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
-import { emptyState, h } from './dom';
+import { emptyState, groupedList, h } from './dom';
 import { t } from './i18n';
 import {
   exerciseSummary,
@@ -70,7 +70,7 @@ const kilograms = (value?: number): string | undefined =>
 export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
   async function showList(): Promise<void> {
     // Группы, которые тренируются чаще, идут первыми; внутри группы порядок прежний
-    const groupOf = (item: UsedExercise): string => item.exercise.muscleGroup ?? t('common.noGroup');
+    const groupOf = (item: UsedExercise): string => groupLabel(groupKey(item.exercise));
     const all = await getUsedExercises();
     const groupTimes = new Map<string, number>();
     for (const item of all) {
@@ -95,23 +95,17 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
 
     function showItems(): void {
       const query = normalize(search.value);
-      const items: HTMLElement[] = [];
-      let lastGroup: string | undefined;
-      for (const { exercise, best } of used.filter((item) => normalize(item.exercise.name).includes(query))) {
-        const group = exercise.muscleGroup ?? t('common.noGroup');
-        if (group !== lastGroup) {
-          items.push(h('h2', { className: 'group-heading' }, group));
-          lastGroup = group;
-        }
-        items.push(
-          h(
-            'button',
-            { type: 'button', className: 'list-button', onclick: () => void showExercise(exercise) },
-            exercise.name,
-            h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
-          ),
-        );
-      }
+      const found = used.filter(
+        ({ exercise }) => normalize(exercise.name).includes(query) || normalize(exerciseLabel(exercise.name)).includes(query),
+      );
+      const items = groupedList(found, groupOf, ({ exercise, best }) =>
+        h(
+          'button',
+          { type: 'button', className: 'list-button', onclick: () => void showExercise(exercise) },
+          exerciseLabel(exercise.name),
+          h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
+        ),
+      );
       list.replaceChildren(...(items.length > 0 ? items : [h('p', { className: 'hint' }, t('exercise.notFound'))]));
     }
 
@@ -160,7 +154,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
       const points = filterByPeriod(currentSeries(), shownPeriod, todayLocal());
       chartBox.replaceChildren(
         points.length > 0
-          ? lineChart(points, unit(), t('exercise.progress', { name: exercise.name }), undefined, {
+          ? lineChart(points, unit(), t('exercise.progress', { name: exerciseLabel(exercise.name) }), undefined, {
               detail: (point) => (shownMetric === 'tonnage' && !cardio ? setsCountText(point.date) : bestSetText(point.date)),
             })
           : h('p', { className: 'hint' }, t('summary.noPeriodData')),
@@ -190,8 +184,8 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
       h(
         'div',
         { className: 'screen' },
-        h('h2', {}, exercise.name),
-        ...(exercise.muscleGroup ? [h('p', { className: 'hint' }, exercise.muscleGroup)] : []),
+        h('h2', {}, exerciseLabel(exercise.name)),
+        h('p', { className: 'hint' }, groupLabel(groupKey(exercise))),
         ...(best
           ? [
               h(

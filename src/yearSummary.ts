@@ -1,3 +1,4 @@
+import { exerciseLabel } from './catalog';
 import type { BodyWeight, Exercise, Workout } from './db';
 import { oneRepMaxSeries, historyRecords } from './progress';
 import { tonnage } from './stats';
@@ -44,7 +45,7 @@ export function yearSummary(
     }
   }
 
-  const name = (id: number): string => exercises.find((exercise) => exercise.id === id)?.name ?? '';
+  const name = (id: number): string => exerciseLabel(exercises.find((exercise) => exercise.id === id)?.name ?? '');
   const favourite = [...histories].sort((a, b) => b[1].length - a[1].length)[0];
 
   const gains = [...histories].flatMap(([id, history]) => {

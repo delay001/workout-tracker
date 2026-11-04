@@ -278,6 +278,25 @@ export function dateField(input: HTMLInputElement): HTMLElement {
 }
 
 // Свое окно подтверждения: стандартное окно браузера встроенные браузеры и PWA иногда блокируют
+// Список с заголовками групп: заголовок ставится там, где меняется группа
+export function groupedList<T>(
+  items: T[],
+  groupOf: (item: T) => string,
+  render: (item: T) => HTMLElement,
+): HTMLElement[] {
+  const result: HTMLElement[] = [];
+  let lastGroup: string | undefined;
+  for (const item of items) {
+    const group = groupOf(item);
+    if (group !== lastGroup) {
+      result.push(h('h2', { className: 'group-heading' }, group));
+      lastGroup = group;
+    }
+    result.push(render(item));
+  }
+  return result;
+}
+
 // Ручка ⋮⋮: тянешь — элемент меняется местами с соседями, отпустил — вызывается onDrop
 export function dragHandle(item: HTMLElement, label: string, onDrop: () => void): HTMLElement {
   item.dataset.sortable = '';

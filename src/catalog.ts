@@ -1,3 +1,6 @@
+import { LANGUAGE, t } from './i18n';
+import { CATALOG_MARKUP, MUSCLES, type Muscle } from './muscles';
+
 export const MUSCLE_GROUPS: string[] = [
   'Грудь',
   'Спина',
@@ -129,4 +132,90 @@ const GROUP_KEYWORDS: [string, string][] = [
 export function guessMuscleGroup(name: string): string | undefined {
   const key = name.toLowerCase();
   return GROUP_KEYWORDS.find(([word]) => key.includes(word))?.[1];
+}
+
+// Списки упражнений делятся на группы по основной мышце (14 из справочника), кардио отдельно
+export type GroupKey = Muscle | 'cardio' | 'none';
+const GROUP_ORDER: GroupKey[] = [...MUSCLES, 'cardio', 'none'];
+
+export function groupKey(exercise: { name: string; muscleGroup?: string; primaryMuscle?: Muscle }): GroupKey {
+  if (exercise.muscleGroup === CARDIO_GROUP) return 'cardio';
+  // У упражнения каталога, которого еще нет в базе, основная мышца берется из разметки
+  return exercise.primaryMuscle ?? CATALOG_MARKUP[exercise.name]?.primaryMuscle ?? 'none';
+}
+
+export function groupRank(key: GroupKey): number {
+  return GROUP_ORDER.indexOf(key);
+}
+
+export function groupLabel(key: GroupKey): string {
+  if (key === 'cardio') return t('group.cardio');
+  if (key === 'none') return t('common.noGroup');
+  return t(`muscle.${key}`);
+}
+
+// Названия каталога на английском. Свои упражнения пользователя не переводятся.
+export const CATALOG_EN: Record<string, string> = {
+  'Жим лежа': 'Bench press',
+  'Жим гантелей под 45': 'Incline dumbbell press 45°',
+  'Жим гантелей под 30–35': 'Incline dumbbell press 30–35°',
+  'Жим под 45 в тренажере': 'Incline machine press 45°',
+  'Жим под 35 в Хамере': 'Hammer Strength incline press 35°',
+  Бабочка: 'Pec deck',
+  'Тяга верхнего блока': 'Lat pulldown',
+  'Верхняя тяга в тренажере': 'Machine pulldown',
+  'Вертикальная тяга в Хамере': 'Hammer Strength pulldown',
+  'Тяга горизонтального блока': 'Seated cable row',
+  'Гребная тяга в тренажере одной рукой': 'One-arm machine row',
+  'Гребная тяга в тренажере двумя руками': 'Machine row',
+  'Гребная тяга в Хамере': 'Hammer Strength row',
+  'Тяга штанги в наклоне': 'Barbell row',
+  'Тяга Йейтса': 'Yates row',
+  'Горизонтальная тяга в Смите': 'Smith machine row',
+  'Тяга гантелей в наклоне': 'Bent-over dumbbell row',
+  'Карманная тяга с гантелью': 'Dumbbell row to hip',
+  'Становая тяга': 'Deadlift',
+  Подтягивания: 'Pull-ups',
+  'Шраги с гантелями': 'Dumbbell shrugs',
+  'Шраги со штангой': 'Barbell shrugs',
+  Гиперэкстензия: 'Back extension',
+  'Махи гантелей в сторону': 'Lateral raises',
+  'Дельты в тренажере': 'Machine lateral raise',
+  'Протяжка на плечи': 'Upright row',
+  'Жим гантелей сидя': 'Seated dumbbell press',
+  'Жим штанги стоя': 'Overhead press',
+  'Обратная бабочка': 'Reverse pec deck',
+  'Махи в наклоне на заднюю дельту': 'Bent-over rear delt raise',
+  'Супинация на бицепс': 'Dumbbell curl with supination',
+  Молотки: 'Hammer curls',
+  'Подъем штанги на бицепс': 'Barbell curl',
+  'Подъем на бицепс обратным хватом': 'Reverse-grip curl',
+  'Подъем EZ-грифа на бицепс': 'EZ-bar curl',
+  'Бицепс в тренажере': 'Machine curl',
+  'Жим блока на трицепс': 'Triceps pushdown',
+  'Разгибания сидя на трицепс': 'Seated triceps extension',
+  'Отжимания на брусьях': 'Dips',
+  'Жим узким хватом': 'Close-grip bench press',
+  'Сгибание кистей со штангой': 'Barbell wrist curl',
+  'Сгибание кисти с гантелью': 'Dumbbell wrist curl',
+  'Разгибание ног сидя': 'Leg extension',
+  'Разгибание ног одной ногой': 'Single-leg extension',
+  'Сгибание ног сидя': 'Seated leg curl',
+  'Сгибание ног лежа': 'Lying leg curl',
+  'Приседания со штангой': 'Barbell squat',
+  'Жим ногами в тренажере': 'Leg press',
+  'Румынская тяга': 'Romanian deadlift',
+  'Румынская тяга в Смите': 'Smith machine Romanian deadlift',
+  'Подъем на носки стоя': 'Standing calf raise',
+  'Подъем на носки сидя': 'Seated calf raise',
+  'Разведение ног в тренажере': 'Hip abduction machine',
+  Элипс: 'Elliptical',
+  Лестница: 'Stair climber',
+  Дорожка: 'Treadmill',
+  Скакалка: 'Jump rope',
+};
+
+// Название для показа: в базе всегда хранится русское название каталога
+export function exerciseLabel(name: string): string {
+  return LANGUAGE === 'en' ? (CATALOG_EN[name] ?? name) : name;
 }

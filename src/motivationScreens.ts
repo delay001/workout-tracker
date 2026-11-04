@@ -1,3 +1,4 @@
+import { exerciseLabel } from './catalog';
 import {
   ACHIEVEMENTS,
   evaluateAchievements,
@@ -29,7 +30,10 @@ export async function currentStates(): Promise<AchievementState[]> {
   return evaluateAchievements(workouts, todayLocal(), {
     weightGoalReached: reached,
     monthlyGoal: await getMonthlyGoal(),
-    exerciseName: (id) => exercises.find((exercise) => exercise.id === id)?.name,
+    exerciseName: (id) => {
+      const name = exercises.find((exercise) => exercise.id === id)?.name;
+      return name && exerciseLabel(name);
+    },
     weightLostKg: active && current !== undefined ? active.startKg - current : 0,
   });
 }
