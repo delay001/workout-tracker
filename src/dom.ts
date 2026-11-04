@@ -376,3 +376,78 @@ export function field(label: string, control: HTMLElement, required = false): HT
 export function requiredMark(): HTMLElement {
   return h('b', { className: 'required-mark', ariaHidden: 'true' }, ' *');
 }
+
+// Свое окно выбора вместо системного выпадающего списка: на всех телефонах выглядит одинаково.
+// Сам <select> остается и хранит значение, поэтому экраны работают с ним как раньше.
+function openSelect(select: HTMLSelectElement): void {
+  const close = (): void => {
+    dialog.close();
+    dialog.remove();
+  };
+  const title = select.closest('label.field')?.querySelector('span')?.textContent?.replace(' *', '');
+  const options = [...select.options].map((option) =>
+    h(
+      'button',
+      {
+        type: 'button',
+        className: option.value === select.value ? 'select-option select-option-current' : 'select-option',
+        onclick: () => {
+          close();
+          if (select.value !== option.value) {
+            select.value = option.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        },
+      },
+      option.textContent ?? '',
+    ),
+  );
+  const dialog = h(
+    'dialog',
+    { className: 'confirm-dialog select-dialog' },
+    ...(title ? [h('h2', {}, title)] : []),
+    h('div', { className: 'select-options' }, ...options),
+  );
+  // Нажатие мимо окна закрывает его без выбора
+  dialog.onclick = (event) => {
+    if (event.target === dialog) close();
+  };
+  dialog.oncancel = (event) => {
+    event.preventDefault();
+    close();
+  };
+  document.body.append(dialog);
+  dialog.showModal();
+  // Окно само ставит фокус на первый пункт, и он открывается с рамкой; рамка нужна только при выборе с клавиатуры
+  (document.activeElement as HTMLElement | null)?.blur();
+  dialog.querySelector('.select-option-current')?.scrollIntoView({ block: 'nearest' });
+}
+
+export function startCustomSelects(): void {
+  // Поле списка не ловит нажатия (pointer-events: none), поэтому ищем его по месту нажатия
+  document.addEventListener('click', (event) => {
+    // Нажатие внутри открытого окна не должно задевать поле, которое лежит под ним
+    if ((event.target as Element).closest('dialog')) return;
+    const hit = [...document.querySelectorAll('select')].find((select) => {
+      const rect = select.getBoundingClientRect();
+      return (
+        !select.disabled &&
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      );
+    });
+    if (hit) {
+      event.preventDefault();
+      openSelect(hit);
+    }
+  });
+  // С клавиатуры тоже открывается свое окно
+  document.addEventListener('keydown', (event) => {
+    if (event.target instanceof HTMLSelectElement && [' ', 'Enter', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
+      event.preventDefault();
+      openSelect(event.target);
+    }
+  });
+}

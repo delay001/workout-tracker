@@ -1,6 +1,6 @@
 import './style.css';
 import { markUpExercises, requestPersistentStorage, type Workout } from './db';
-import { h } from './dom';
+import { h, startCustomSelects } from './dom';
 import { renderHistoryTab, resetHistoryMonth } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
 import { getSetting, loadTheme } from './settings';
@@ -113,6 +113,7 @@ async function openActive(): Promise<void> {
 
 void loadTheme()
   .then(startHaptics)
+  .then(startCustomSelects)
   .then(markUpExercises)
   .then(() => syncAchievements(false))
   .then(needsOnboarding)
