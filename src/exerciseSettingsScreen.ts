@@ -3,6 +3,7 @@ import { exerciseLabel, groupKey, groupLabel, guessMuscleGroup } from './catalog
 import { markupFor, MUSCLES, type Movement, type Muscle } from './muscles';
 import { select } from './ui';
 import { field, groupedList, h } from './dom';
+import { withMuscleIcon } from './muscleIcons';
 import { groupSelect } from './workoutScreen';
 import {
   getHiddenExercises,
@@ -161,10 +162,9 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
         options,
         (option) => groupLabel(groupKey(option)),
         (option) =>
-          h(
-            'button',
-            { type: 'button', className: 'list-button', onclick: () => showEdit(option) },
-            exerciseLabel(option.name),
+          withMuscleIcon(
+            h('button', { type: 'button', className: 'list-button', onclick: () => showEdit(option) }, exerciseLabel(option.name)),
+            groupKey(option),
           ),
       );
 
@@ -173,7 +173,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
       }
       for (const exercise of hidden) {
         items.push(
-          h(
+          withMuscleIcon(h(
             'button',
             {
               type: 'button',
@@ -184,7 +184,7 @@ export async function renderExerciseSettings(root: HTMLElement, onBack: () => vo
               },
             },
             exerciseLabel(exercise.name),
-          ),
+          ), groupKey(exercise)),
         );
       }
       results.replaceChildren(...items);

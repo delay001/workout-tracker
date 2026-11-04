@@ -4,6 +4,7 @@ import { lineChart, type ChartDatum } from './chart';
 import { formatDate, todayLocal } from './dates';
 import type { Exercise } from './db';
 import { emptyState, groupedList, h, statRow } from './dom';
+import { withMuscleIcon } from './muscleIcons';
 import { t } from './i18n';
 import {
   exerciseSummary,
@@ -99,11 +100,14 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
         ({ exercise }) => normalize(exercise.name).includes(query) || normalize(exerciseLabel(exercise.name)).includes(query),
       );
       const items = groupedList(found, groupOf, ({ exercise, best }) =>
-        h(
-          'button',
-          { type: 'button', className: 'list-button', onclick: () => void showExercise(exercise) },
-          exerciseLabel(exercise.name),
-          h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
+        withMuscleIcon(
+          h(
+            'button',
+            { type: 'button', className: 'list-button', onclick: () => void showExercise(exercise) },
+            exerciseLabel(exercise.name),
+            h('span', { className: 'muscle-group' }, best ? t('exercise.best', { best: formatBest(best) }) : ''),
+          ),
+          groupKey(exercise),
         ),
       );
       list.replaceChildren(...(items.length > 0 ? items : [h('p', { className: 'hint' }, t('exercise.notFound'))]));

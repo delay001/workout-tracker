@@ -1,5 +1,6 @@
 import { exerciseLabel, groupKey, groupLabel, MUSCLE_GROUPS, type GroupKey } from './catalog';
 import { MUSCLES } from './muscles';
+import { withMuscleIcon } from './muscleIcons';
 import { renderExerciseForm } from './exerciseSettingsScreen';
 import { vibrate } from './haptics';
 import { clearStopwatch, loadStopwatch, pause, saveStopwatch, start, stopwatchBar, toMinutes, total } from './stopwatch';
@@ -297,6 +298,7 @@ export async function renderWorkoutScreen(
       ...(isCurrent ? [setForm(item, exercise), actions] : []),
     );
     card.dataset.exerciseId = String(item.exerciseId);
+    withMuscleIcon(card.querySelector<HTMLElement>('.card-title')!, groupKey(exercise));
     if (workout.exercises.length > 1) {
       card.prepend(dragHandle(card, t('workout.dragExercise'), () => void saveOrder()));
     }
@@ -535,16 +537,19 @@ export async function renderWorkoutScreen(
           shown,
           (option) => groupLabel(groupKey(option)),
           (option) =>
-            h(
-              'button',
-              {
-                type: 'button',
-                className: 'list-button',
-                onclick: async () => {
-                  await choose(await findOrCreateExercise(option.name, option.muscleGroup));
+            withMuscleIcon(
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'list-button',
+                  onclick: async () => {
+                    await choose(await findOrCreateExercise(option.name, option.muscleGroup));
+                  },
                 },
-              },
-              exerciseLabel(option.name),
+                exerciseLabel(option.name),
+              ),
+              groupKey(option),
             ),
         ),
       );
