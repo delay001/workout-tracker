@@ -192,7 +192,7 @@ export async function renderMeasurementsView(root: HTMLElement, edited?: Measure
       field(t('common.date'), dateField(date)),
       h(
         'div',
-        { className: 'set-inputs' },
+        { className: 'set-inputs measure-inputs' },
         ...MEASUREMENT_FIELDS.map(([, label], index) => field(withUnit(label), inputs[index][1])),
       ),
       error,
