@@ -467,7 +467,18 @@ export async function renderWorkoutScreen(
     let selectedGroup: GroupKey | '' = '';
     const groupFilter = h(
       'div',
-      { className: 'chips segmented segmented-scroll', role: 'radiogroup', ariaLabel: t('common.muscleGroup') },
+      {
+        className: 'chips segmented segmented-scroll',
+        role: 'radiogroup',
+        ariaLabel: t('common.muscleGroup'),
+        // На компьютере колесико мыши листает полоску вбок; на телефоне ее листают пальцем
+        onwheel: (event: WheelEvent) => {
+          if (event.deltaY !== 0) {
+            event.preventDefault();
+            groupFilter.scrollLeft += event.deltaY;
+          }
+        },
+      },
       ...[
         [t('common.all'), ''] as const,
         ...[...MUSCLES, 'cardio' as const].map((key) => [groupLabel(key), key] as const),

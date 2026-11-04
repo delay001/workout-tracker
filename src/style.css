@@ -1454,6 +1454,8 @@ p.set-row {
 
 /* Длинный список в одну строку: листается вбок пальцем, полоса прокрутки скрыта */
 .segmented-scroll {
+  /* Спрятанные кружки выбора остаются внутри полоски и не растягивают страницу вбок */
+  position: relative;
   grid-auto-columns: max-content;
   overflow-x: auto;
   scrollbar-width: none;
