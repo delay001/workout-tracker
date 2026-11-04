@@ -25,6 +25,7 @@ import { renderTemplateSettings } from './templateSettingsScreen';
 import { addWorkoutType, deleteWorkoutType, getCustomWorkoutTypes, workoutTypeName } from './workouts';
 import { LANGUAGE, setLanguage, t, type Language } from './i18n';
 import { renderOnboarding } from './onboarding';
+import { renderNotificationsScreen } from './notificationsScreen';
 import { MASCOTS, mascotIcon, parseMascot, type Mascot } from './mascot';
 import { HAPTIC_LEVELS, parseHaptics, setHaptics, vibrate, type HapticLevel } from './haptics';
 
@@ -358,6 +359,7 @@ export async function renderSettingsScreen(
       link(t('settings.workoutTypes'), () => void showTypes()),
       link(t('settings.templates'), () => void renderTemplateSettings(root, () => void showMain())),
       link(t('settings.norms'), () => void showNorms()),
+      link(t('notify.title'), () => void renderNotificationsScreen(root, () => void showMain())),
 
       h('h2', {}, t('settings.groupData')),
       persisted

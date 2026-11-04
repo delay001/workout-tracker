@@ -3,7 +3,7 @@ import { todayLocal } from './dates';
 import { confirmDialog } from './dom';
 import { saveFile } from './files';
 import { parseHaptics, setHaptics } from './haptics';
-import { applySavedLook, getSetting } from './settings';
+import { applySavedLook, getSetting, setSetting } from './settings';
 import { t } from './i18n';
 
 function countsOf(backup: Backup): { exercises: number; workouts: number } {
@@ -31,6 +31,8 @@ export function renderBackupScreen(root: HTMLElement, onImported: (message: stri
         new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }),
       );
       status.textContent = t('backup.saved', countsOf(backup));
+      // От этой даты считается напоминание «Пора сохранить копию»
+      await setSetting('lastBackupDate', todayLocal());
     } catch {
       status.textContent = t('backup.saveFailed');
     }

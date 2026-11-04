@@ -1,5 +1,4 @@
 :root {
-  color-scheme: dark;
   --bg: #17151f;
   --card: #211e2b;
   --surface: #2c2938;
@@ -1749,4 +1748,57 @@ body::before {
 .card[data-sortable] .card-title {
   -webkit-touch-callout: none;
   user-select: none;
+}
+
+/* Уведомления: карточка напоминания с переключателем и его параметрами */
+.notify-card {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--card);
+}
+
+.notify-toggle {
+  align-items: flex-start;
+}
+
+.notify-toggle > span {
+  display: grid;
+  gap: 2px;
+}
+
+.notify-body {
+  margin-top: 12px;
+}
+
+.weekday-chips {
+  margin-bottom: 12px;
+}
+
+.weekday-chips .chip {
+  padding: 6px 0;
+  text-transform: capitalize;
+}
+
+.time-list {
+  display: grid;
+  gap: 8px;
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.125rem;
 }

@@ -58,7 +58,15 @@ export function loadStopwatch(workoutId: number): Stopwatch {
   }
 }
 
+// Таймер в шторке телефона повторяет секундомер. В браузерной сборке этой ветки нет.
+function syncShade(watch: Stopwatch | undefined): void {
+  if (import.meta.env.MODE === 'apk') {
+    void import('./native').then((native) => native.syncTimer(watch)).catch(() => undefined);
+  }
+}
+
 export function saveStopwatch(workoutId: number, watch: Stopwatch): void {
+  syncShade(watch);
   try {
     localStorage.setItem(key(workoutId), JSON.stringify(watch));
   } catch {
@@ -67,6 +75,7 @@ export function saveStopwatch(workoutId: number, watch: Stopwatch): void {
 }
 
 export function clearStopwatch(workoutId: number): void {
+  syncShade(undefined);
   try {
     localStorage.removeItem(key(workoutId));
   } catch {
