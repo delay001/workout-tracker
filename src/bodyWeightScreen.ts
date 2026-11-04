@@ -101,7 +101,7 @@ export async function renderBodyWeightView(root: HTMLElement): Promise<void> {
 
     const section: HTMLElement[] = [h('h2', {}, t('goal.title'))];
     if (goal) {
-      const status = goalStatus(goal, trend, today);
+      const status = goalStatus(goal, trend, today, current);
       const fill = h('div', { className: 'progress-fill' });
       fill.style.width = `${status.percent}%`;
       section.push(

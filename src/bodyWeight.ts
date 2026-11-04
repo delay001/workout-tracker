@@ -62,8 +62,10 @@ export interface GoalStatus {
   tooFast: boolean;
 }
 
-export function goalStatus(goal: WeightGoal, trend: ChartDatum[], today: string): GoalStatus {
-  const current = trend.at(-1)?.value ?? goal.startKg;
+// Прогресс и «осталось» — по последнему взвешиванию, чтобы новая запись сразу двигала цель;
+// темп в неделю — по тренду (среднее за 7 дней), чтобы его не дергали скачки воды
+export function goalStatus(goal: WeightGoal, trend: ChartDatum[], today: string, latestKg?: number): GoalStatus {
+  const current = latestKg ?? trend.at(-1)?.value ?? goal.startKg;
   const leftKg = Math.round((goal.targetKg - current) * 10) / 10;
   const leftDays = Math.max(0, daysBetween(today, goal.deadline));
   const requiredPerWeek = Math.round((leftKg / Math.max(leftDays, 1)) * 70) / 10;

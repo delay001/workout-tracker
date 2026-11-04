@@ -91,6 +91,14 @@ describe('тренд и цель', () => {
 
     expect(goalStatus(goal, trend, '2026-10-15')).toMatchObject({ status: 'behind', tooFast: true });
   });
+
+  it('прогресс и остаток считаются по последнему взвешиванию, а не по среднему за неделю', () => {
+    const goal = { targetKg: 80, deadline: '2026-12-10', startKg: 90, startDate: '2026-10-01' };
+    // Среднее за неделю 88, но последнее взвешивание уже 85
+    const trend = [{ date: '2026-10-15', value: 88 }];
+    expect(goalStatus(goal, trend, '2026-10-15', 85)).toMatchObject({ percent: 50, leftKg: -5 });
+    expect(goalStatus(goal, trend, '2026-10-15')).toMatchObject({ percent: 20, leftKg: -8 });
+  });
 });
 
 describe('график', () => {

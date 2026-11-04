@@ -70,8 +70,8 @@ export async function renderHomeScreen(
     if (!weightGoal) {
       return month;
     }
-    const trend = movingAverage(await getBodyWeights());
-    const status = goalStatus(weightGoal, trend, today);
+    const weights = await getBodyWeights();
+    const status = goalStatus(weightGoal, movingAverage(weights), today, weights.at(-1)?.kg);
     const reached = status.percent >= 100;
     const weight = h(
       'div',
