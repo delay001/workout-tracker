@@ -172,28 +172,36 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
     const hints = plateauHints(plateau, workouts, exercises, norms, today);
     const muscle = hints.muscle ? t(`muscle.${hints.muscle}`) : '';
     const num = (value?: number): string => (value === undefined ? '—' : value.toLocaleString(LOCALE));
-    const lines = [
-      ...(hints.muscle && hints.norm
-        ? [t(`plateau.volume.${hints.volume}`, { sets: num(hints.weeklySets), muscle, min: hints.norm[0], max: hints.norm[1] })]
-        : []),
-      t(`plateau.intensity.${hints.intensity}`, { reps: num(hints.averageReps), failure: hints.failureSets, sets: hints.workingSets }),
-      t(`plateau.recovery.${hints.recovery}`, {
-        now: num(hints.ratingNow),
-        before: num(hints.ratingBefore),
-        times: num(hints.perWeek),
-        muscle,
-      }),
-    ];
+    // Показывается только то, что стоит поменять; если все в норме — одна строка
+    const lines: string[] = [];
+    if (hints.muscle && hints.norm && hints.volume !== 'ok') {
+      lines.push(t(`plateau.volume.${hints.volume}`, { sets: num(hints.weeklySets), min: hints.norm[0], max: hints.norm[1] }));
+    }
+    if (hints.intensity !== 'ok') {
+      lines.push(t(`plateau.intensity.${hints.intensity}`, { reps: num(hints.averageReps), sets: hints.workingSets }));
+    }
+    if (hints.recovery !== 'ok') {
+      lines.push(
+        t(`plateau.recovery.${hints.recovery}`, {
+          now: num(hints.ratingNow),
+          before: num(hints.ratingBefore),
+          times: num(hints.perWeek),
+          muscle,
+        }),
+      );
+    }
     return h(
       'div',
       { className: 'plateau-card' },
-      row(exerciseName(plateau.exerciseId), t('plateau.row', { weeks: Math.floor(plateau.days / 7), times: plateau.times })),
-      h('p', { className: 'hint' }, t('plateau.best', { value: formatWeight(plateau.best) })),
-      ...lines.map((line) => h('p', { className: 'plateau-hint' }, line)),
+      row(exerciseName(plateau.exerciseId), t('plateau.row', { weeks: Math.floor(plateau.days / 7) })),
+      ...(lines.length > 0 ? lines : [t('plateau.allOk')]).map((line) => h('p', { className: 'plateau-hint' }, line)),
     );
   };
+  // Первым — упражнение, которое делается чаще всего
+  const timesDone = (id: number): number => workouts.filter((workout) => workout.exerciseIds.includes(id)).length;
   const plateauCards = findPlateaus(workouts, today)
     .filter((item) => !exercises.find((exercise) => exercise.id === item.exerciseId)?.hidden)
+    .sort((a, b) => timesDone(b.exerciseId) - timesDone(a.exerciseId))
     .map(plateauCard);
 
   // Скрытые упражнения в подсказку «давно не делал» не попадают
@@ -407,7 +415,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
       ...(overdueRows.length > 0 ? collapsible(overdueRows) : [h('p', { className: 'hint' }, t('stats.noOverdue'))]),
       h('h2', {}, t('plateau.title')),
       ...(plateauCards.length > 0
-        ? [h('p', { className: 'hint' }, t('plateau.explain')), ...collapsible(plateauCards, 3)]
+        ? [h('p', { className: 'hint' }, t('plateau.explain')), ...collapsible(plateauCards, 1)]
         : [h('p', { className: 'hint' }, t('plateau.none'))]),
     );
   }
