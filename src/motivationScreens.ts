@@ -1,4 +1,5 @@
 import { exerciseLabel } from './catalog';
+import { saveFile } from './files';
 import {
   ACHIEVEMENTS,
   evaluateAchievements,
@@ -144,12 +145,7 @@ function saveCard(year: number, title: string, value: string): void {
 
   canvas.toBlob((blob) => {
     if (blob) {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `workout-year-${year}.png`;
-      link.click();
-      URL.revokeObjectURL(url);
+      void saveFile(`workout-year-${year}.png`, blob);
     }
   });
 }

@@ -1,0 +1,79 @@
+name: Сборка APK
+
+# Отдельно от публикации сайта: запускается только вручную (кнопка Run workflow на вкладке Actions)
+# или тегом apk-*. Сайт на GitHub Pages этот сценарий не трогает.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['apk-*']
+
+permissions:
+  # Нужно, чтобы выложить apk в «Релизы»
+  contents: write
+
+concurrency:
+  group: apk
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_BASE64: ${{ secrets.APK_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Если хоть один тест упал, apk не собирается
+      - run: npm test
+      - run: npm run build:apk
+      - run: npx cap sync android
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Ключ подписи из секретов
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.p12"
+          echo "APK_KEYSTORE_FILE=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+
+      - name: Сборка apk
+        working-directory: android
+        env:
+          APK_VERSION_CODE: ${{ github.run_number }}
+          APK_VERSION_NAME: 1.0.${{ github.run_number }}
+          APK_KEYSTORE_PASSWORD: ${{ secrets.APK_KEYSTORE_PASSWORD }}
+          APK_KEY_ALIAS: ${{ secrets.APK_KEY_ALIAS }}
+          APK_KEY_PASSWORD: ${{ secrets.APK_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          if [ -n "$APK_KEYSTORE_FILE" ]; then
+            ./gradlew --no-daemon assembleRelease
+            cp app/build/outputs/apk/release/app-release.apk "../workout-tracker-1.0.${{ github.run_number }}.apk"
+          else
+            # Без ключа в секретах собирается отладочная версия: поставить можно, но обновить поверх — нет
+            echo "::warning::Нет ключа подписи в секретах: собрана отладочная версия, ее нельзя обновлять поверх"
+            ./gradlew --no-daemon assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk "../workout-tracker-1.0.${{ github.run_number }}-debug.apk"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: workout-tracker-*.apk
+
+      - name: Выложить в «Релизы»
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('apk-v1.0.{0}', github.run_number) }}
+        run: |
+          gh release create "$TAG" workout-tracker-*.apk \
+            --target "$GITHUB_SHA" \
+            --title "Трекер тренировок 1.0.${{ github.run_number }} (apk)" \
+            --notes "Скачайте apk на телефон и откройте. Новая версия ставится поверх старой, данные сохраняются." \
+            --prerelease

@@ -1,0 +1,72 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "io.github.delay001.workouttracker"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "io.github.delay001.workouttracker"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // Номер версии задает сборка на GitHub (номер запуска): каждая новая версия больше прошлой,
+        // поэтому ставится поверх старой с сохранением данных. Локально — 1.
+        versionCode((System.getenv("APK_VERSION_CODE") ?: "1").toInteger())
+        versionName(System.getenv("APK_VERSION_NAME") ?: "1.0")
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // Ключ подписи приходит из секретов GitHub. Все версии должны быть подписаны одним ключом:
+    // иначе новую нельзя поставить поверх старой, только удалив ее вместе с данными.
+    signingConfigs {
+        release {
+            def keystore = System.getenv("APK_KEYSTORE_FILE")
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv("APK_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("APK_KEY_ALIAS")
+                keyPassword System.getenv("APK_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (System.getenv("APK_KEYSTORE_FILE")) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

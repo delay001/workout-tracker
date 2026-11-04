@@ -1,16 +1,8 @@
 import { exportData, importData, parseBackup, type Backup } from './backup';
 import { todayLocal } from './dates';
 import { confirmDialog } from './dom';
+import { saveFile } from './files';
 import { t } from './i18n';
-
-function downloadJson(fileName: string, content: string): void {
-  const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
-}
 
 function countsOf(backup: Backup): { exercises: number; workouts: number } {
   return { exercises: backup.exercises.length, workouts: backup.workouts.length };
@@ -31,8 +23,15 @@ export function renderBackupScreen(root: HTMLElement, onImported: (message: stri
 
   root.querySelector('#export')!.addEventListener('click', async () => {
     const backup = await exportData();
-    downloadJson(`workout-backup-${todayLocal()}.json`, JSON.stringify(backup, null, 2));
-    status.textContent = t('backup.saved', countsOf(backup));
+    try {
+      await saveFile(
+        `workout-backup-${todayLocal()}.json`,
+        new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }),
+      );
+      status.textContent = t('backup.saved', countsOf(backup));
+    } catch {
+      status.textContent = t('backup.saveFailed');
+    }
   });
 
   root.querySelector('#import')!.addEventListener('click', () => fileInput.click());

@@ -28,6 +28,8 @@
 - `npm run dev -- --host`: открыть с телефона в той же Wi-Fi сети
 - `npm run build`: сборка
 - `npm test`: тесты (Vitest) для логики: расчеты, импорт/экспорт, миграции данных
+- `npm run build:apk`: веб-часть для apk (папка dist-apk, без service worker). Сам apk собирает GitHub:
+  Actions → «Сборка APK» → Run workflow, файл появляется в «Релизах». Подробности: `docs/APK-PLAN.md`
 
 ## Экраны
 

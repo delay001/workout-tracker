@@ -105,6 +105,7 @@ export const en: Record<keyof typeof ru, string> = {
   'common.nextYear': 'Next year',
   'common.thisMonth': 'This month',
   'common.undo': 'Undo',
+  'backup.saveFailed': 'Could not save the backup file',
   'exercise.icon': 'Picture',
   'exercise.iconAuto': 'Automatic',
   'exercise.iconChange': 'Change',

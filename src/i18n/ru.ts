@@ -93,6 +93,7 @@ export const ru = {
   'common.nextYear': 'Следующий год',
   'common.thisMonth': 'Этот месяц',
   'common.undo': 'Отменить',
+  'backup.saveFailed': 'Не удалось сохранить файл копии',
   'exercise.icon': 'Картинка',
   'exercise.iconAuto': 'Автоматически',
   'exercise.iconChange': 'Изменить',

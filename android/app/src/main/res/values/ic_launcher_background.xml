@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Фон иконки и заставки: темный, как у приложения -->
+    <color name="ic_launcher_background">#14161A</color>
+    <color name="app_background">#17151F</color>
+</resources>
