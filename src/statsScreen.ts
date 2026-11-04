@@ -14,7 +14,8 @@ import { getBodyWeights } from './bodyWeight';
 import type { Bar } from './chart';
 import type { Workout } from './db';
 import { radioChips, segmented } from './ui';
-import { renderVolumeView } from './volumeScreen';
+import { getNorms, renderVolumeView } from './volumeScreen';
+import { findPlateaus, plateauHints, type Plateau } from './plateau';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { LOCALE, t } from './i18n';
 
@@ -164,6 +165,37 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
     exerciseLabel(exercises.find((exercise) => exercise.id === id)?.name ?? '');
 
   const row = statRow;
+
+  // Плато: упражнения без роста расчетного 1ПМ и что проверить по объему, интенсивности и восстановлению
+  const norms = await getNorms();
+  const plateauCard = (plateau: Plateau): HTMLElement => {
+    const hints = plateauHints(plateau, workouts, exercises, norms, today);
+    const muscle = hints.muscle ? t(`muscle.${hints.muscle}`) : '';
+    const num = (value?: number): string => (value === undefined ? '—' : value.toLocaleString(LOCALE));
+    const lines = [
+      ...(hints.muscle && hints.norm
+        ? [t(`plateau.volume.${hints.volume}`, { sets: num(hints.weeklySets), muscle, min: hints.norm[0], max: hints.norm[1] })]
+        : []),
+      t(`plateau.intensity.${hints.intensity}`, { reps: num(hints.averageReps), failure: hints.failureSets, sets: hints.workingSets }),
+      t(`plateau.recovery.${hints.recovery}`, {
+        now: num(hints.ratingNow),
+        before: num(hints.ratingBefore),
+        times: num(hints.perWeek),
+        muscle,
+      }),
+    ];
+    return h(
+      'div',
+      { className: 'plateau-card' },
+      row(exerciseName(plateau.exerciseId), t('plateau.row', { weeks: Math.floor(plateau.days / 7), times: plateau.times })),
+      h('p', { className: 'hint' }, t('plateau.best', { value: formatWeight(plateau.best) })),
+      ...lines.map((line) => h('p', { className: 'plateau-hint' }, line)),
+    );
+  };
+  const plateauCards = findPlateaus(workouts, today)
+    .filter((item) => !exercises.find((exercise) => exercise.id === item.exerciseId)?.hidden)
+    .map(plateauCard);
+
   // Скрытые упражнения в подсказку «давно не делал» не попадают
   const overdueRows = overdue
     .filter((item) => !exercises.find((exercise) => exercise.id === item.exerciseId)?.hidden)
@@ -373,6 +405,10 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
           ]),
       h('h2', {}, t('stats.overdue')),
       ...(overdueRows.length > 0 ? collapsible(overdueRows) : [h('p', { className: 'hint' }, t('stats.noOverdue'))]),
+      h('h2', {}, t('plateau.title')),
+      ...(plateauCards.length > 0
+        ? [h('p', { className: 'hint' }, t('plateau.explain')), ...collapsible(plateauCards, 3)]
+        : [h('p', { className: 'hint' }, t('plateau.none'))]),
     );
   }
 

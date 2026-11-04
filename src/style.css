@@ -1615,3 +1615,21 @@ p.set-row {
   width: 100%;
   height: 100%;
 }
+
+/* Плато: упражнение и подсказки, что проверить */
+.plateau-card {
+  margin-bottom: 12px;
+}
+
+.plateau-card .hint {
+  margin: 4px 4px 6px;
+}
+
+.plateau-hint {
+  margin: 0 0 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
