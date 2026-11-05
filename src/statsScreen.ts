@@ -15,6 +15,8 @@ import type { Bar } from './chart';
 import type { Workout } from './db';
 import { radioChips, segmented } from './ui';
 import { getNorms, renderVolumeView } from './volumeScreen';
+import { renderExercisesScreen } from './exercisesScreen';
+import { withMuscleIcon } from './muscleIcons';
 import { findPlateaus, plateauHints, type Plateau } from './plateau';
 import { getFinishedWorkouts, workoutTypeName } from './workouts';
 import { LOCALE, t } from './i18n';
@@ -104,6 +106,11 @@ export async function renderTotalsScreen(root: HTMLElement, onBack: () => void):
 
 let shownView: 'month' | 'week' = 'month';
 
+// Повторное нажатие на вкладку «Статистика» открывает «Обзор»
+export function resetStatsView(): void {
+  shownView = 'month';
+}
+
 export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () => void): Promise<void> {
   const body = h('div');
   const showView = async (): Promise<void> => {
@@ -165,6 +172,24 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
     exerciseLabel(exercises.find((exercise) => exercise.id === id)?.name ?? '');
 
   const row = statRow;
+  // Строка упражнения: значок, название и значение; нажатие открывает историю упражнения
+  const exerciseRow = (id: number, value: string): HTMLElement => {
+    const exercise = exercises.find((item) => item.id === id);
+    if (!exercise) return row(exerciseName(id), value);
+    return withMuscleIcon(
+      h(
+        'button',
+        {
+          type: 'button',
+          className: 'set-row set-row-button',
+          onclick: () => void renderExercisesScreen(page, { exercise, onBack: back }),
+        },
+        h('span', {}, exerciseName(id)),
+        h('strong', {}, value),
+      ),
+      exercise,
+    );
+  };
 
   // Плато: упражнения без роста расчетного 1ПМ и что проверить по объему, интенсивности и восстановлению
   const norms = await getNorms();
@@ -207,7 +232,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
   // Скрытые упражнения в подсказку «давно не делал» не попадают
   const overdueRows = overdue
     .filter((item) => !exercises.find((exercise) => exercise.id === item.exerciseId)?.hidden)
-    .map((item) => row(exerciseName(item.exerciseId), t('stats.overdueRow', { days: item.days })));
+    .map((item) => exerciseRow(item.exerciseId, t('stats.overdueRow', { days: item.days })));
 
   function show(): void {
     const months = shownMonths;
@@ -407,7 +432,7 @@ async function renderMonthView(root: HTMLElement, page: HTMLElement, onOpenSetti
             h('h2', {}, t('stats.top')),
             ...collapsible(
               topExercises(periodWorkouts, Infinity).map((item) =>
-                row(exerciseName(item.exerciseId), t('stats.topRow', { count: item.count })),
+                exerciseRow(item.exerciseId, t('stats.topRow', { count: item.count })),
               ),
             ),
           ]),

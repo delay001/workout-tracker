@@ -1791,7 +1791,8 @@ body::before {
   gap: 8px;
 }
 
-.time-input {
+/* Время в уведомлениях: выглядит как поле, нажатие открывает свое окно выбора */
+.time-button {
   width: 100%;
   min-height: 48px;
   padding: 8px 12px;
@@ -1801,6 +1802,7 @@ body::before {
   color: var(--text);
   font: inherit;
   font-size: 1.125rem;
+  text-align: left;
 }
 
 /* Справка «Как считается»: раздел на подложке, переносы строк из текста сохраняются */
@@ -1821,4 +1823,59 @@ body::before {
   color: var(--muted);
   line-height: 1.45;
   white-space: pre-line;
+}
+
+/* Окно выбора времени: крупное время сверху, сетки часов и минут */
+.time-dialog .time-dialog-value {
+  margin: 0 0 8px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.time-dialog h2 {
+  margin: 8px 0 6px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.time-cell {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.time-cell-current {
+  background: var(--grad-1);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+/* Строка упражнения в статистике — кнопка, открывает историю упражнения */
+.set-row-button {
+  width: 100%;
+  margin: 6px 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.125rem;
+  text-align: left;
+}
+
+.set-row-button.has-muscle-icon {
+  padding-left: 46px;
 }

@@ -445,6 +445,70 @@ export function requiredMark(): HTMLElement {
   return h('b', { className: 'required-mark', ariaHidden: 'true' }, ' *');
 }
 
+// Свое окно выбора времени «ЧЧ:ММ»: сетка часов и минут с шагом 5. null — закрыли без выбора.
+export function pickTime(value: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    let [hour, minute] = value.split(':');
+    const pad = (n: number): string => String(n).padStart(2, '0');
+    const shownTime = h('p', { className: 'time-dialog-value' });
+    const close = (result: string | null): void => {
+      dialog.close();
+      dialog.remove();
+      resolve(result);
+    };
+    const grid = (values: string[], current: () => string, choose: (v: string) => void): HTMLElement => {
+      const box = h('div', { className: 'time-grid' });
+      const draw = (): void =>
+        box.replaceChildren(
+          ...values.map((item) =>
+            h(
+              'button',
+              {
+                type: 'button',
+                className: item === current() ? 'time-cell time-cell-current' : 'time-cell',
+                onclick: () => {
+                  choose(item);
+                  update();
+                },
+              },
+              item,
+            ),
+          ),
+        );
+      draws.push(draw);
+      return box;
+    };
+    const draws: (() => void)[] = [];
+    const update = (): void => {
+      shownTime.textContent = `${hour}:${minute}`;
+      draws.forEach((draw) => draw());
+    };
+    const dialog = h(
+      'dialog',
+      { className: 'confirm-dialog time-dialog' },
+      shownTime,
+      h('h2', {}, t('time.hours')),
+      grid(Array.from({ length: 24 }, (_, i) => pad(i)), () => hour, (v) => (hour = v)),
+      h('h2', {}, t('time.minutes')),
+      grid(Array.from({ length: 12 }, (_, i) => pad(i * 5)), () => minute, (v) => (minute = v)),
+      h(
+        'div',
+        { className: 'card-actions' },
+        h('button', { type: 'button', className: 'button button-secondary', onclick: () => close(null) }, t('set.cancel')),
+        h('button', { type: 'button', className: 'button', onclick: () => close(`${hour}:${minute}`) }, t('time.done')),
+      ),
+    );
+    dialog.oncancel = (event) => {
+      event.preventDefault();
+      close(null);
+    };
+    update();
+    document.body.append(dialog);
+    dialog.showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+  });
+}
+
 // Свое окно выбора вместо системного выпадающего списка: на всех телефонах выглядит одинаково.
 // Сам <select> остается и хранит значение, поэтому экраны работают с ним как раньше.
 function openSelect(select: HTMLSelectElement): void {

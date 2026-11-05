@@ -1,7 +1,7 @@
 import './style.css';
 import { markUpExercises, requestPersistentStorage, type Workout } from './db';
 import { h, startCustomSelects } from './dom';
-import { renderHistoryTab, resetHistoryMonth } from './historyScreen';
+import { renderHistoryTab, resetHistoryMonth, resetHistoryView } from './historyScreen';
 import { renderHomeScreen } from './homeScreen';
 import { getSetting, loadTheme } from './settings';
 import { startHaptics } from './haptics';
@@ -9,7 +9,7 @@ import { mountMascot, parseMascot } from './mascot';
 import { syncAchievements } from './motivationScreens';
 import { needsOnboarding, renderOnboarding } from './onboarding';
 import { renderSettingsScreen } from './settingsScreen';
-import { renderStatsScreen } from './statsScreen';
+import { renderStatsScreen, resetStatsView } from './statsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
 import { getActiveWorkout } from './workouts';
 import { keepAwake } from './keepAwake';
@@ -59,6 +59,9 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
           if (id === 'history') {
             resetHistoryMonth();
           }
+          // Нажали на уже открытую вкладку — вернуться к ее первому разделу
+          if (id === tab && id === 'history') resetHistoryView();
+          if (id === tab && id === 'stats') resetStatsView();
           void showTab(id);
         },
       },

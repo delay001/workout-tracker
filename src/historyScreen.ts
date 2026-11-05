@@ -35,6 +35,11 @@ function summary(workout: Workout): string {
 
 let shownView: 'workouts' | 'exercises' | 'weight' | 'measurements' = 'workouts';
 
+// Повторное нажатие на вкладку «История» открывает первый раздел — календарь тренировок
+export function resetHistoryView(): void {
+  shownView = 'workouts';
+}
+
 export async function renderHistoryTab(
   root: HTMLElement,
   onOpen: (workout: Workout) => void,

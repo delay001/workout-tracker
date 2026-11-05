@@ -1,4 +1,4 @@
-import { field, h } from './dom';
+import { field, h, pickTime } from './dom';
 import { LOCALE, t } from './i18n';
 import { parseReminders, REMINDER_KINDS, type ReminderKind, type ReminderSettings } from './reminders';
 import { getSetting, setSetting } from './settings';
@@ -37,12 +37,17 @@ export async function renderNotificationsScreen(root: HTMLElement, onBack: () =>
     if (allowed) await native.rescheduleReminders();
   }
 
-  const timeInput = (value: string, onChange: (value: string) => void): HTMLInputElement => {
-    const input = h('input', { type: 'time', value, className: 'time-input' });
-    input.onchange = () => {
-      if (input.value) onChange(input.value);
+  // Поле времени: кнопка с временем, нажатие открывает свое окно выбора (одинаковое на всех телефонах)
+  const timeInput = (value: string, onChange: (value: string) => void): HTMLButtonElement => {
+    const button = h('button', { type: 'button', className: 'time-button' }, value);
+    button.onclick = async () => {
+      const picked = await pickTime(button.textContent ?? value);
+      if (picked) {
+        button.textContent = picked;
+        onChange(picked);
+      }
     };
-    return input;
+    return button;
   };
 
   const daysPicker = (days: number[]): HTMLElement =>

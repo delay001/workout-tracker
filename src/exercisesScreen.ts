@@ -68,7 +68,13 @@ function formatBest(best: BestResult): string {
 const kilograms = (value?: number): string | undefined =>
   value === undefined ? undefined : formatWeight(value);
 
-export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
+// opened — открыть сразу историю этого упражнения; «Назад» тогда ведет в onBack (например, в статистику)
+export async function renderExercisesScreen(
+  root: HTMLElement,
+  opened?: { exercise: Exercise; onBack: () => void },
+): Promise<void> {
+  let back = (): void => void showList();
+
   async function showList(): Promise<void> {
     // Группы, которые тренируются чаще, идут первыми; внутри группы порядок прежний
     const groupOf = (item: UsedExercise): string => groupLabel(groupKey(item.exercise));
@@ -287,7 +293,7 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
           {
             type: 'button',
             className: 'button button-secondary bottom-action',
-            onclick: () => void showList(),
+            onclick: () => back(),
           },
           t('common.back'),
         ),
@@ -295,5 +301,10 @@ export async function renderExercisesScreen(root: HTMLElement): Promise<void> {
     );
   }
 
-  await showList();
+  if (opened) {
+    back = opened.onBack;
+    await showExercise(opened.exercise);
+  } else {
+    await showList();
+  }
 }
