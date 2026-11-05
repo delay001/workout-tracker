@@ -35,4 +35,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Отклик вибрацией на нажатия и рекорды -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Шаги из Health Connect старше 30 дней (остальные разрешения Health Connect объявляет модуль) -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
 </manifest>

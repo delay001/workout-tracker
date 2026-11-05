@@ -4,6 +4,7 @@
 import { App } from '@capacitor/app';
 import { registerPlugin } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { Health } from '@capgo/capacitor-health';
 import { getBodyWeights } from './bodyWeight';
 import { db } from './db';
 import { t } from './i18n';
@@ -130,4 +131,29 @@ export function startReminders(): void {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') void rescheduleReminders();
   });
+}
+
+// Шаги из Health Connect: 'missing' — Health Connect нет на телефоне, 'denied' — разрешения пока нет
+export async function stepsAccess(): Promise<'missing' | 'denied' | 'granted'> {
+  if (!(await Health.isAvailable()).available) return 'missing';
+  const status = await Health.checkAuthorization({ read: ['steps'] });
+  return status.readAuthorized.includes('steps') ? 'granted' : 'denied';
+}
+
+// Окно Health Connect «разрешить чтение шагов»; заодно просим историю старше 30 дней, если телефон умеет
+export async function requestStepsAccess(): Promise<void> {
+  await Health.requestAuthorization({ read: ['steps'], requestHistoryAccess: true });
+}
+
+// Сумма шагов за промежуток. Берем сводку Health Connect, а не отдельные записи:
+// если шаги пишут и телефон, и часы, сводка не посчитает их дважды
+export async function stepsBetween(start: Date, end: Date): Promise<number> {
+  const { samples } = await Health.queryAggregated({
+    dataType: 'steps',
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    bucket: 'day',
+    aggregation: 'sum',
+  });
+  return samples.reduce((sum, item) => sum + item.value, 0);
 }

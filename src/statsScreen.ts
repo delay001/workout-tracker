@@ -104,7 +104,7 @@ export async function renderTotalsScreen(root: HTMLElement, onBack: () => void):
   );
 }
 
-let shownView: 'month' | 'week' = 'month';
+let shownView: 'month' | 'week' | 'steps' = 'month';
 
 // Повторное нажатие на вкладку «Статистика» открывает «Обзор»
 export function resetStatsView(): void {
@@ -124,18 +124,22 @@ export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () =>
   const showView = async (): Promise<void> => {
     if (shownView === 'month') {
       await renderMonthView(body, root, onOpenSettings);
-    } else {
+    } else if (shownView === 'week') {
       await renderVolumeView(body);
+    } else if (import.meta.env.MODE === 'apk') {
+      await (await import('./stepsView')).renderStepsView(body);
     }
   };
   root.replaceChildren(
     await pageHeader(t('tab.stats'), onOpenSettings),
-    segmented(radioChips<'month' | 'week'>(
+    segmented(radioChips<'month' | 'week' | 'steps'>(
       'stats-view',
       t('stats.view'),
       [
         ['month', t('stats.viewMonth')],
         ['week', t('stats.viewWeek')],
+        // Шаги есть только в apk: браузер к Health Connect доступа не имеет
+        ...(import.meta.env.MODE === 'apk' ? [['steps', t('stats.viewSteps')] as ['steps', string]] : []),
       ],
       shownView,
       (value) => {
