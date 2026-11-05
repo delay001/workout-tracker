@@ -8,6 +8,12 @@ import { parseHaptics, setHaptics } from './haptics';
 import { applySavedLook, getSetting, setSetting } from './settings';
 import { t } from './i18n';
 
+// «сегодня», «вчера», «5 дней назад»
+function daysAgo(date: string): string {
+  const days = Math.round((Date.parse(`${todayLocal()}T00:00:00`) - Date.parse(`${date}T00:00:00`)) / 86_400_000);
+  return days <= 0 ? t('backup.today') : days === 1 ? t('backup.yesterday') : t('backup.daysAgo', { count: days });
+}
+
 function countsOf(backup: Backup): { exercises: number; workouts: number } {
   return { exercises: backup.exercises.length, workouts: backup.workouts.length };
 }
@@ -15,7 +21,8 @@ function countsOf(backup: Backup): { exercises: number; workouts: number } {
 export function renderBackupScreen(root: HTMLElement, onImported: (message: string) => void): void {
   root.innerHTML = `
     <h2>${t('backup.title')}</h2>
-    <p class="hint">${t('backup.hint')}</p>
+    <p class="hint">${t(import.meta.env.MODE === 'apk' ? 'backup.autoHint' : 'backup.hint')}</p>
+    <p class="hint" id="last-backup"></p>
     <button type="button" class="button" id="export">${t('backup.save')}</button>
     <button type="button" class="button button-secondary" id="import">${t('backup.restore')}</button>
     <input type="file" id="import-file" hidden />
@@ -23,6 +30,12 @@ export function renderBackupScreen(root: HTMLElement, onImported: (message: stri
   `;
 
   const status = root.querySelector<HTMLParagraphElement>('#backup-status')!;
+  const last = root.querySelector<HTMLParagraphElement>('#last-backup')!;
+  const showLast = async (): Promise<void> => {
+    const date = await getSetting('lastBackupDate');
+    last.textContent = date ? t('backup.last', { when: daysAgo(date) }) : t('backup.lastNever');
+  };
+  void showLast();
   const fileInput = root.querySelector<HTMLInputElement>('#import-file')!;
 
   root.querySelector('#export')!.addEventListener('click', async () => {
@@ -35,6 +48,7 @@ export function renderBackupScreen(root: HTMLElement, onImported: (message: stri
       status.textContent = t('backup.saved', countsOf(backup));
       // От этой даты считается напоминание «Пора сохранить копию»
       await setSetting('lastBackupDate', todayLocal());
+      await showLast();
     } catch {
       status.textContent = t('backup.saveFailed');
     }

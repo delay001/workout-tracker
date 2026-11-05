@@ -5,12 +5,15 @@ import { App } from '@capacitor/app';
 import { registerPlugin } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Health } from '@capgo/capacitor-health';
+import { exportData, importData, parseBackup, type Backup } from './backup';
 import { getBodyWeights } from './bodyWeight';
+import { formatDate, todayLocal } from './dates';
+import { confirmDialog } from './dom';
 import { db } from './db';
 import { t } from './i18n';
 import { getMeasurements } from './measurements';
 import { parseReminders, planReminders, type PlannedReminder } from './reminders';
-import { getSetting, getStepGoal } from './settings';
+import { getSetting, getStepGoal, setSetting } from './settings';
 import { addDays, type DaySteps } from './steps';
 import { formatTime, loadStopwatch, total, type Stopwatch } from './stopwatch';
 import { getActiveWorkout } from './workouts';
@@ -180,4 +183,52 @@ export async function stepsByDay(from: string, to: string): Promise<DaySteps[]> 
     aggregation: 'sum',
   });
   return samples.map((item) => ({ date: new Date(item.startDate).toLocaleDateString('sv-SE'), steps: item.value }));
+}
+
+// Автокопия: после каждой тренировки и при запуске приложения. Два места:
+// - внутренняя папка приложения: ее раз в сутки забирает резервное копирование Google (allowBackup),
+//   поэтому копия переживет потерю телефона и вернется на новом после установки приложения;
+// - «Документы/WorkoutTracker»: видна в «Файлах», ее можно унести руками.
+const AUTO_BACKUP = 'auto-backup.json';
+
+export async function autoBackup(): Promise<void> {
+  // Пустую базу не сохраняем: иначе она затерла бы хорошую копию до того, как ее предложат восстановить
+  if ((await db.workouts.count()) === 0) return;
+  const { Directory, Encoding, Filesystem } = await import('@capacitor/filesystem');
+  const data = JSON.stringify(await exportData());
+  await Filesystem.writeFile({ path: AUTO_BACKUP, data, directory: Directory.Data, encoding: Encoding.UTF8 });
+  // В «Документы» записать бывает нельзя (файл остался от прошлой установки): тогда хватит внутренней копии
+  await Filesystem.writeFile({
+    path: 'WorkoutTracker/workout-backup-auto.json',
+    data,
+    directory: Directory.Documents,
+    encoding: Encoding.UTF8,
+    recursive: true,
+  }).catch(() => undefined);
+  await setSetting('lastBackupDate', todayLocal());
+}
+
+// Новый телефон или переустановка: база пустая, а Google вернул автокопию — предложить восстановить.
+// true — данные восстановлены, экран нужно построить заново
+export async function offerAutoRestore(): Promise<boolean> {
+  if ((await db.workouts.count()) > 0) return false;
+  const { Directory, Encoding, Filesystem } = await import('@capacitor/filesystem');
+  let backup: Backup;
+  try {
+    const file = await Filesystem.readFile({ path: AUTO_BACKUP, directory: Directory.Data, encoding: Encoding.UTF8 });
+    backup = parseBackup(String(file.data));
+  } catch {
+    return false;
+  }
+  if (backup.workouts.length === 0) return false;
+  const question = t('backup.autoFound', { date: formatDate(new Date(backup.exportedAt).toLocaleDateString('sv-SE')), workouts: backup.workouts.length });
+  if (await confirmDialog(question)) {
+    await importData(backup);
+    return true;
+  }
+  // Отказались: старая копия не затирается новой пустой, а откладывается рядом
+  await Filesystem.rename({ from: AUTO_BACKUP, to: `auto-backup-old-${todayLocal()}.json`, directory: Directory.Data }).catch(
+    () => undefined,
+  );
+  return false;
 }

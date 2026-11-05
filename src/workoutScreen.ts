@@ -713,6 +713,8 @@ export async function renderWorkoutScreen(
               if (!isEditing) {
                 clearStopwatch(workout.id);
               }
+              // В apk копия сохраняется сама после каждой завершенной или исправленной тренировки
+              if (import.meta.env.MODE === 'apk') void import('./native').then((native) => native.autoBackup());
               if (saved && !isEditing) {
                 const month = workout.date.slice(0, 7);
                 const count = (await getFinishedWorkouts()).filter((item) => item.date.startsWith(month)).length;

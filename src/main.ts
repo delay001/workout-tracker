@@ -147,5 +147,13 @@ void loadTheme()
 void requestPersistentStorage();
 // Напоминания по расписанию есть только в apk
 if (import.meta.env.MODE === 'apk') {
-  void import('./native').then((native) => native.startReminders());
+  void import('./native').then(async (native) => {
+    native.startReminders();
+    // Сначала предложить вернуть данные из автокопии (новый телефон), потом обновить копию
+    if (await native.offerAutoRestore()) {
+      location.reload();
+      return;
+    }
+    await native.autoBackup();
+  });
 }
