@@ -1898,3 +1898,14 @@ body::before {
 .delta-down {
   color: var(--danger);
 }
+
+/* Шаги: линия цели на столбиках и дни, где цель выполнена */
+.chart-goal {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+}
+
+.chart-bar-done {
+  fill: #4ade80;
+}

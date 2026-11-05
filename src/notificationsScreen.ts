@@ -82,6 +82,33 @@ export async function renderNotificationsScreen(root: HTMLElement, onBack: () =>
     return input;
   };
 
+  // Шаги в заданное время проверяет Android без открытого приложения: для этого нужно разрешение Health Connect
+  // «чтение в фоне». Пока его нет — подсказка и кнопка
+  function stepsAccessBox(): HTMLElement {
+    const box = h('div');
+    if (!IN_APK) return box;
+    const draw = async (state?: { available: boolean; granted: boolean }): Promise<void> => {
+      const native = await import('./native');
+      const { available, granted } = state ?? (await native.stepsReminderStatus());
+      if (granted) {
+        box.replaceChildren(h('p', { className: 'hint' }, t('notify.stepsReady')));
+      } else if (!available) {
+        box.replaceChildren(h('p', { className: 'error' }, t('notify.stepsUnavailable')));
+      } else {
+        box.replaceChildren(
+          h('p', { className: 'hint' }, t('notify.stepsNeed')),
+          h(
+            'button',
+            { type: 'button', className: 'button button-secondary', onclick: async () => void draw(await native.requestStepsReminderAccess()) },
+            t('notify.stepsAllow'),
+          ),
+        );
+      }
+    };
+    void draw();
+    return box;
+  }
+
   // Параметры каждого напоминания под его переключателем
   function controls(kind: ReminderKind, s: ReminderSettings): HTMLElement[] {
     const set = <K extends ReminderKind>(k: K, patch: Partial<ReminderSettings[K]>): void => {
@@ -169,6 +196,8 @@ export async function renderNotificationsScreen(root: HTMLElement, onBack: () =>
           field(t('notify.everyDays'), count(s.backup.days, 2, (days) => set('backup', { days }))),
           field(t('notify.time'), timeInput(s.backup.time, (time) => set('backup', { time }))),
         ];
+      case 'steps':
+        return [field(t('notify.time'), timeInput(s.steps.time, (time) => set('steps', { time }))), stepsAccessBox()];
     }
   }
 

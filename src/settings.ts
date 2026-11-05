@@ -1,4 +1,5 @@
 import { db } from './db';
+import { DEFAULT_STEP_GOAL } from './steps';
 import { setUnits } from './units';
 
 export type Theme = 'dark' | 'light' | 'system';
@@ -23,6 +24,11 @@ export async function setSetting(key: string, value: string): Promise<void> {
 export async function getMonthlyGoal(): Promise<number> {
   const goal = Number(await getSetting('monthlyGoal'));
   return Number.isInteger(goal) && goal > 0 ? goal : DEFAULT_MONTHLY_GOAL;
+}
+
+export async function getStepGoal(): Promise<number> {
+  const goal = Number(await getSetting('stepGoal'));
+  return Number.isInteger(goal) && goal > 0 ? goal : DEFAULT_STEP_GOAL;
 }
 
 export async function getWeightStep(): Promise<number> {

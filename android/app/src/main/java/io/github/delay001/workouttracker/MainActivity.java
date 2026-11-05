@@ -8,6 +8,8 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // Свой модуль: таймер тренировки в шторке уведомлений
         registerPlugin(WorkoutTimerPlugin.class);
+        // Свой модуль: напоминание «Пора пройтись», если цель по шагам не выполнена
+        registerPlugin(StepsReminderPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

@@ -63,8 +63,10 @@ export interface Bar {
 }
 
 // Столбцы с числом над каждым. Столбец можно нажать: описание показывается над графиком.
-export function barChart(bars: Bar[], label: string): HTMLElement {
-  const max = Math.max(1, ...bars.map((bar) => bar.value));
+// С целью: пунктирная линия цели, столбцы, дотянувшие до нее, — зеленые
+export function barChart(bars: Bar[], label: string, goal?: number, selected = bars.length - 1): HTMLElement {
+  const max = Math.max(1, goal ?? 0, ...bars.map((bar) => bar.value));
+  const goalY = goal ? BOX.bottom - (goal / max) * (BOX.bottom - BOX.top - 14) : 0;
   const step = (BOX.right - 12 - 12) / bars.length;
   const width = Math.min(28, step * 0.7);
   // Подписи под столбцами только если они не налезают друг на друга
@@ -79,11 +81,12 @@ export function barChart(bars: Bar[], label: string): HTMLElement {
     'beforeend',
     `<svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img">
       <line class="chart-grid" x1="12" x2="${BOX.right}" y1="${BOX.bottom}" y2="${BOX.bottom}"/>
+      ${goal ? `<line class="chart-goal" x1="12" x2="${BOX.right}" y1="${goalY}" y2="${goalY}"/>` : ''}
       ${bars
         .map((bar, index) => {
           const x = 12 + step * index + (step - width) / 2;
           const height = (bar.value / max) * (BOX.bottom - BOX.top - 14);
-          return `<rect class="chart-bar" x="${x}" y="${BOX.bottom - height}" width="${width}" height="${height}" rx="4"/>
+          return `<rect class="chart-bar${goal && bar.value >= goal ? ' chart-bar-done' : ''}" x="${x}" y="${BOX.bottom - height}" width="${width}" height="${height}" rx="4"/>
             <text x="${x + width / 2}" y="${BOX.bottom - height - 4}" text-anchor="middle">${bar.text ?? bar.value}</text>
             ${index % labelEvery === 0 ? `<text x="${x + width / 2}" y="${HEIGHT - 6}" text-anchor="middle">${bar.label}</text>` : ''}
             <rect class="chart-hit" x="${12 + step * index}" y="${BOX.top}" width="${step}" height="${HEIGHT - BOX.top}"/>`;
@@ -92,7 +95,7 @@ export function barChart(bars: Bar[], label: string): HTMLElement {
     </svg>`,
   );
   figure.querySelector('svg')?.setAttribute('aria-label', label);
-  show(bars.length - 1);
+  show(selected);
   figure.querySelectorAll('.chart-hit').forEach((target, index) => {
     const reveal = (): void => show(index);
     target.addEventListener('click', reveal);

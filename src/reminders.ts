@@ -1,8 +1,8 @@
 // Напоминания: настройки и расчет, когда какое прислать. Сами уведомления ставит apk (native.ts),
 // здесь только правила, чтобы их можно было проверить тестами.
 
-export type ReminderKind = 'workout' | 'creatine' | 'weigh' | 'measure' | 'idle' | 'unfinished' | 'backup';
-export const REMINDER_KINDS: ReminderKind[] = ['workout', 'creatine', 'weigh', 'measure', 'idle', 'unfinished', 'backup'];
+export type ReminderKind = 'workout' | 'creatine' | 'weigh' | 'measure' | 'idle' | 'unfinished' | 'backup' | 'steps';
+export const REMINDER_KINDS: ReminderKind[] = ['workout', 'creatine', 'weigh', 'measure', 'idle', 'unfinished', 'backup', 'steps'];
 
 export interface ReminderSettings {
   // Дни недели: 0 — воскресенье … 6 — суббота; время — «ЧЧ:ММ»
@@ -13,6 +13,8 @@ export interface ReminderSettings {
   idle: { on: boolean; days: number; time: string };
   unfinished: { on: boolean; hours: number };
   backup: { on: boolean; days: number; time: string };
+  // Шаги проверяет сам Android в это время (StepsReminderPlugin.kt), в planReminders не участвует
+  steps: { on: boolean; time: string };
 }
 
 export const DEFAULT_REMINDERS: ReminderSettings = {
@@ -23,6 +25,7 @@ export const DEFAULT_REMINDERS: ReminderSettings = {
   idle: { on: false, days: 4, time: '19:00' },
   unfinished: { on: false, hours: 3 },
   backup: { on: false, days: 7, time: '20:00' },
+  steps: { on: false, time: '20:00' },
 };
 
 // Сохраненные настройки поверх значений по умолчанию: новые виды напоминаний появятся сами

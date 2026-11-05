@@ -127,7 +127,7 @@ export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () =>
     } else if (shownView === 'week') {
       await renderVolumeView(body);
     } else if (import.meta.env.MODE === 'apk') {
-      await (await import('./stepsView')).renderStepsView(body);
+      await (await import('./stepsView')).renderStepsView(body, await import('./native'));
     }
   };
   root.replaceChildren(

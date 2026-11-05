@@ -10,7 +10,8 @@ import { db } from './db';
 import { t } from './i18n';
 import { getMeasurements } from './measurements';
 import { parseReminders, planReminders, type PlannedReminder } from './reminders';
-import { getSetting } from './settings';
+import { getSetting, getStepGoal } from './settings';
+import { addDays, type DaySteps } from './steps';
 import { formatTime, loadStopwatch, total, type Stopwatch } from './stopwatch';
 import { getActiveWorkout } from './workouts';
 
@@ -19,6 +20,17 @@ interface WorkoutTimerPlugin {
   show(options: { title: string; text: string; running: boolean; elapsedMs: number; channelName: string }): Promise<void>;
   hide(): Promise<void>;
 }
+interface StepsReminderPlugin {
+  schedule(options: { on: boolean; time: string; goal: number; title: string; body: string; channelName: string }): Promise<void>;
+  status(): Promise<{ available: boolean; granted: boolean }>;
+  requestAccess(): Promise<{ available: boolean; granted: boolean }>;
+}
+// Свой кусок под Android (StepsReminderPlugin.kt): проверка шагов в заданное время без открытого приложения
+const StepsReminder = registerPlugin<StepsReminderPlugin>('StepsReminder');
+
+export const stepsReminderStatus = (): ReturnType<StepsReminderPlugin['status']> => StepsReminder.status();
+export const requestStepsReminderAccess = (): ReturnType<StepsReminderPlugin['requestAccess']> => StepsReminder.requestAccess();
+
 // Свой кусок кода под Android (WorkoutTimerPlugin.java): закрепленное уведомление с тикающим временем
 const WorkoutTimer = registerPlugin<WorkoutTimerPlugin>('WorkoutTimer');
 
@@ -60,6 +72,15 @@ const text = (item: PlannedReminder): { title: string; body: string } => ({
 
 // Пересчитать и заново поставить все напоминания по текущим данным и настройкам
 export async function rescheduleReminders(): Promise<void> {
+  const settings = parseReminders(await getSetting('reminders'));
+  // Номер вставляет Android в момент проверки, поэтому в тексте метка вместо числа
+  await StepsReminder.schedule({
+    ...settings.steps,
+    goal: await getStepGoal(),
+    title: t('reminder.steps.title'),
+    body: t('reminder.steps.body', { left: '#LEFT#' }),
+    channelName: t('steps.channel'),
+  });
   if ((await LocalNotifications.checkPermissions()).display !== 'granted') return;
   const workouts = await db.workouts.toArray();
   const finished = workouts.filter((workout) => workout.status === 'finished').map((workout) => workout.date).sort();
@@ -67,7 +88,7 @@ export async function rescheduleReminders(): Promise<void> {
   const watch = active ? loadStopwatch(active.id) : undefined;
   const measurements = (await getMeasurements()).map((item) => item.date).sort();
   const plan = planReminders(
-    parseReminders(await getSetting('reminders')),
+    settings,
     {
       workoutDates: new Set(workouts.map((workout) => workout.date)),
       lastWorkout: finished.at(-1),
@@ -145,9 +166,12 @@ export async function requestStepsAccess(): Promise<void> {
   await Health.requestAuthorization({ read: ['steps'], requestHistoryAccess: true });
 }
 
-// Сумма шагов за промежуток. Берем сводку Health Connect, а не отдельные записи:
-// если шаги пишут и телефон, и часы, сводка не посчитает их дважды
-export async function stepsBetween(start: Date, end: Date): Promise<number> {
+// Шаги по дням с from по to включительно (ГГГГ-ММ-ДД), будущее не спрашиваем. Берем сводку Health Connect,
+// а не отдельные записи: если шаги пишут и телефон, и часы, сводка не посчитает их дважды
+export async function stepsByDay(from: string, to: string): Promise<DaySteps[]> {
+  const start = new Date(`${from}T00:00:00`);
+  const end = new Date(Math.min(Date.now(), new Date(`${addDays(to, 1)}T00:00:00`).getTime()));
+  if (start >= end) return [];
   const { samples } = await Health.queryAggregated({
     dataType: 'steps',
     startDate: start.toISOString(),
@@ -155,5 +179,5 @@ export async function stepsBetween(start: Date, end: Date): Promise<number> {
     bucket: 'day',
     aggregation: 'sum',
   });
-  return samples.reduce((sum, item) => sum + item.value, 0);
+  return samples.map((item) => ({ date: new Date(item.startDate).toLocaleDateString('sv-SE'), steps: item.value }));
 }
