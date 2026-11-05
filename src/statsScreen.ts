@@ -111,6 +111,14 @@ export function resetStatsView(): void {
   shownView = 'month';
 }
 
+// С главного экрана («тренировок за месяц»): «Обзор» с периодом «месяц» на текущем месяце
+export function resetStatsToThisMonth(): void {
+  const today = new Date();
+  shown = { year: today.getFullYear(), month: today.getMonth() };
+  shownMonths = 1;
+  shownView = 'month';
+}
+
 export async function renderStatsScreen(root: HTMLElement, onOpenSettings: () => void): Promise<void> {
   const body = h('div');
   const showView = async (): Promise<void> => {

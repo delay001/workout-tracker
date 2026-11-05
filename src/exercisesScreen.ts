@@ -128,6 +128,7 @@ export async function renderExercisesScreen(
   }
 
   async function showExercise(exercise: Exercise): Promise<void> {
+    scrollTo(0, 0);
     const history = await getExerciseHistory(exercise.id);
     const best = bestResult(history);
     // Уровень считается по лучшему результату за все время, итоги ниже — за выбранный период

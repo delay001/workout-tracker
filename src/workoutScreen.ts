@@ -466,7 +466,7 @@ export async function renderWorkoutScreen(
 
     const nameInput = h('input', { type: 'text', autocomplete: 'off' });
 
-    const results = h('div', { hidden: true });
+    const results = h('div');
     nameInput.onfocus = () => {
       results.hidden = false;
     };
@@ -563,6 +563,7 @@ export async function renderWorkoutScreen(
     }
 
     nameInput.oninput = () => void updateResults();
+    void updateResults();
 
     root.replaceChildren(
       h(

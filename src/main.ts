@@ -9,7 +9,7 @@ import { mountMascot, parseMascot } from './mascot';
 import { syncAchievements } from './motivationScreens';
 import { needsOnboarding, renderOnboarding } from './onboarding';
 import { renderSettingsScreen } from './settingsScreen';
-import { renderStatsScreen, resetStatsView } from './statsScreen';
+import { renderStatsScreen, resetStatsToThisMonth, resetStatsView } from './statsScreen';
 import { renderWorkoutScreen } from './workoutScreen';
 import { getActiveWorkout } from './workouts';
 import { keepAwake } from './keepAwake';
@@ -83,7 +83,16 @@ async function showTab(tab: Tab, message = ''): Promise<void> {
   }
 
   if (tab === 'workout') {
-    await renderHomeScreen(content, await getActiveWorkout(), () => void openActive(), () => void showTab('stats'), () => void showTab('settings'));
+    await renderHomeScreen(
+      content,
+      await getActiveWorkout(),
+      () => void openActive(),
+      () => {
+        resetStatsToThisMonth();
+        void showTab('stats');
+      },
+      () => void showTab('settings'),
+    );
   } else if (tab === 'history') {
     await renderHistoryTab(
       content,

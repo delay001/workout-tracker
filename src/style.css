@@ -669,6 +669,8 @@ textarea {
   color: var(--text);
   font: inherit;
   font-size: 1.25rem;
+  /* Тянуть можно только по высоте: ширина всегда по экрану */
+  resize: vertical;
 }
 
 /* Список: своя стрелка вместо системной, нажатие открывает свое окно выбора (startCustomSelects) */
@@ -1310,9 +1312,10 @@ p.set-row {
 }
 
 /* Плашка уже экрана и по центру, чтобы меньше закрывать карточки под ней; нажатия проходят сквозь нее */
+/* Сообщения внизу, над вкладками: там их удобно нажать большим пальцем */
 .toast-stack {
   position: fixed;
-  top: calc(8px + var(--safe-top));
+  bottom: calc(84px + var(--safe-bottom));
   right: 32px;
   left: 32px;
   z-index: 2;
