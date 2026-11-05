@@ -20,7 +20,7 @@ import {
   type WorkoutSet,
 } from './db';
 import { confetti, confirmDialog, dateField, dragHandle, field, groupedList, h, requiredMark, showToast, showUndo, statRow } from './dom';
-import { workoutStats } from './progress';
+import { previousSameType, workoutStats } from './progress';
 import {
   addExerciseToWorkout,
   addSet,
@@ -331,6 +331,51 @@ export async function renderWorkoutScreen(
     ];
   }
 
+  // Сравнение с прошлой тренировкой того же типа: тоннаж, подходы, время. Больше — зеленым, меньше — красным;
+  // у времени цвета нет: дольше не значит лучше
+  function comparisonRows(current: Workout, previous: Workout | undefined): HTMLElement[] {
+    const title = h('h2', {}, t('finish.compareTitle'));
+    if (!previous) return [title, h('p', { className: 'hint' }, t('finish.compareNone'))];
+    const now = workoutStats(current);
+    const before = workoutStats(previous);
+    const row = (label: string, value: string, delta: number, text: string, colored = true): HTMLElement =>
+      h(
+        'p',
+        { className: 'set-row' },
+        label,
+        h(
+          'strong',
+          {},
+          value,
+          ' ',
+          h(
+            'span',
+            { className: !colored || delta === 0 ? 'delta' : delta > 0 ? 'delta delta-up' : 'delta delta-down' },
+            delta === 0 ? '=' : `${delta > 0 ? '+' : '−'}${text}`,
+          ),
+        ),
+      );
+    const tonnageDelta = now.tonnage - before.tonnage;
+    const setsDelta = now.sets - before.sets;
+    return [
+      title,
+      h('p', { className: 'hint' }, t('finish.compareWith', { type: workoutTypeName(previous.type), date: formatDate(previous.date) })),
+      row(t('workoutStats.tonnage'), formatWeight(now.tonnage), tonnageDelta, formatWeight(Math.abs(tonnageDelta))),
+      row(t('workoutStats.sets'), String(now.sets), setsDelta, String(Math.abs(setsDelta))),
+      ...(current.durationMin && previous.durationMin
+        ? [
+            row(
+              t('finish.duration'),
+              formatDuration(current.durationMin),
+              current.durationMin - previous.durationMin,
+              formatDuration(Math.abs(current.durationMin - previous.durationMin)),
+              false,
+            ),
+          ]
+        : []),
+    ];
+  }
+
   // Карточка после завершения: что сделано и сколько рекордов побито
   async function showSummary(message: string): Promise<void> {
     const finished = (await db.workouts.get(workout.id)) ?? workout;
@@ -356,6 +401,7 @@ export async function renderWorkoutScreen(
           ...(records > 0 ? [statRow(t('finish.records'), String(records))] : []),
         ),
         ...(await statRowsFor(finished)),
+        ...comparisonRows(finished, previousSameType(finished, await db.workouts.toArray())),
         h('button', { type: 'button', className: 'button bottom-action', onclick: onClosed }, t('finish.done')),
       ),
     );

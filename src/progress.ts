@@ -134,6 +134,19 @@ export function overdueExercises(
     .sort((a, b) => b.days - a.days);
 }
 
+// Прошлая завершенная тренировка того же типа: раньше по дате, а в тот же день — внесенная раньше
+export function previousSameType(workout: Workout, workouts: Workout[]): Workout | undefined {
+  return workouts
+    .filter(
+      (item) =>
+        item.status === 'finished' &&
+        item.type === workout.type &&
+        item.id !== workout.id &&
+        (item.date < workout.date || (item.date === workout.date && item.id < workout.id)),
+    )
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)[0];
+}
+
 export function workoutStats(workout: Workout): { exercises: number; sets: number; tonnage: number } {
   const sets = workout.exercises.flatMap((item) => item.sets);
   return {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Workout, WorkoutSet } from './db';
 import {
   daysBetween,
+  previousSameType,
   exerciseSummary,
   filterByPeriod,
   historyRecords,
@@ -160,5 +161,29 @@ describe('общая статистика', () => {
       { exerciseId: 2, count: 2 },
       { exerciseId: 1, count: 1 },
     ]);
+  });
+});
+
+describe('previousSameType', () => {
+  const w = (id: number, date: string, type: string, status: 'finished' | 'active' = 'finished') =>
+    ({ id, date, type, status, exercises: [], exerciseIds: [] }) as Workout;
+
+  it('берет ближайшую раньшую завершенную тренировку того же типа', () => {
+    const current = w(10, '2026-11-05', 'upper');
+    const all = [
+      w(1, '2026-10-20', 'upper'),
+      w(2, '2026-10-28', 'upper'),
+      w(3, '2026-11-01', 'lower'),
+      w(4, '2026-11-03', 'upper', 'active'),
+      w(5, '2026-11-06', 'upper'),
+      current,
+    ];
+    expect(previousSameType(current, all)?.id).toBe(2);
+  });
+
+  it('в тот же день — внесенная раньше; нет прошлой — ничего', () => {
+    const current = w(7, '2026-11-05', 'upper');
+    expect(previousSameType(current, [w(6, '2026-11-05', 'upper'), w(8, '2026-11-05', 'upper'), current])?.id).toBe(6);
+    expect(previousSameType(current, [current])).toBeUndefined();
   });
 });

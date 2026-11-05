@@ -1882,3 +1882,19 @@ body::before {
 .set-row-button.has-muscle-icon {
   padding-left: 46px;
 }
+
+/* Сравнение с прошлой тренировкой: разница рядом со значением */
+.delta {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.delta-up {
+  color: #4ade80;
+}
+
+.delta-down {
+  color: var(--danger);
+}
